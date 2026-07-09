@@ -292,6 +292,12 @@ class GrokMainView: NSView {
 }
 
 extension GrokMainView: WKNavigationDelegate {
+    private static let trustedHosts: Set<String> = ["grok.com", "x.com", "twitter.com", "x.ai"]
+
+    private func isTrustedHost(_ host: String) -> Bool {
+        Self.trustedHosts.contains { host == $0 || host.hasSuffix("." + $0) }
+    }
+
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         // Inject dark scrollbar and L7 branding
         let inject = """
@@ -311,19 +317,23 @@ extension GrokMainView: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        // Allow all navigation within grok/x domains
-        if let url = navigationAction.request.url {
-            let host = url.host ?? ""
-            if host.contains("grok") || host.contains("x.com") || host.contains("twitter") || host.contains("x.ai") || host.isEmpty {
-                decisionHandler(.allow)
-                return
-            }
-            // External links: open in browser
-            NSWorkspace.shared.open(url)
-            decisionHandler(.cancel)
+        guard let url = navigationAction.request.url else {
+            decisionHandler(.allow)
             return
         }
-        decisionHandler(.allow)
+        // about:blank etc. have no host and are safe to allow
+        if url.scheme == "about" {
+            decisionHandler(.allow)
+            return
+        }
+        // Allow navigation only within grok/x domains (exact host or subdomain)
+        if isTrustedHost(url.host ?? "") {
+            decisionHandler(.allow)
+            return
+        }
+        // Everything else: open in the default browser instead of loading in-app
+        NSWorkspace.shared.open(url)
+        decisionHandler(.cancel)
     }
 }
 
