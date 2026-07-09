@@ -14,6 +14,13 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
+// Safely single-quote a value for interpolation into a shell command string.
+// Many commands below rely on shell pipes/redirects/fallbacks, so they can't
+// simply switch to execFileSync — this neutralizes shell metacharacters instead.
+function shQuote(str) {
+  return `'${String(str).replace(/'/g, `'\\''`)}'`;
+}
+
 const L7_DIR = path.join(process.env.HOME, '.l7');
 const SCAN_DIR = path.join(L7_DIR, 'scan');
 const MANIFEST = path.join(SCAN_DIR, 'manifest.json');
@@ -130,9 +137,7 @@ function detectType(filePath) {
       if (head.startsWith('#!')) return 'application/script';
       if (head.startsWith('<?xml')) return 'text/xml';
       if (head.startsWith('<!DOCTYPE') || head.startsWith('<!doctype')) return 'text/html-doctype';
-      if (head.startsWith('
-
-<html') || head.startsWith('<HTML')) return 'text/html';
+      if (head.startsWith('<html') || head.startsWith('<HTML')) return 'text/html';
       if (head.startsWith('---')) return 'text/yaml';
       if (head.startsWith('name:') || head.startsWith('version:')) return 'text/yaml';
       return 'text/plain';
@@ -430,27 +435,27 @@ function backward(filePath) {
     case 'encoding/base64':
       console.log('\u2502  Decoding base64...');
       console.log('\u2514\u2500');
-      try { process.stdout.write(execSync(`base64 -D < "${filePath}"`)); } catch(_) {}
+      try { process.stdout.write(execSync(`base64 -D < ${shQuote(filePath)}`)); } catch(_) {}
       break;
     case 'application/bplist':
     case 'application/bplist-in-text':
       console.log('\u2502  Converting binary plist to XML...');
       console.log('\u2514\u2500');
-      try { process.stdout.write(execSync(`plutil -convert xml1 -o - "${filePath}"`)); }
-      catch(_) { try { process.stdout.write(execSync(`xxd "${filePath}" | head -40`)); } catch(_) {} }
+      try { process.stdout.write(execSync(`plutil -convert xml1 -o - ${shQuote(filePath)}`)); }
+      catch(_) { try { process.stdout.write(execSync(`xxd ${shQuote(filePath)} | head -40`)); } catch(_) {} }
       break;
     case 'application/sqlite':
       console.log('\u2502  Listing SQLite tables + schema...');
       console.log('\u2514\u2500');
-      try { process.stdout.write(execSync(`sqlite3 "${filePath}" ".tables" 2>/dev/null`)); }
+      try { process.stdout.write(execSync(`sqlite3 ${shQuote(filePath)} ".tables" 2>/dev/null`)); }
       catch(_) {}
-      try { process.stdout.write(execSync(`sqlite3 "${filePath}" ".schema" 2>/dev/null | head -60`)); }
+      try { process.stdout.write(execSync(`sqlite3 ${shQuote(filePath)} ".schema" 2>/dev/null | head -60`)); }
       catch(_) {}
       break;
     case 'application/gzip':
       console.log('\u2502  Listing gzip/tar contents...');
       console.log('\u2514\u2500');
-      try { process.stdout.write(execSync(`gzip -dc "${filePath}" 2>/dev/null | tar tf - 2>/dev/null || gzip -dc "${filePath}" 2>/dev/null | head -c 4096`)); }
+      try { process.stdout.write(execSync(`gzip -dc ${shQuote(filePath)} 2>/dev/null | tar tf - 2>/dev/null || gzip -dc ${shQuote(filePath)} 2>/dev/null | head -c 4096`)); }
       catch(_) {}
       break;
     case 'application/zip':
@@ -458,44 +463,44 @@ function backward(filePath) {
     case 'application/zip-spanned':
       console.log('\u2502  Listing zip contents (not extracting)...');
       console.log('\u2514\u2500');
-      try { process.stdout.write(execSync(`unzip -l "${filePath}" 2>/dev/null`)); } catch(_) {}
+      try { process.stdout.write(execSync(`unzip -l ${shQuote(filePath)} 2>/dev/null`)); } catch(_) {}
       break;
     default:
       if (/^image\//.test(type)) {
         console.log('\u2502  Image metadata (no pixel decode)...');
         console.log('\u2514\u2500');
-        try { process.stdout.write(execSync(`file "${filePath}"`)); } catch(_) {}
-        try { process.stdout.write(execSync(`mdls -name kMDItemContentType -name kMDItemPixelHeight -name kMDItemPixelWidth -name kMDItemColorSpace "${filePath}" 2>/dev/null`)); } catch(_) {}
+        try { process.stdout.write(execSync(`file ${shQuote(filePath)}`)); } catch(_) {}
+        try { process.stdout.write(execSync(`mdls -name kMDItemContentType -name kMDItemPixelHeight -name kMDItemPixelWidth -name kMDItemColorSpace ${shQuote(filePath)} 2>/dev/null`)); } catch(_) {}
         // Check trailing strings
         try {
-          const trail = execSync(`tail -c 256 "${filePath}" 2>/dev/null | strings 2>/dev/null`).toString().trim();
+          const trail = execSync(`tail -c 256 ${shQuote(filePath)} 2>/dev/null | strings 2>/dev/null`).toString().trim();
           if (trail) console.log(`Trailing strings:\n${trail}`);
         } catch(_) {}
       } else if (/^font\//.test(type)) {
         console.log('\u2502  Font metadata...');
         console.log('\u2514\u2500');
-        try { process.stdout.write(execSync(`strings "${filePath}" | grep -iE "name|family|regular|bold|version|copyright" | head -15`)); } catch(_) {}
+        try { process.stdout.write(execSync(`strings ${shQuote(filePath)} | grep -iE "name|family|regular|bold|version|copyright" | head -15`)); } catch(_) {}
       } else if (/macho/.test(type)) {
         console.log('\u2502  Mach-O header + dependency tree...');
         console.log('\u2514\u2500');
-        try { process.stdout.write(execSync(`file "${filePath}"`)); } catch(_) {}
+        try { process.stdout.write(execSync(`file ${shQuote(filePath)}`)); } catch(_) {}
         console.log('\n=== Shared Library Dependencies (otool -L) ===');
-        try { process.stdout.write(execSync(`otool -L "${filePath}" 2>/dev/null`)); } catch(_) {}
+        try { process.stdout.write(execSync(`otool -L ${shQuote(filePath)} 2>/dev/null`)); } catch(_) {}
         console.log('\n=== Rpaths (otool -l | grep -A2 LC_RPATH) ===');
-        try { process.stdout.write(execSync(`otool -l "${filePath}" 2>/dev/null | grep -A2 LC_RPATH`)); } catch(_) {}
+        try { process.stdout.write(execSync(`otool -l ${shQuote(filePath)} 2>/dev/null | grep -A2 LC_RPATH`)); } catch(_) {}
         console.log('\n=== Load Commands Summary ===');
-        try { process.stdout.write(execSync(`otool -l "${filePath}" 2>/dev/null | grep -E "cmd |name |path " | head -40`)); } catch(_) {}
+        try { process.stdout.write(execSync(`otool -l ${shQuote(filePath)} 2>/dev/null | grep -E "cmd |name |path " | head -40`)); } catch(_) {}
       } else if (/^application\/icc/.test(type) || /\.icc$/.test(filePath)) {
         console.log('\u2502  ICC Color Profile...');
         console.log('\u2514\u2500');
-        try { process.stdout.write(execSync(`file "${filePath}"`)); } catch(_) {}
-        try { process.stdout.write(execSync(`strings "${filePath}" | grep -iE "desc|copy|dmnd|dmdd|wtpt|bkpt|rXYZ|gXYZ|bXYZ|chad|sRGB|Display|Adobe|color" | head -20`)); } catch(_) {}
+        try { process.stdout.write(execSync(`file ${shQuote(filePath)}`)); } catch(_) {}
+        try { process.stdout.write(execSync(`strings ${shQuote(filePath)} | grep -iE "desc|copy|dmnd|dmdd|wtpt|bkpt|rXYZ|gXYZ|bXYZ|chad|sRGB|Display|Adobe|color" | head -20`)); } catch(_) {}
       } else if (/\.dictionary$/.test(filePath) || /linguistic/i.test(filePath)) {
         console.log('\u2502  Linguistic/Dictionary data...');
         console.log('\u2514\u2500');
-        try { process.stdout.write(execSync(`file "${filePath}"`)); } catch(_) {}
-        try { process.stdout.write(execSync(`ls -la "${filePath}" 2>/dev/null`)); } catch(_) {}
-        try { process.stdout.write(execSync(`strings "${filePath}" | head -20`)); } catch(_) {}
+        try { process.stdout.write(execSync(`file ${shQuote(filePath)}`)); } catch(_) {}
+        try { process.stdout.write(execSync(`ls -la ${shQuote(filePath)} 2>/dev/null`)); } catch(_) {}
+        try { process.stdout.write(execSync(`strings ${shQuote(filePath)} | head -20`)); } catch(_) {}
       } else {
         console.log('\u2502  First 512 bytes...');
         console.log('\u2514\u2500');
@@ -520,10 +525,10 @@ function showHeader(filePath) {
   console.log(`\u2502  Modified: ${stat.mtime.toISOString()}`);
   console.log('\u2502');
   console.log('\u2502  First 64 bytes (hex):');
-  try { const out = execSync(`xxd -l 64 "${filePath}" 2>/dev/null`).toString(); out.split('\n').forEach(l => console.log(`\u2502  ${l}`)); } catch(_) {}
+  try { const out = execSync(`xxd -l 64 ${shQuote(filePath)} 2>/dev/null`).toString(); out.split('\n').forEach(l => console.log(`\u2502  ${l}`)); } catch(_) {}
   console.log('\u2502');
   console.log('\u2502  Extended attributes:');
-  try { const out = execSync(`xattr -l "${filePath}" 2>/dev/null`).toString().trim(); if (out) out.split('\n').forEach(l => console.log(`\u2502  ${l}`)); else console.log('\u2502  (none)'); } catch(_) { console.log('\u2502  (none)'); }
+  try { const out = execSync(`xattr -l ${shQuote(filePath)} 2>/dev/null`).toString().trim(); if (out) out.split('\n').forEach(l => console.log(`\u2502  ${l}`)); else console.log('\u2502  (none)'); } catch(_) { console.log('\u2502  (none)'); }
   console.log('\u2514\u2500');
 }
 
@@ -538,25 +543,29 @@ function drill(filePath) {
 
   switch (container) {
     case 'archive':
-      if (/zip/.test(type)) try { process.stdout.write(execSync(`unzip -l "${filePath}" 2>/dev/null`)); } catch(_) {}
-      else if (/gzip/.test(type)) try { process.stdout.write(execSync(`gzip -dc "${filePath}" 2>/dev/null | tar tf - 2>/dev/null || echo "(not tar inside gzip)"`)); } catch(_) {}
-      else if (/bzip2/.test(type)) try { process.stdout.write(execSync(`bzip2 -dc "${filePath}" 2>/dev/null | tar tf - 2>/dev/null || echo "(not tar inside bzip2)"`)); } catch(_) {}
-      else if (/xz/.test(type)) try { process.stdout.write(execSync(`xz -dc "${filePath}" 2>/dev/null | tar tf - 2>/dev/null || echo "(not tar inside xz)"`)); } catch(_) {}
+      if (/zip/.test(type)) try { process.stdout.write(execSync(`unzip -l ${shQuote(filePath)} 2>/dev/null`)); } catch(_) {}
+      else if (/gzip/.test(type)) try { process.stdout.write(execSync(`gzip -dc ${shQuote(filePath)} 2>/dev/null | tar tf - 2>/dev/null || echo "(not tar inside gzip)"`)); } catch(_) {}
+      else if (/bzip2/.test(type)) try { process.stdout.write(execSync(`bzip2 -dc ${shQuote(filePath)} 2>/dev/null | tar tf - 2>/dev/null || echo "(not tar inside bzip2)"`)); } catch(_) {}
+      else if (/xz/.test(type)) try { process.stdout.write(execSync(`xz -dc ${shQuote(filePath)} 2>/dev/null | tar tf - 2>/dev/null || echo "(not tar inside xz)"`)); } catch(_) {}
       break;
     case 'database':
       console.log('=== Tables ===');
-      try { process.stdout.write(execSync(`sqlite3 "${filePath}" ".tables" 2>/dev/null`)); } catch(_) {}
+      try { process.stdout.write(execSync(`sqlite3 ${shQuote(filePath)} ".tables" 2>/dev/null`)); } catch(_) {}
       console.log('\n=== Row Counts ===');
       try {
-        const tables = execSync(`sqlite3 "${filePath}" ".tables" 2>/dev/null`).toString().trim().split(/\s+/);
+        const tables = execSync(`sqlite3 ${shQuote(filePath)} ".tables" 2>/dev/null`).toString().trim().split(/\s+/);
         for (const t of tables) {
           if (!t) continue;
-          try { const c = execSync(`sqlite3 "${filePath}" "SELECT COUNT(*) FROM \\"${t}\\";" 2>/dev/null`).toString().trim(); console.log(`  ${t}: ${c} rows`); } catch(_) {}
+          try {
+            const sql = `SELECT COUNT(*) FROM "${t.replace(/"/g, '""')}";`;
+            const c = execSync(`sqlite3 ${shQuote(filePath)} ${shQuote(sql)} 2>/dev/null`).toString().trim();
+            console.log(`  ${t}: ${c} rows`);
+          } catch(_) {}
         }
       } catch(_) {}
       break;
     case 'plist':
-      try { process.stdout.write(execSync(`plutil -convert xml1 -o - "${filePath}" 2>/dev/null`)); } catch(_) { console.log('(cannot convert plist)'); }
+      try { process.stdout.write(execSync(`plutil -convert xml1 -o - ${shQuote(filePath)} 2>/dev/null`)); } catch(_) { console.log('(cannot convert plist)'); }
       break;
     case 'json':
       try {
@@ -570,22 +579,22 @@ function drill(filePath) {
       break;
     case 'font':
       console.log('Font metadata:');
-      try { process.stdout.write(execSync(`strings "${filePath}" | grep -iE "name|family|regular|bold|italic|version|copyright" | head -15`)); } catch(_) {}
+      try { process.stdout.write(execSync(`strings ${shQuote(filePath)} | grep -iE "name|family|regular|bold|italic|version|copyright" | head -15`)); } catch(_) {}
       break;
     case 'binary':
       console.log('=== Mach-O Dependency Tree ===');
-      try { process.stdout.write(execSync(`otool -L "${filePath}" 2>/dev/null`)); } catch(_) {}
+      try { process.stdout.write(execSync(`otool -L ${shQuote(filePath)} 2>/dev/null`)); } catch(_) {}
       console.log('\n=== Rpaths ===');
-      try { process.stdout.write(execSync(`otool -l "${filePath}" 2>/dev/null | grep -A2 LC_RPATH`)); } catch(_) {}
+      try { process.stdout.write(execSync(`otool -l ${shQuote(filePath)} 2>/dev/null | grep -A2 LC_RPATH`)); } catch(_) {}
       console.log('\n=== Code Signature ===');
-      try { process.stdout.write(execSync(`codesign -dvv "${filePath}" 2>&1 | head -15`)); } catch(_) {}
+      try { process.stdout.write(execSync(`codesign -dvv ${shQuote(filePath)} 2>&1 | head -15`)); } catch(_) {}
       break;
     default:
       // Check if it's an ICC color profile
       if (/\.icc$/i.test(filePath)) {
         console.log('ICC Color Profile:');
-        try { process.stdout.write(execSync(`file "${filePath}"`)); } catch(_) {}
-        try { process.stdout.write(execSync(`strings "${filePath}" | head -15`)); } catch(_) {}
+        try { process.stdout.write(execSync(`file ${shQuote(filePath)}`)); } catch(_) {}
+        try { process.stdout.write(execSync(`strings ${shQuote(filePath)} | head -15`)); } catch(_) {}
       } else {
         console.log('Not a recognized container.');
       }
