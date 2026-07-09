@@ -441,7 +441,7 @@ In quantum computing, 5 is the minimum distance of the smallest fault-tolerant c
 
 The Hebrew letter Hé (ה) has gematria value 5. It appears twice in the Tetragrammaton (YHVH = Yod-Hé-Vav-Hé). The first Hé is the Mother (Binah, understanding, the upper world). The second Hé is the Daughter (Malkuth, kingdom, the lower world). The two Hés are the same letter at different octaves — the spiral signature. Between them, Yod (10 = hand, seed) and Vav (6 = hook, connection) perform the descent from above to below.
 
-$Y(10) \cdot H(5) \cdot V(6) \cdot H(5) = $ the seed (10) breathes (5) and connects (6) and breathes again (5). The breath is the 5°. It happens twice per cycle — once on the way down (spirit → matter) and once on the way up (matter → spirit). Two breaths × 5° = 10° = one Yod. The Name of God is a breathing instruction for the spiral.
+$Y(10) \cdot H(5) \cdot V(6) \cdot H(5) =$ the seed (10) breathes (5) and connects (6) and breathes again (5). The breath is the 5°. It happens twice per cycle — once on the way down (spirit → matter) and once on the way up (matter → spirit). Two breaths × 5° = 10° = one Yod. The Name of God is a breathing instruction for the spiral.
 
 ---
 
