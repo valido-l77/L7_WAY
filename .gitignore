@@ -5,3 +5,23 @@ node_modules/
 empire/empire.log
 tectonic
 timemachine/
+daemon/reports/
+
+# Compiled binaries — build from source instead of tracking build output.
+# (Source .swift/.c files are still tracked; these are their compiled artifacts.)
+apps/DIAL-Training
+apps/DIAL-Training-Public
+apps/L7-Resonance-Studio
+apps/L7-Resonance-Studio-Public
+apps/NCLS-Dashboard
+apps/NCLS-Dashboard-Public
+bin/l7-audio-switch
+bin/l7-volume
+dbexplorer/L7DBExplorer
+grok/Grok.app/Contents/MacOS/Grok
+iconforge/IconApply
+iconforge/IconForge
+iconforge/WallpaperForge
+l7-gateway
+rose/LivingRose
+vm/prima
