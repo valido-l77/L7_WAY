@@ -52,8 +52,6 @@ class SilentHandler(http.server.SimpleHTTPRequestHandler):
                     content = f.read()
                 self.send_response(200)
                 self.send_header('Content-Type', 'text/plain; charset=utf-8')
-                self.send_header('X-L7-Privacy', 'sacred-ground')
-                self.send_header('Cache-Control', 'no-store')
                 self.end_headers()
                 self.wfile.write(content.encode('utf-8'))
             except FileNotFoundError:

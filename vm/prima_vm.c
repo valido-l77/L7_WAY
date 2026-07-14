@@ -1,24 +1,24 @@
 /*
  * ════════════════════════════════════════════════════════════════
  * PRIMA VM — The First Spark
-* ════════════════════════════════════════════════════════════════
-*
-* A minimal bytecode interpreter for the Prima language.
-* 22 operations. <12+1D> coordinate space. Sigils as programs.
-*
-* No libc beyond syscall wrappers. No malloc. No printf.
-* Only: read, write, open, close, mmap, munmap, exit.
-*
-* This is the Nigredo — the black stage. The substrate.
-* Once Prima can compile itself, this file is discarded.
-*
-* "You start from the top, each line a command."
-* "Each graph contains the previous ones."
-*
-* Author: Alberto Valido Delgado
-* License: L7 WAY Proprietary
-* ════════════════════════════════════════════════════════════════
-*/
+ * ════════════════════════════════════════════════════════════════
+ *
+ * A minimal bytecode interpreter for the Prima language.
+ * 22 operations. <12+1D> coordinate space. Sigils as programs.
+ *
+ * No libc beyond syscall wrappers. No malloc. No printf.
+ * Only: read, write, open, close, mmap, munmap, exit.
+ *
+ * This is the Nigredo — the black stage. The substrate.
+ * Once Prima can compile itself, this file is discarded.
+ *
+ * "You start from the top, each line a command."
+ * "Each graph contains the previous ones."
+ *
+ * Author: Alberto Valido Delgado
+ * License: L7 WAY Proprietary
+ * ════════════════════════════════════════════════════════════════
+ */
 
 #include <sys/types.h>
 #include <sys/mman.h>

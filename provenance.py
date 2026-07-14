@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 CREATOR = "Alberto Valido Delgado"
 SYSTEM = "L7 WAY"
 LICENSE = "Proprietary — Framework free, products licensed (Law XXII)"
-L7_DIR = os.path.expanduser("~/Backup/L7_WAY")
+L7_DIR = os.path.expanduser("~/L7_WAY")
 REGISTRY_PATH = os.path.join(L7_DIR, ".provenance", "registry.json")
 
 MARKER_START_HTML = "<!-- L7:PROVENANCE"

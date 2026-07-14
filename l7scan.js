@@ -137,7 +137,7 @@ function detectType(filePath) {
       if (head.startsWith('#!')) return 'application/script';
       if (head.startsWith('<?xml')) return 'text/xml';
       if (head.startsWith('<!DOCTYPE') || head.startsWith('<!doctype')) return 'text/html-doctype';
-      if (head.startsWith('<html') || head.startsWith('<HTML')) return 'text/html';
+      if (/^\n*<html/i.test(head)) return 'text/html';
       if (head.startsWith('---')) return 'text/yaml';
       if (head.startsWith('name:') || head.startsWith('version:')) return 'text/yaml';
       return 'text/plain';
