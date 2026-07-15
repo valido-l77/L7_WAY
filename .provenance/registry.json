@@ -166,11 +166,12 @@
     },
     {
       "file": "lib/gateway.js",
-      "body_hash": "ac44474cf16ebef39f57a1479d91a3af7087a34e0d3f1ca98bc03bd69e82fa73",
-      "chain_hash": "9d0621a244c96023a743d837c1f8767e7f1dc0958866fc7511ce74819e0edb64",
+      "body_hash": "16b03db7aaa92e889af7253df89248a35c80bbd5ae79a8d0a36156ac08801365",
+      "chain_hash": "c3f80ab1dde5ceea8ce432fdc923c452e7058038a1c91dfacf3eade293d14008",
       "created": "2026-03-01T15:09:50.018518+00:00",
-      "version": 1,
-      "creator": "Alberto Valido Delgado"
+      "version": 2,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-15T10:06:48.154495+00:00"
     },
     {
       "file": "lib/harmonics.js",
