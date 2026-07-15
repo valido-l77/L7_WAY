@@ -11,7 +11,7 @@
     "parse": "node lib/parser.js parse",
     "list": "node lib/parser.js list",
     "empire": "node empire/server.js",
-    "test": "node test/parser.test.js"
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.2",
