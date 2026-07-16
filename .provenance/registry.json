@@ -215,12 +215,12 @@
     },
     {
       "file": "lib/parser.js",
-      "body_hash": "495ac82588d62fc78fea8eff7267f0080753a6f3f2dc5fb55e22fd507b0cc39a",
-      "chain_hash": "038745f0d23534f88ed01fbe2eb6260900be3eaa74905a74d7bd5f5a336863fd",
+      "body_hash": "b719bd55997b600027584a8e8e2a52f1f596899f6a39f2a8ba3bbbd9d9017512",
+      "chain_hash": "7e59bf6b2186f2756264c4d6d6b982d0ec1e992e274892392fdff8eb68d75ff4",
       "created": "2026-03-01T15:09:50.021194+00:00",
-      "version": 2,
+      "version": 3,
       "creator": "Alberto Valido Delgado",
-      "updated": "2026-07-10T01:00:46.393423+00:00"
+      "updated": "2026-07-16T00:12:45.699022+00:00"
     },
     {
       "file": "lib/polarity.js",
