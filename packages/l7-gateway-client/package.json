@@ -1,0 +1,15 @@
+{
+  "name": "@l7-way/gateway-client",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    }
+  },
+  "types": "./index.d.ts",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

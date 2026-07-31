@@ -1,0 +1,699 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "L7 Capability Gateway",
+    "version": "1.0",
+    "description": "Public, governed L7 job API. AVLI worker endpoints remain private."
+  },
+  "paths": {
+    "/v1/capabilities": {
+      "get": {
+        "operationId": "listCapabilities",
+        "responses": {
+          "200": {
+            "description": "Capability discovery",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/jobs": {
+      "get": {
+        "operationId": "listJobs",
+        "responses": {
+          "200": {
+            "description": "Tenant-scoped jobs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobListEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "submitJob",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GatewayJobRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted job",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/jobs/{jobId}": {
+      "parameters": [
+        {
+          "name": "jobId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getJob",
+        "responses": {
+          "200": {
+            "description": "Job status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/jobs/{jobId}/cancel": {
+      "parameters": [
+        {
+          "name": "jobId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "cancelJob",
+        "responses": {
+          "200": {
+            "description": "Cancelled job",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/artifacts/{sha256}": {
+      "parameters": [
+        {
+          "name": "sha256",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "downloadArtifact",
+        "responses": {
+          "200": {
+            "description": "Content-addressed artifact"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Identifier": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+      },
+      "Sha256": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "Capability": {
+        "type": "object",
+        "required": [
+          "id",
+          "modality",
+          "operations",
+          "privacy_classes",
+          "available",
+          "models",
+          "limits"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9.-]{1,127}$"
+          },
+          "modality": {
+            "enum": [
+              "text",
+              "document",
+              "image",
+              "video",
+              "audio",
+              "music",
+              "automation"
+            ]
+          },
+          "operations": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          "privacy_classes": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "public",
+                "internal",
+                "restricted"
+              ]
+            }
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "models": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "limits": {
+            "type": "object",
+            "required": [
+              "max_concurrency",
+              "max_input_bytes",
+              "timeout_seconds"
+            ],
+            "properties": {
+              "max_concurrency": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "max_input_bytes": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "timeout_seconds": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "Capabilities": {
+        "type": "object",
+        "required": [
+          "contract_version",
+          "worker_id",
+          "worker_version",
+          "generated_at",
+          "capabilities"
+        ],
+        "properties": {
+          "contract_version": {
+            "const": "l7.worker.capabilities/1.0"
+          },
+          "worker_id": {
+            "$ref": "#/components/schemas/Identifier"
+          },
+          "worker_version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "capabilities": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Capability"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "Callback": {
+        "type": "object",
+        "required": [
+          "url",
+          "key_id"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://"
+          },
+          "key_id": {
+            "$ref": "#/components/schemas/Identifier"
+          }
+        },
+        "additionalProperties": false
+      },
+      "JobRequest": {
+        "type": "object",
+        "required": [
+          "contract_version",
+          "request_id",
+          "tenant_id",
+          "capability",
+          "input",
+          "privacy_class",
+          "deadline"
+        ],
+        "properties": {
+          "contract_version": {
+            "const": "l7.worker.job-request/1.0"
+          },
+          "request_id": {
+            "$ref": "#/components/schemas/Identifier"
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/Identifier"
+          },
+          "capability": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9.-]{1,127}$"
+          },
+          "input": {
+            "type": "object"
+          },
+          "privacy_class": {
+            "enum": [
+              "public",
+              "internal",
+              "restricted"
+            ]
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "callback": {
+            "$ref": "#/components/schemas/Callback"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Non-authoritative tracing metadata. Identity and policy are supplied by L7 headers."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Artifact": {
+        "type": "object",
+        "required": [
+          "sha256",
+          "bytes",
+          "media_type",
+          "producer",
+          "model",
+          "license_id",
+          "prompt_hash",
+          "created_at"
+        ],
+        "properties": {
+          "sha256": {
+            "$ref": "#/components/schemas/Sha256"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "media_type": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+$"
+          },
+          "producer": {
+            "$ref": "#/components/schemas/Identifier"
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "model_version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 256
+          },
+          "license_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "prompt_hash": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Sha256"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "delivery_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Short-lived delivery hint; never artifact identity."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Job": {
+        "type": "object",
+        "required": [
+          "contract_version",
+          "job_id",
+          "request_id",
+          "tenant_id",
+          "capability",
+          "state",
+          "created_at",
+          "updated_at",
+          "progress",
+          "artifacts",
+          "error"
+        ],
+        "properties": {
+          "contract_version": {
+            "const": "l7.worker.job/1.0"
+          },
+          "job_id": {
+            "$ref": "#/components/schemas/Identifier"
+          },
+          "request_id": {
+            "$ref": "#/components/schemas/Identifier"
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/Identifier"
+          },
+          "capability": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9.-]{1,127}$"
+          },
+          "state": {
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed",
+              "cancelling",
+              "cancelled"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "progress": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "result": {},
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Artifact"
+            }
+          },
+          "error": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "properties": {
+                  "code": {
+                    "enum": [
+                      "VALIDATION_ERROR",
+                      "AUTHENTICATION_REQUIRED",
+                      "AUTHORIZATION_DENIED",
+                      "POLICY_DENIED",
+                      "NOT_FOUND",
+                      "CONFLICT",
+                      "DEPENDENCY_FAILURE",
+                      "PROVIDER_FAILURE",
+                      "INTEGRITY_VIOLATION",
+                      "TIMEOUT",
+                      "CANCELLED",
+                      "INTERNAL_ERROR"
+                    ]
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "GatewayJobRequest": {
+        "type": "object",
+        "required": [
+          "contract_version",
+          "request_id",
+          "capability",
+          "input",
+          "privacy_class",
+          "deadline"
+        ],
+        "properties": {
+          "contract_version": {
+            "const": "l7.worker.job-request/1.0"
+          },
+          "request_id": {
+            "$ref": "#/components/schemas/Identifier"
+          },
+          "capability": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9.-]{1,127}$"
+          },
+          "input": {
+            "type": "object"
+          },
+          "privacy_class": {
+            "enum": [
+              "public",
+              "internal",
+              "restricted"
+            ]
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "callback": {
+            "$ref": "#/components/schemas/Callback"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Non-authoritative tracing metadata. Identity and policy are supplied by L7 headers."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "enum": [
+              "VALIDATION_ERROR",
+              "AUTHENTICATION_REQUIRED",
+              "AUTHORIZATION_DENIED",
+              "POLICY_DENIED",
+              "NOT_FOUND",
+              "CONFLICT",
+              "DEPENDENCY_FAILURE",
+              "PROVIDER_FAILURE",
+              "INTEGRITY_VIOLATION",
+              "TIMEOUT",
+              "CANCELLED",
+              "INTERNAL_ERROR"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResultMeta": {
+        "type": "object",
+        "required": [
+          "contract_version",
+          "timestamp"
+        ],
+        "properties": {
+          "contract_version": {
+            "const": "l7.result/1.0"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "job_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "CapabilitiesEnvelope": {
+        "type": "object",
+        "required": [
+          "success",
+          "result",
+          "error",
+          "meta"
+        ],
+        "properties": {
+          "success": {
+            "const": true
+          },
+          "result": {
+            "$ref": "#/components/schemas/Capabilities"
+          },
+          "error": {
+            "type": "null"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResultMeta"
+          }
+        }
+      },
+      "JobEnvelope": {
+        "type": "object",
+        "required": [
+          "success",
+          "result",
+          "error",
+          "meta"
+        ],
+        "properties": {
+          "success": {
+            "const": true
+          },
+          "result": {
+            "type": "object",
+            "required": [
+              "job"
+            ],
+            "properties": {
+              "job": {
+                "$ref": "#/components/schemas/Job"
+              }
+            }
+          },
+          "error": {
+            "type": "null"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResultMeta"
+          }
+        }
+      },
+      "JobListEnvelope": {
+        "type": "object",
+        "required": [
+          "success",
+          "result",
+          "error",
+          "meta"
+        ],
+        "properties": {
+          "success": {
+            "const": true
+          },
+          "result": {
+            "type": "object",
+            "required": [
+              "jobs"
+            ],
+            "properties": {
+              "jobs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "error": {
+            "type": "null"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResultMeta"
+          }
+        }
+      }
+    }
+  }
+}

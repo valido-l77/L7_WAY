@@ -70,10 +70,10 @@ duplicate work; approval-required work cannot bypass the L7 state machine.
 
 - [ ] Create a small Python worker SDK for auth, health, capabilities, job
   lifecycle, cancellation, timeouts, result envelopes, and telemetry.
-- [ ] Create an equivalent TypeScript client for L7 and assistant-ui.
-- [ ] Publish one JSON Schema/OpenAPI bundle generated from canonical types.
-- [ ] Build a conformance harness usable against any worker URL.
-- [ ] Test authentication failure, invalid input, timeout, cancellation,
+- [x] Create an equivalent TypeScript client for L7 and assistant-ui.
+- [x] Publish one JSON Schema/OpenAPI bundle generated from canonical types.
+- [x] Build a conformance harness usable against any worker URL.
+- [x] Test authentication failure, invalid input, timeout, cancellation,
   duplicate request, worker restart, artifact hash mismatch, and unavailable
   dependencies.
 - [ ] Require SBOM, pinned image digest, license record, and vulnerability scan

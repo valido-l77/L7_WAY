@@ -10,6 +10,8 @@
   "scripts": {
     "start": "node serve.js",
     "gateway": "node serve.js",
+    "contracts:build": "node scripts/build-worker-contract-bundle.js",
+    "client:test": "node --test packages/l7-gateway-client/test/*.test.js",
     "validate": "node lib/parser.js validate",
     "parse": "node lib/parser.js parse",
     "list": "node lib/parser.js list",
