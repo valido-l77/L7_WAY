@@ -113,6 +113,10 @@ test('studio route serves the morphic media workspace', async () => {
   assert.match(response.body, /SSD-1B readiness/);
   assert.match(response.body, /\/api\/media\/readiness\/ssd-1b/);
   assert.match(response.body, /No generation (?:is|was) started/);
+  assert.match(response.body, /L7 Prism Design System/);
+  assert.match(response.body, /--ds-canvas:/);
+  assert.match(response.body, /prefers-reduced-motion/);
+  assert.match(response.body, /Content addressed/);
 });
 
 test('SSD-1B readiness endpoint is non-generative and reports the full preflight contract', async () => {

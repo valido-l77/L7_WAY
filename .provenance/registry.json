@@ -319,12 +319,12 @@
     },
     {
       "file": "src/avli-cloud-studio.html",
-      "body_hash": "5f6295fd9fe4b826905525b3a70b21be7116dfe5c7af4a25f643fd250adff64b",
-      "chain_hash": "cb12a323ba92e5b09fdfc5f4b14b07d98dd6d2bcb45d94aebd4844754d85a133",
+      "body_hash": "31910f59a58cf74b955d37e9afab9e6378cb50f9cb4933d75b11f523ddf9b449",
+      "chain_hash": "cadc58aa4fc589d86f249c8a7331b9d7b735c9d08b5ef671b7481f1e102304bc",
       "created": "2026-07-17T06:05:48.944317+00:00",
-      "version": 9,
+      "version": 10,
       "creator": "Alberto Valido Delgado",
-      "updated": "2026-07-24T04:46:06.941505+00:00"
+      "updated": "2026-07-31T13:56:06.018188+00:00"
     },
     {
       "file": "lib/morph-cycle.js",
