@@ -4,11 +4,12 @@
   "chain": [
     {
       "file": "LIBRARY.html",
-      "body_hash": "8f701431341b2f297b20da00f4c0bf5f766dd7b9c466634fb5e4a6e65d1a6f63",
-      "chain_hash": "f66eab329df00b161fb664a7f3d079806bee91b5a4051400191b6e91c8fcb290",
+      "body_hash": "15b30f2d9e1bf4f062d9d95793eb736687852ade5115dd89b1b4548324810e62",
+      "chain_hash": "8de0fcfad962d76c26911badb13f7ffb3af4d283240ea3907a901d5c82fc1124",
       "created": "2026-03-01T15:09:50.004020+00:00",
-      "version": 1,
-      "creator": "Alberto Valido Delgado"
+      "version": 2,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-29T04:08:33.795993+00:00"
     },
     {
       "file": "l7index.js",
@@ -37,11 +38,12 @@
     },
     {
       "file": "serve.js",
-      "body_hash": "ae5a29c4e93b2520e1fecd54b33c1fdaa45a67f5a1626c8edbfdc4b503e1438a",
-      "chain_hash": "a782b44e1ffd235b3bb293f6cc4426914a78ec5dd1b668f8c93b5a44b3200035",
+      "body_hash": "4d030437900d7eb88be446987c5c8272e22c39ac95daaab92314abbd252a237f",
+      "chain_hash": "7498b25a237cd92385966be3f7b989b85b5ee4b5ccb7f6999b5bbf2b5c2b5f5c",
       "created": "2026-03-01T15:09:50.006072+00:00",
-      "version": 1,
-      "creator": "Alberto Valido Delgado"
+      "version": 7,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-31T13:26:40.410219+00:00"
     },
     {
       "file": "publications/APPENDIX_LVIII_BOOK_OF_LIFE.html",
@@ -133,19 +135,21 @@
     },
     {
       "file": "lib/domains.js",
-      "body_hash": "44c9ffc9fd9af403500b17d8f8cc615290e980d922f29542fd9129726420b326",
-      "chain_hash": "a78662b48674c31c35b9053de386cb4cd22e1fcd2f4fbfac57bf5d17c59558ca",
+      "body_hash": "7891efab4e7acebb6f63fdad4a8cef27019076610e7bbd32f0f5bcb3e726da61",
+      "chain_hash": "5af1c1611a83ca194c2382cc72cef336aef5e8a850611bee43eac3fdc8948b85",
       "created": "2026-03-01T15:09:50.016438+00:00",
-      "version": 1,
-      "creator": "Alberto Valido Delgado"
+      "version": 4,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-24T04:13:53.197267+00:00"
     },
     {
       "file": "lib/executor.js",
-      "body_hash": "d58005869fae7569eb6a2e48fc67dc7d913db312d7d8d3401c2b75842cfe1050",
-      "chain_hash": "0c971ad29e2f8753181916e01860ee03031101f35dc67dc1916dde5e8fb0f3a5",
+      "body_hash": "4d05c12e9b2d753397834afd7f4f14e88ef34a1946bad3b8108bbfd972388143",
+      "chain_hash": "49f69c19ab362efb35340f8a16287655ce422dfd84945a02684ae91cf083f32b",
       "created": "2026-03-01T15:09:50.016901+00:00",
-      "version": 1,
-      "creator": "Alberto Valido Delgado"
+      "version": 2,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-20T00:35:48.894570+00:00"
     },
     {
       "file": "lib/field.js",
@@ -166,12 +170,12 @@
     },
     {
       "file": "lib/gateway.js",
-      "body_hash": "16b03db7aaa92e889af7253df89248a35c80bbd5ae79a8d0a36156ac08801365",
-      "chain_hash": "c3f80ab1dde5ceea8ce432fdc923c452e7058038a1c91dfacf3eade293d14008",
+      "body_hash": "77ceb37dc1bdd7fbbcd2077c5ff3a99be25b65105af5038501f156d2b07d3dfc",
+      "chain_hash": "d2c7c27e4347510ee062df8127b7142691cee706d9f2c33c4396c20801b6d141",
       "created": "2026-03-01T15:09:50.018518+00:00",
-      "version": 2,
+      "version": 3,
       "creator": "Alberto Valido Delgado",
-      "updated": "2026-07-15T10:06:48.154495+00:00"
+      "updated": "2026-07-29T07:52:25.523992+00:00"
     },
     {
       "file": "lib/harmonics.js",
@@ -215,12 +219,12 @@
     },
     {
       "file": "lib/parser.js",
-      "body_hash": "92996b32a9843197196c9a1c79d46f60afd02473e382d0bd8068c6a31cbe0964",
-      "chain_hash": "5e83fa12c866e492645b1aa753452605d7e586565f95c910251a8c365893af20",
+      "body_hash": "e02d886c46e1ad56c93abac2510da6c3d23a2928f84a9694e55c92e83871683b",
+      "chain_hash": "62ecafd1bee6f2de7cb20bc08836a3d924aed636641e781014889c14d4db972d",
       "created": "2026-03-01T15:09:50.021194+00:00",
-      "version": 4,
+      "version": 5,
       "creator": "Alberto Valido Delgado",
-      "updated": "2026-07-16T00:45:50.291563+00:00"
+      "updated": "2026-07-20T00:35:49.086506+00:00"
     },
     {
       "file": "lib/polarity.js",
@@ -272,11 +276,12 @@
     },
     {
       "file": "empire/server.js",
-      "body_hash": "6c989d61b7e38e14d854401062b705bfe7eacbba47ea2defd3bedddd63b8eb29",
-      "chain_hash": "3cce44c28084fe233daa4954b27951d70e9dd26e5cbf0088d4cd81b48353811e",
+      "body_hash": "ec33aa905f82aefe3005f6d2e013183ae50a5bd92bff3b9dd0e58da61b49f0fb",
+      "chain_hash": "587b0af569ce410d25421ab9129c7391fe71c97b9ad0c98d28c64464d22c24dd",
       "created": "2026-03-01T15:09:56.451346+00:00",
-      "version": 1,
-      "creator": "Alberto Valido Delgado"
+      "version": 2,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-20T00:35:49.529932+00:00"
     },
     {
       "file": "empire/public/app.js",
@@ -305,11 +310,250 @@
     },
     {
       "file": "src/studio.html",
-      "body_hash": "4431e65e2f1917f2e0d8d9038da715a4a998230eec77c47f877315cb276c2a50",
-      "chain_hash": "42430120c0cccdc133fc8aadeec0564c79c0b5b6262e69cc168c3064d7802c06",
+      "body_hash": "9b9195b193072b443d91d7e15a50adec8be51e8389c47522a2b33b1542b01622",
+      "chain_hash": "f1b0da8e44bc27347b3ab1f339e32d65cc07d00464f90aac9d8ce93d430992b4",
       "created": "2026-03-01T15:09:56.454698+00:00",
+      "version": 4,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-17T06:24:13.745719+00:00"
+    },
+    {
+      "file": "src/avli-cloud-studio.html",
+      "body_hash": "5f6295fd9fe4b826905525b3a70b21be7116dfe5c7af4a25f643fd250adff64b",
+      "chain_hash": "cb12a323ba92e5b09fdfc5f4b14b07d98dd6d2bcb45d94aebd4844754d85a133",
+      "created": "2026-07-17T06:05:48.944317+00:00",
+      "version": 9,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-24T04:46:06.941505+00:00"
+    },
+    {
+      "file": "lib/morph-cycle.js",
+      "body_hash": "e93304f9c0e9f07d8fe51c7c15d794544c48f712877b0a6da787cb499faa09b0",
+      "chain_hash": "12d50571dd305fa9197ab826583c8dbfce4261b1dabe94760bc653a2af4f6cd8",
+      "created": "2026-07-18T06:20:39.637474+00:00",
+      "version": 3,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-28T15:35:02.364052+00:00"
+    },
+    {
+      "file": "serve-gateway.js",
+      "body_hash": "02a9af070b8c646ecdb9066434cb2be886081e4b47dc29ebc537f9240f00d21f",
+      "chain_hash": "8a4fc92081e5a258d1df8c77569db044cc1d90b05375ed2f9c10eb2eeea797c7",
+      "created": "2026-07-18T06:20:39.708829+00:00",
+      "version": 2,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-18T06:20:45.997137+00:00"
+    },
+    {
+      "file": "lib/http-security.js",
+      "body_hash": "293fe0e0d1c04f0e2081ad356bafd0512d51ffee6b8364567dc1502e87dd35f0",
+      "chain_hash": "14d4d4f8c3c4185ad6177065ceb088dfe4bbdf68d4192ec3870aedbed7241486",
+      "created": "2026-07-20T00:35:47.291586+00:00",
+      "version": 3,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-31T13:26:40.295573+00:00"
+    },
+    {
+      "file": "lib/media-storage.js",
+      "body_hash": "bdc63035c5db86bd595d3f1b01d27b71f7f17af308a32f5b626876d606bb48e1",
+      "chain_hash": "b5ff97b7d66754cff4c25b4e47c8257e01990a4cc6cf5bbaca971e3f5c4e2bd9",
+      "created": "2026-07-20T00:35:47.519979+00:00",
+      "version": 3,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-31T13:26:40.376312+00:00"
+    },
+    {
+      "file": "lib/media-runner.js",
+      "body_hash": "ff258a190c381159c80e10a31df469d4cb3e429e03b720b67aa9fc921c945334",
+      "chain_hash": "259333fa6f8f5bc2df48aafb15fd3d62bc816e614b9d163a551e4aed10dbf4b8",
+      "created": "2026-07-20T00:35:47.684281+00:00",
+      "version": 5,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-28T15:35:02.329878+00:00"
+    },
+    {
+      "file": "lib/morphic-field-renderer.js",
+      "body_hash": "22a4c76cc700947b282ce9fabfdd14e1d8a4de3f63113c9d4d88a4459e920d80",
+      "chain_hash": "586efac1aaf9305095552900f20d022d78fbf74b23cb557650b2c4c02dd4b663",
+      "created": "2026-07-20T00:35:47.869637+00:00",
+      "version": 3,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-24T04:48:16.259550+00:00"
+    },
+    {
+      "file": "lib/morphic-media.js",
+      "body_hash": "414630a8714197463ce591dc9a646dce1ec58edea63ee42e2dfc1c15626b03ea",
+      "chain_hash": "99e0d488dda04bbea343217885a3c526aee495da622164b18a9f500e7796f816",
+      "created": "2026-07-20T00:35:48.038404+00:00",
+      "version": 2,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-24T04:03:00.022380+00:00"
+    },
+    {
+      "file": "vps/avli-media-store.js",
+      "body_hash": "ae6213b15bf878843433b7417678b32e0f9a9c8036e1bfb3eaf192f04ecaadb2",
+      "chain_hash": "179af1d086e277acb93a3e00e01aa4bd13649643967032f2334eee6357b2884a",
+      "created": "2026-07-20T00:35:48.198436+00:00",
       "version": 1,
       "creator": "Alberto Valido Delgado"
+    },
+    {
+      "file": "bin/l7-morph-media.js",
+      "body_hash": "2083556c879efe4ee388831f6b1be25ecfe264ecb0aa998eef2834a4fb75ca68",
+      "chain_hash": "8075790245d9a402616d4c7fbfe40f9bb1a667023f827e7c6637fbe4cce352a6",
+      "created": "2026-07-20T00:35:48.366906+00:00",
+      "version": 1,
+      "creator": "Alberto Valido Delgado"
+    },
+    {
+      "file": "src/avli-cloud-studio.html",
+      "body_hash": "158a2465ac3b330929dc34a175b3ffc37f84c8de6237b568b2797a542173edbd",
+      "chain_hash": "1f04fafad111ddd97888ac5d740eb34e81fea7654bf05a5b5546161f333ae51e",
+      "created": "2026-07-24T04:06:00.264378+00:00",
+      "version": 1,
+      "creator": "Alberto Valido Delgado"
+    },
+    {
+      "file": "lib/media-lifecycle.js",
+      "body_hash": "e6125b00cdcb6d29a440433ab39785f6ce0f726bc1558a487cb71d06ea55ac1b",
+      "chain_hash": "ab497e7ae77ab91fc17623f79473c851a3b8a6d8f83fddea7f1093ab790f11d9",
+      "created": "2026-07-24T04:13:53.225043+00:00",
+      "version": 2,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-24T04:13:58.939896+00:00"
+    },
+    {
+      "file": "lib/ssd-image-adapter.js",
+      "body_hash": "74a64316fd11f20ad50a642593a09e6edc63813bfa415a7e407d7df7780f8a68",
+      "chain_hash": "01b27167d7a75c7ea988c54be77847ac4afdc2aafdacdfa44a21ebba77478e31",
+      "created": "2026-07-24T05:00:23.910800+00:00",
+      "version": 4,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-28T15:35:02.431166+00:00"
+    },
+    {
+      "file": "scripts/ssd_image_worker.py",
+      "body_hash": "b0071711f7b1224c2370e423712585dbeaa0ebb3cc59160fb3fb397e73d68b5e",
+      "chain_hash": "cc0e19b72f31db8b03083c04ddd5db3539114b8e8bc36d7f5620287ab4f01d7f",
+      "created": "2026-07-24T05:00:23.936902+00:00",
+      "version": 2,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-24T05:01:09.852202+00:00"
+    },
+    {
+      "file": "scripts/install_ssd1b_model.sh",
+      "body_hash": "f3ba29bdedc0f01b31ae6a5dba393d70a8d4df13132964c5cd9c0d5de016e1c0",
+      "chain_hash": "b9cb647b459142460ec42b6d63f3894a61235fbf8734137c49c520b2d2a69b35",
+      "created": "2026-07-24T05:00:23.964184+00:00",
+      "version": 3,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-24T05:01:53.390152+00:00"
+    },
+    {
+      "file": "provenance.py",
+      "body_hash": "d17647577bec315cbeb59f7a02442a3ad0c9f48e48b8004d549da40fa6ee3bc1",
+      "chain_hash": "87f1c0ea237a1fd4e9f78c4f1e03547e42fa2eadcf14bbd6049562cab6ff523b",
+      "created": "2026-07-24T05:01:09.793992+00:00",
+      "version": 1,
+      "creator": "Alberto Valido Delgado"
+    },
+    {
+      "file": "lib/avli-cloud-video-adapter.js",
+      "body_hash": "6c7a78e4527cf2bdb3ad21a405addab93ce8ff7ed23746b122a0ba43ae6be788",
+      "chain_hash": "905d02d97a73013e9fb4cd8d77a8075f3a5702e06cc6ecbe8644ba9d79318905",
+      "created": "2026-07-28T15:51:22.619924+00:00",
+      "version": 1,
+      "creator": "Alberto Valido Delgado"
+    },
+    {
+      "file": "lib/avli-cluster-video-adapter.js",
+      "body_hash": "3ff3b96c8fea7bd8f689aa16a2ba0ebf0cc1f713793af82b246416055d86af7f",
+      "chain_hash": "52538b745577bd5e29617bd29b62b45dcf037e1253a96b978314170c1ecd2dd9",
+      "created": "2026-07-28T15:51:22.659547+00:00",
+      "version": 1,
+      "creator": "Alberto Valido Delgado"
+    },
+    {
+      "file": "lib/contracts.js",
+      "body_hash": "8d9259192554c8b1a6d54d91cb89b2e62d77a6a39b2cab98b31cd6fdb02cf591",
+      "chain_hash": "a027438ee9dc5c6ae95fdd8526a76909bd9c2305a8848732905d52ad519b4f2b",
+      "created": "2026-07-28T15:51:22.693564+00:00",
+      "version": 1,
+      "creator": "Alberto Valido Delgado"
+    },
+    {
+      "file": "lib/cortex.js",
+      "body_hash": "fed0c7256537e0a6a8923fe9f190bde6b00d456aae2ae3c0fea562fd9e5d968f",
+      "chain_hash": "7aa786d804caf929c00e443f9324ca86e856681285d9bffd39c11afb83ec71a2",
+      "created": "2026-07-28T15:51:22.728245+00:00",
+      "version": 1,
+      "creator": "Alberto Valido Delgado"
+    },
+    {
+      "file": "lib/flux-video-adapter.js",
+      "body_hash": "cecbd906e61f49c9dfc302271f32fee169708636e9b37ec9324d6fe5f79b8b85",
+      "chain_hash": "f1dc4ed8408f6da2daa144e4e777e887abfcc87caf410db545868dbbe0e70f50",
+      "created": "2026-07-28T15:51:22.762397+00:00",
+      "version": 1,
+      "creator": "Alberto Valido Delgado"
+    },
+    {
+      "file": "lib/http-body.js",
+      "body_hash": "1d5b30550f56e33428474900b961cbbd34f3d3517866ad5cbaf1de57b474143e",
+      "chain_hash": "06e17fe34b153a39e2d328b91c59fa6609e07974a708f2086074794dd1591e0c",
+      "created": "2026-07-28T15:51:22.796846+00:00",
+      "version": 2,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-29T07:52:25.558105+00:00"
+    },
+    {
+      "file": "lib/imago.js",
+      "body_hash": "d5f0a772471835984d693609d73caf7d4ccf9f0fd87c0cc6ea3cfea3b7e94166",
+      "chain_hash": "65b3aca573dccf728e5e1a546ada30987d0243a88d64782560e54155be25c617",
+      "created": "2026-07-28T15:51:22.830799+00:00",
+      "version": 1,
+      "creator": "Alberto Valido Delgado"
+    },
+    {
+      "file": "lib/media-adapter-registry.js",
+      "body_hash": "7b9269a6aabc0ffad03f7675d2b6dc2894938852f1fbc4db8bf4a67b2375d137",
+      "chain_hash": "9097eedab5889f31b197beaaf468287558278ecb137246489b8d8f0bd3ec385f",
+      "created": "2026-07-28T15:51:22.864379+00:00",
+      "version": 1,
+      "creator": "Alberto Valido Delgado"
+    },
+    {
+      "file": "lib/media-run-coordinator.js",
+      "body_hash": "eafe264b9e24d807e807ef056d3d37a1ff995071ae7a73249441e00964d0955a",
+      "chain_hash": "0fadd8de741a510ae249b2da765021deeb82a785ebef1fd2b92428ec6a6d7a7c",
+      "created": "2026-07-28T15:51:22.898285+00:00",
+      "version": 1,
+      "creator": "Alberto Valido Delgado"
+    },
+    {
+      "file": "lib/safe-path.js",
+      "body_hash": "e0bba491a4ade7a3e5ac14d7f02a5670b41b91e1f93237e4a4cbd80b888badcc",
+      "chain_hash": "4e11e032fd417daaba27634a275fc35f24041c86ac160654cc8875f3c3cd6cc7",
+      "created": "2026-07-28T15:51:22.936600+00:00",
+      "version": 1,
+      "creator": "Alberto Valido Delgado"
+    },
+    {
+      "file": "lib/tool-registry.js",
+      "body_hash": "381fbc60f92da23d1a886231b368f40817fcfdce5da165a1843da5382af3660e",
+      "chain_hash": "7c6dea1d3efb676a284e4b8873f0f659f7dceaf5e6ea7a75ae0c00d159328659",
+      "created": "2026-07-28T15:51:22.970962+00:00",
+      "version": 1,
+      "creator": "Alberto Valido Delgado"
+    },
+    {
+      "file": "lib/job-coordinator.js",
+      "body_hash": "6e2ee5d5cc6e0c3918e58a5c281aab80da96f43705bdd9555131fd4c8ea0bd7f",
+      "chain_hash": "6d05f9a6be5e6bb498d3476319e245b6d20153b5bb8f48d794a0d0dda762d58b",
+      "created": "2026-07-29T07:52:25.487661+00:00",
+      "version": 4,
+      "creator": "Alberto Valido Delgado",
+      "updated": "2026-07-31T13:28:28.631607+00:00"
     }
   ],
   "created": "2026-03-01T15:09:50.003560+00:00"

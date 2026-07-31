@@ -27,3 +27,13 @@ rose/LivingRose
 vm/prima
 
 .playwright-mcp/
+
+# Machine-local doctrine/session state. These may contain sealed or classified
+# material and must never enter source control.
+.cloud9
+.codex/
+.salt/
+.starseed
+
+# Generated media run output — regenerate via the adapters, don't track binaries.
+artifacts/

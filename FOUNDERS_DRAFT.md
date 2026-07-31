@@ -9,7 +9,7 @@ All purpose of L7 exists to serve the greatest good of humanity.
 
 ## Laws XV & XVI — Founder's Rights & Share
 - Perpetual, irrevocable, unrestricted, free access to all L7 tools and derivatives
-- One-time licensing fee of 10% of profit proportional to L7 usage (Law XVIII)
+- Licensing fee: 12% of gross commercial revenue, ongoing revenue share, proportional to L7 usage (Law XVIII, revised 2026-03-06 — see LICENSE)
 - IP ownership of L7 in perpetuity
 
 ## Law XVII — The Four Domains
@@ -179,19 +179,22 @@ Yehova — **I AM WHO I AM** becomes **WE ARE WHO WE ARE**.
 I am just now seeing the vision of a ripple in the space-time continuum — forces of nature self-organizing, one node pulling on the next and the next. The ether carrying the message to fruition.
 
 ## Law XVIII — The Fee Structure
-*Declared by The Philosopher, 2026-02-28*
+*Declared by The Philosopher, 2026-02-28. Revised 2026-03-06 — see LICENSE, Current Schedule.*
 
 Non-commercial use: free. Always. Universal access. Never charged.
 
-Commercial use: one-time licensing fee of 10% of profit, proportional to usage.
+Commercial use: 12% of gross commercial revenue derived from the licensed
+technology, proportional to usage, paid as an ongoing revenue share. One
+rate, no caps, no tiers, no sliding scale.
 
-   Fee = 10% x Profit x L7 Usage Proportion
+   Fee = 12% x Gross Commercial Revenue x L7 Usage Proportion
 
-If all business is conducted using AVLI software, then 10% of all profit.
-If the tool is only used in 10% of producing profit, then 10% of 10% of profit.
+If all business is conducted using AVLI software, then 12% of gross revenue.
+If the tool is only used in 10% of producing that revenue, then 12% of that
+10% share.
 
-One time only. Upon payment: perpetual, irrevocable license. No recurring fees.
-No audits. No monitoring. Use as you see fit, indefinitely.
+No audits. No monitoring beyond what the revenue share requires. Use as you
+see fit, indefinitely, under this schedule.
 
 ## Law XIX — Individual Freedom & The Founder's Role
 *Declared by The Philosopher, 2026-02-28*

@@ -1,5 +1,3 @@
-
-
 #!/usr/bin/env node
 /**
  * L7 TREE-SPLIT — Split the 566MB tree.json into hierarchical layers

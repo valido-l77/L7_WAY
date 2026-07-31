@@ -79,6 +79,13 @@ test('loadTool returns null for a missing tool and parses an existing one', () =
   assert.equal(tool.does, 'send');
 });
 
+test('loadFlow and loadTool reject traversal outside their boundaries', () => {
+  fs.writeFileSync(path.join(FIXTURE_DIR, 'secret.flow'), yaml.dump({ name: 'secret', steps: [] }));
+  fs.writeFileSync(path.join(FIXTURE_DIR, 'secret.tool'), yaml.dump({ name: 'secret', does: 'x' }));
+  assert.throws(() => executor.loadFlow('../secret'), /Flow name must not contain path separators/);
+  assert.throws(() => executor.loadTool('../secret'), /Tool name must not contain path separators/);
+});
+
 // --- Single do step ---------------------------------------------------------
 test('executeFlow runs a single do step through the gateway and stores its result', async () => {
   fakeGateway.reset();
@@ -100,6 +107,30 @@ test('executeFlow interpolates $vars and {{ }} from inputs into step params', as
   await executor.executeFlow('interp', { name: 'Sofia', county: 'Wake' });
 
   assert.equal(fakeGateway.calls[0].params.text, 'Hi Sofia from Wake');
+});
+
+test('executeFlow preserves non-string and nested parameter values', async () => {
+  fakeGateway.reset();
+  writeFlow('typedparams', {
+    steps: [{
+      do: 'record',
+      with: {
+        count: 3,
+        enabled: true,
+        payload: { owner: '$name', flags: ['alpha', '$flag'] },
+        list: [1, '$count'],
+      },
+    }],
+  });
+
+  await executor.executeFlow('typedparams', { name: 'Sofia', flag: 'beta', count: 2 });
+
+  assert.deepEqual(fakeGateway.calls[0].params, {
+    count: 3,
+    enabled: true,
+    payload: { owner: 'Sofia', flags: ['alpha', 'beta'] },
+    list: [1, 2],
+  });
 });
 
 test('executeFlow honors a do step `if` condition (skip when false, run when true)', async () => {
@@ -174,6 +205,58 @@ test('executeFlow skips an each step whose source is not an array', async () => 
 
   assert.equal(fakeGateway.calls.length, 0);
   assert.equal(st.status, 'completed');
+});
+
+test('executeFlow retries thrown tool failures before succeeding', async () => {
+  let attempts = 0;
+  fakeGateway.reset(async (_toolName, params) => {
+    attempts++;
+    if (attempts === 1) throw new Error('temporary failure');
+    return { ok: true, attempts, data: params };
+  });
+  writeFlow('retrying', { steps: [{ do: 'flaky', retry: 1, with: { x: 1 }, as: 'done' }] });
+
+  const st = await executor.executeFlow('retrying');
+
+  assert.equal(st.status, 'completed');
+  assert.equal(fakeGateway.calls.length, 2);
+  assert.equal(st.results.done.attempts, 2);
+});
+
+test('executeFlow fails after retry attempts are exhausted', async () => {
+  fakeGateway.reset(async () => {
+    throw new Error('still broken');
+  });
+  writeFlow('retryfail', { steps: [{ do: 'flaky', on_fail: 'retry', retry: 1 }] });
+
+  const st = await executor.executeFlow('retryfail');
+
+  assert.equal(st.status, 'failed');
+  assert.equal(fakeGateway.calls.length, 2);
+  assert.match(st.errors[0].error, /still broken/);
+});
+
+test('each loops honor the default halt policy after an item fails', async () => {
+  fakeGateway.reset(async () => { throw new Error('item failed'); });
+  writeFlow('loopfail', { steps: [{ do: 'flaky', each: 'items', with: { value: '$item' } }] });
+
+  const st = await executor.executeFlow('loopfail', { items: [1, 2] });
+
+  assert.equal(st.status, 'failed');
+  assert.equal(fakeGateway.calls.length, 1);
+  assert.match(st.errors[0].error, /item failed/);
+});
+
+test('executeFlow supports throttled each steps', async () => {
+  fakeGateway.reset();
+  writeFlow('throttled', {
+    steps: [{ do: 'email', each: 'people', throttle: '1000/second', with: { to: '$item' } }],
+  });
+
+  const st = await executor.executeFlow('throttled', { people: ['a@x', 'b@x'] });
+
+  assert.equal(st.status, 'completed');
+  assert.equal(fakeGateway.calls.length, 2);
 });
 
 // --- wait / checkpoint / approve / reject / resume --------------------------

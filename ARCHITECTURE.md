@@ -5,9 +5,33 @@ Create a single common language that lets any tool, workflow, UI, or project plu
 
 ## System Model
 - **Registry**: Canonical index of tool names, schemas, versions, and metadata.
-- **Gateway**: Universal access layer (`/tools`, `/execute`) that routes to MCP servers.
+- **Gateway**: Universal access layer (`/v1/tools`, versioned execution resources)
+  that routes to MCP servers.
 - **Tools**: Capabilities exposed via MCP servers; discoverable, versioned, swappable.
 - **Clients**: Adapter layer + UI (UI is a renderable tool consuming structured data).
+
+## Canonical Implementation Model
+
+L7 evolves as a **modular monolith with ports and adapters**. One Gateway owns
+command validation and lifecycle transitions; MCP servers, media providers,
+storage backends, and native host controls plug in behind capability ports.
+
+- `serve.js` is the canonical HTTP composition root. `serve-gateway.js` is a
+  compatibility launcher only and must not contain a second server.
+- The 7D declaration below is the stable external interoperability contract.
+- The 12D dodecahedron is a versioned internal projection derived from entity
+  declarations, provenance, policy, and observations. It is used for routing,
+  similarity, and field behavior; it is not the source of identity or authority.
+- `.morph`, `.work`, `.salt`, and `.vault` are governed lifecycle boundaries.
+  Their transitions belong to the domain layer rather than HTTP handlers or
+  provider adapters.
+- Prima operations are the command vocabulary used to invoke those domain
+  capabilities.
+
+The system may extract workers when measured isolation or scaling needs demand
+it, but splitting deployment units must not split ownership of a lifecycle
+invariant. In particular, one durable Morph cycle owns ABOVE → MIRROR → BELOW
+→ SALT and requires explicit approval before returning to ABOVE.
 
 ## 7D Common Lingua (System Dimensions)
 Every entity must declare itself using the same seven L7 types:
@@ -24,8 +48,8 @@ Every project, tool, or client must declare itself through the gateway using the
 
 ## Registry Rule
 Every entity must register with:
-- `entity_id`, `entity_type`, `birth_date`, `owner`, `status`, `lineage`, and `l7_declaration`.
-- See `ENTITY_REGISTRY.md` and `REGISTRY_SCHEMA.json`.
+- `entity_id`, `entity_type`, `birth_date`, `owner`, `lifecycle`, `lineage`, and `l7_declaration`.
+- See `ENTITY_REGISTRY.md` and `schema/v1/entity.schema.json`.
 
 ## Type Boundary
 Entity type is absolute and sits outside the L7 declaration. L7 describes the entity; type defines what it is.
@@ -46,11 +70,16 @@ Marching orders are non-composable mission logic and constraints for a legion. T
 1. **Gateway-only access** for tools (no direct MCP server calls from clients).
 2. **Adapters only** in clients; UI never references tool names or endpoints.
 3. **Schema validation** before execution.
-4. **Normalized results**: `{ data, error, meta }`.
+4. **Normalized results**: `{ success, result, error, meta }` using
+   `l7.result/1.0`; `ok` is a temporary compatibility alias.
 5. **Config-only credentials**.
 
 ## Common Language
-- All tool calls use gateway contract: `GET /tools`, `POST /execute`.
+- Tool discovery uses `GET /v1/tools`.
+- Tool execution uses `POST /v1/tools/:name/executions`.
+- Flow discovery uses `GET /v1/flows`; flow execution uses
+  `POST /v1/flows/:name/executions`.
+- Historical `/api/*` routes remain compatibility aliases during migration.
 - Tools are addressed by stable names and versions.
 - Responses are normalized and human-safe for UI.
 

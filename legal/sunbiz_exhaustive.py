@@ -57,8 +57,6 @@ def search():
             'Valido Delgado',
             'Avalia Cloud',
             'Avalia',
-            'Vargas Lujan',
-            'Vargas-Lujan',
         ]
 
         for name in names:

@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://avli.cloud/l7/schema/v1/common-lingua.schema.json",
+  "title": "L7 Public Common Lingua v1",
+  "description": "Stable external seven-dimensional declaration. The internal 12D projection is derived and versioned separately.",
+  "type": "object",
+  "required": [
+    "capability",
+    "data",
+    "policyIntent",
+    "presentation",
+    "orchestration",
+    "timeVersioning",
+    "identitySecurity"
+  ],
+  "properties": {
+    "capability": {
+      "type": "string",
+      "enum": ["communicate", "data", "analyze", "automate", "render", "search"]
+    },
+    "data": {
+      "type": "object",
+      "required": ["pii", "source", "shape", "freshness"],
+      "properties": {
+        "pii": { "enum": ["pii", "non_pii"] },
+        "source": { "enum": ["internal", "external", "mixed"] },
+        "shape": { "enum": ["record", "list", "summary", "file"] },
+        "freshness": { "enum": ["live", "cached", "snapshot"] }
+      },
+      "additionalProperties": false
+    },
+    "policyIntent": {
+      "type": "object",
+      "required": ["mode", "risk", "requireApproval", "compliance"],
+      "properties": {
+        "mode": { "enum": ["test", "live"] },
+        "risk": { "enum": ["low", "medium", "high"] },
+        "requireApproval": { "type": "boolean" },
+        "compliance": { "enum": ["standard", "restricted"] }
+      },
+      "additionalProperties": false
+    },
+    "presentation": {
+      "type": "object",
+      "required": ["ui", "output", "density"],
+      "properties": {
+        "ui": { "enum": ["card", "table", "chart", "form", "editor", "modal"] },
+        "output": { "enum": ["html", "markdown", "json", "file"] },
+        "density": { "enum": ["compact", "standard", "detailed"] }
+      },
+      "additionalProperties": false
+    },
+    "orchestration": {
+      "type": "object",
+      "required": ["flow", "trigger", "retry"],
+      "properties": {
+        "flow": { "enum": ["single", "sequence", "parallel"] },
+        "trigger": { "enum": ["manual", "scheduled", "event"] },
+        "retry": { "enum": ["none", "backoff", "manual"] }
+      },
+      "additionalProperties": false
+    },
+    "timeVersioning": {
+      "type": "object",
+      "required": ["toolVersion", "schemaVersion", "lifecycle"],
+      "properties": {
+        "toolVersion": { "type": "string", "pattern": "^v[0-9]+$" },
+        "schemaVersion": { "const": "v1" },
+        "lifecycle": {
+          "enum": ["summoned", "oath", "formed", "serving", "mature", "sunset", "archived"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "identitySecurity": {
+      "type": "object",
+      "required": ["role", "auth", "audit"],
+      "properties": {
+        "role": { "enum": ["admin", "analyst", "operator", "viewer"] },
+        "auth": { "enum": ["token", "mTLS", "session", "hardware"] },
+        "audit": { "enum": ["on", "off"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

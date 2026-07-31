@@ -29,7 +29,7 @@ This paper presents an original cognitive architecture. The seven-stage transfor
 The synthesis — mapping functionally heterogeneous stages onto graph-based representations with emergent properties — is entirely original. The seven stages draw philosophical inspiration from classical transformation models but the computational formalization is novel.
 
 ## Related Software
-- **LTA-7 Framework:** Python implementation (`lta7-framework/`), published under academic alias "Alberto Vargas-Lujan" — same person (see IDENTITY_CHAIN.md)
+- **LTA-7 Framework:** Python implementation (`lta7-framework/`), authored by Alberto Valido Delgado (see IDENTITY_CHAIN.md). Previously attributed to academic alias "Alberto Vargas-Lujan" — deprecated 2026-07-29, not a real identity.
 
 ---
 *Alberto Valido Delgado, AVLI Cloud LLC*

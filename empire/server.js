@@ -8,8 +8,14 @@ const { parseFile, listFiles } = require('../lib/parser');
 const { executeFlow, approve, reject, showStatus, listExecutions } = require('../lib/executor');
 const gateway = require('../lib/gateway');
 const stateManager = require('../lib/state');
+const { configuredBodyLimit, parseJsonBody, publicHttpError } = require('../lib/http-body');
+const { createHttpSecurity } = require('../lib/http-security');
+const { resolveNamedFile } = require('../lib/safe-path');
 
-const PORT = process.env.EMPIRE_PORT || 7377;
+const PORT = Number(process.env.EMPIRE_PORT || 7377);
+const BIND = process.env.EMPIRE_BIND || '127.0.0.1';
+const MAX_BODY_BYTES = configuredBodyLimit(process.env.EMPIRE_MAX_BODY_BYTES);
+const httpSecurity = createHttpSecurity({ port: PORT });
 const L7_DIR = path.join(process.env.HOME || '', '.l7');
 const EMP_DIR = path.join(process.env.HOME || '', '.emp');
 const TOOLS_DIR = path.join(L7_DIR, 'tools');
@@ -18,11 +24,9 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const AUDIT_LOG = process.env.AVLI_AUDIT_LOG || path.join(process.env.HOME || '', '.l7', 'audit.log');
 const TRANSITION_LOG = process.env.AVLI_TRANSITION_LOG || path.join(process.env.HOME || '', '.l7', 'transitions.log');
 
-// CORS headers for dashboard integration
+// CORS headers for trusted dashboard origins only.
 function setCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  httpSecurity.setCorsHeaders(res._l7Request, res);
 }
 
 function sendJson(res, status, data) {
@@ -98,18 +102,12 @@ function readLogFile(filePath, limit = 120) {
  * Parse JSON body from request
  */
 function parseBody(req) {
-  return new Promise((resolve, reject) => {
-    let body = '';
-    req.on('data', (chunk) => { body += chunk; });
-    req.on('end', () => {
-      try {
-        resolve(body ? JSON.parse(body) : {});
-      } catch (err) {
-        reject(new Error('Invalid JSON body'));
-      }
-    });
-    req.on('error', reject);
-  });
+  return parseJsonBody(req, { maxBytes: MAX_BODY_BYTES });
+}
+
+function sendRequestError(res, error) {
+  const response = publicHttpError(error);
+  sendJson(res, response.status, response.body);
 }
 
 /**
@@ -151,13 +149,19 @@ function listFlowFiles() {
 }
 
 const server = http.createServer((req, res) => {
+  res._l7Request = req;
   const parsed = url.parse(req.url, true);
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    setCorsHeaders(res);
-    res.writeHead(204);
-    res.end();
+    httpSecurity.handleOptions(req, res);
+    return;
+  }
+
+  const protectedRoute = parsed.pathname.startsWith('/api/')
+    || parsed.pathname === '/execute'
+    || parsed.pathname === '/call';
+  if (protectedRoute && !httpSecurity.authorize(req, res)) {
     return;
   }
 
@@ -315,7 +319,13 @@ const server = http.createServer((req, res) => {
       sendJson(res, 400, { error: 'Flow name required' });
       return;
     }
-    const flowPath = path.join(FLOWS_DIR, `${name}.flow`);
+    let flowPath;
+    try {
+      flowPath = resolveNamedFile(FLOWS_DIR, name, '.flow', { label: 'Flow name' });
+    } catch (error) {
+      sendRequestError(res, error);
+      return;
+    }
     if (!fs.existsSync(flowPath)) {
       sendJson(res, 404, { error: 'Flow not found' });
       return;
@@ -329,13 +339,32 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Execute a flow (POST)
-  if (parsed.pathname === '/api/execute' && req.method === 'POST') {
+  // Execute a flow OR a tool (POST) — L7 contract + flow runner
+  // Tool form:  { "tool": "financial_ratios", "params": { ... } }
+  // Flow form:  { "flow": "name", "inputs": { ... } }
+  if ((parsed.pathname === '/api/execute' || parsed.pathname === '/execute') && req.method === 'POST') {
     parseBody(req).then(async (body) => {
+      const toolName = body.tool || body.name;
+      const toolParams = body.params || body.arguments || body.args || {};
+
+      // M2: tool execution through gateway forge → skill-runtime
+      if (toolName && !body.flow) {
+        try {
+          const result = await gateway.execute(toolName, toolParams, {
+            who: body.who || req.headers['x-l7-who'] || 'empire-http',
+          });
+          const ok = result && result.ok !== false && result.success !== false;
+          sendJson(res, ok ? 200 : 422, result);
+        } catch (err) {
+          sendJson(res, 500, { success: false, ok: false, error: err.message });
+        }
+        return;
+      }
+
       const { flow, inputs = {}, dryRun = false } = body;
 
       if (!flow) {
-        sendJson(res, 400, { error: 'Flow name required' });
+        sendJson(res, 400, { error: 'Flow name required (or pass tool for skill-runtime execute)' });
         return;
       }
 
@@ -351,16 +380,15 @@ const server = http.createServer((req, res) => {
       } catch (err) {
         sendJson(res, 500, { error: err.message });
       }
-    }).catch((err) => {
-      sendJson(res, 400, { error: err.message });
-    });
+    }).catch((err) => sendRequestError(res, err));
     return;
   }
 
   // Execute a single tool (POST)
-  if (parsed.pathname === '/api/call' && req.method === 'POST') {
+  if ((parsed.pathname === '/api/call' || parsed.pathname === '/call') && req.method === 'POST') {
     parseBody(req).then(async (body) => {
-      const { tool, arguments: args = {} } = body;
+      const { tool, arguments: args = {}, params } = body;
+      const toolParams = params || args || {};
 
       if (!tool) {
         sendJson(res, 400, { error: 'Tool name required' });
@@ -368,14 +396,15 @@ const server = http.createServer((req, res) => {
       }
 
       try {
-        const result = await gateway.execute(tool, args);
-        sendJson(res, 200, result);
+        const result = await gateway.execute(tool, toolParams, {
+          who: body.who || req.headers['x-l7-who'] || 'empire-http',
+        });
+        const ok = result && result.ok !== false && result.success !== false;
+        sendJson(res, ok ? 200 : 422, result);
       } catch (err) {
-        sendJson(res, 500, { error: err.message });
+        sendJson(res, 500, { success: false, ok: false, error: err.message });
       }
-    }).catch((err) => {
-      sendJson(res, 400, { error: err.message });
-    });
+    }).catch((err) => sendRequestError(res, err));
     return;
   }
 
@@ -400,9 +429,7 @@ const server = http.createServer((req, res) => {
       } catch (err) {
         sendJson(res, 500, { error: err.message });
       }
-    }).catch((err) => {
-      sendJson(res, 400, { error: err.message });
-    });
+    }).catch((err) => sendRequestError(res, err));
     return;
   }
 
@@ -427,9 +454,7 @@ const server = http.createServer((req, res) => {
       } catch (err) {
         sendJson(res, 500, { error: err.message });
       }
-    }).catch((err) => {
-      sendJson(res, 400, { error: err.message });
-    });
+    }).catch((err) => sendRequestError(res, err));
     return;
   }
 
@@ -455,9 +480,7 @@ const server = http.createServer((req, res) => {
       } catch (err) {
         sendJson(res, 500, { error: err.message });
       }
-    }).catch((err) => {
-      sendJson(res, 400, { error: err.message });
-    });
+    }).catch((err) => sendRequestError(res, err));
     return;
   }
 
@@ -515,17 +538,14 @@ const server = http.createServer((req, res) => {
 
   if (parsed.pathname === '/api/signal' && req.method === 'POST') {
     // Receive a signal from another node
-    let body = '';
-    req.on('data', chunk => { body += chunk; });
-    req.on('end', () => {
+    parseBody(req).then((signal) => {
       try {
-        const signal = JSON.parse(body);
         const result = autopoiesis.receive(signal);
         sendJson(res, 200, result);
       } catch (err) {
         sendJson(res, 400, { error: 'Invalid signal' });
       }
-    });
+    }).catch((err) => sendRequestError(res, err));
     return;
   }
 
@@ -533,16 +553,30 @@ const server = http.createServer((req, res) => {
   res.end('Not found');
 });
 
-server.listen(PORT, async () => {
-  console.log(`\n  \x1b[93mEmpire server running at http://localhost:${PORT}\x1b[0m\n`);
-  // Boot the Forge — the Unified Self awakens
-  try {
-    await gateway.boot();
-  } catch (err) {
-    console.error(`\x1b[91m  Boot error: ${err.message}\x1b[0m`);
-    console.error(err.stack);
-  }
-});
+function start() {
+  httpSecurity.assertSafeBind(BIND, 'Empire server');
+  return server.listen(PORT, BIND, async () => {
+    console.log(`\n  \x1b[93mEmpire server running at http://${BIND}:${PORT}\x1b[0m\n`);
+    // Boot the Forge — the Unified Self awakens
+    try {
+      await gateway.boot();
+    } catch (err) {
+      console.error(`\x1b[91m  Boot error: ${err.message}\x1b[0m`);
+      console.error(err.stack);
+    }
+  });
+}
+
+if (require.main === module) start();
+
+module.exports = {
+  BIND,
+  MAX_BODY_BYTES,
+  PORT,
+  parseBody,
+  server,
+  start,
+};
 
 // L7:PROVENANCE
 // Creator: Alberto Valido Delgado | System: L7 WAY | License: Proprietary — Framework free, products licensed (Law XXII)

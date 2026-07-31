@@ -1,0 +1,181 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://avli.cloud/l7/schema/v1/media-definitions.schema.json",
+  "title": "L7 Media shared definitions v1",
+  "definitions": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "layerName": { "enum": ["ABOVE", "MIRROR", "BELOW"] },
+    "mediaType": { "enum": ["image", "video", "audio", "model", "manifest"] },
+    "runState": {
+      "enum": [
+        "planned", "queued", "running", "evaluating", "staged",
+        "crystallized", "awaiting_release_approval", "released", "rejected",
+        "failed", "cancelled"
+      ]
+    },
+    "request": {
+      "type": "object",
+      "required": [
+        "contract_version", "brief", "mode", "ratio", "duration", "seed",
+        "astrocyte", "style", "negative", "identity", "candidates"
+      ],
+      "properties": {
+        "contract_version": { "const": "l7.media.request/1.0" },
+        "brief": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "mode": { "enum": ["image", "video"] },
+        "ratio": { "enum": ["16:9", "1:1", "9:16", "4:5"] },
+        "duration": { "type": "number", "minimum": 0, "maximum": 120 },
+        "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+        "astrocyte": { "type": "number", "minimum": 0, "exclusiveMaximum": 1 },
+        "style": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "negative": { "type": "string", "maxLength": 4000 },
+        "identity": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "candidates": { "type": "integer", "minimum": 1, "maximum": 8 }
+      },
+      "additionalProperties": false
+    },
+    "job": {
+      "type": "object",
+      "required": ["contract_version", "id", "capability", "adapter", "dependencies", "input", "output"],
+      "properties": {
+        "contract_version": { "const": "l7.media.job/1.0" },
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9.-]{1,127}$" },
+        "capability": { "enum": ["image.generate", "video.generate", "video.finish", "audio.generate", "audio.finish", "model.generate"] },
+        "adapter": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "dependencies": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "tool_chain": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+        "input": { "type": "object" },
+        "output": {
+          "type": "object",
+          "required": ["media", "required"],
+          "properties": {
+            "media": { "$ref": "#/definitions/mediaType" },
+            "required": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "asset": {
+      "type": "object",
+      "required": ["contract_version", "asset_uri", "content_hash", "bytes", "media_type"],
+      "properties": {
+        "contract_version": { "const": "l7.media.asset/1.0" },
+        "asset_uri": { "type": "string", "minLength": 1 },
+        "content_hash": { "$ref": "#/definitions/sha256" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "media_type": { "type": "string", "pattern": "^[^/]+/[^/]+$" },
+        "backend": { "type": "string", "minLength": 1 },
+        "receipt_id": { "type": ["string", "null"] },
+        "receipt_uri": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "receipt": {
+      "type": "object",
+      "required": [
+        "contract_version", "provider", "adapter", "adapter_version", "model",
+        "model_version", "provider_request_id", "requested_seed", "confirmed_seed",
+        "normalized_parameters", "attempt", "started_at", "completed_at"
+      ],
+      "properties": {
+        "contract_version": { "const": "l7.media.receipt/1.0" },
+        "provider": { "type": "string", "minLength": 1 },
+        "adapter": { "type": "string", "minLength": 1 },
+        "adapter_version": { "type": "string", "minLength": 1 },
+        "model": { "type": ["string", "null"] },
+        "model_version": { "type": ["string", "null"] },
+        "provider_request_id": { "type": ["string", "null"] },
+        "requested_seed": { "type": ["integer", "null"], "minimum": 0, "maximum": 4294967295 },
+        "confirmed_seed": { "type": ["integer", "null"], "minimum": 0, "maximum": 4294967295 },
+        "normalized_parameters": { "type": "object" },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "started_at": { "$ref": "#/definitions/timestamp" },
+        "completed_at": { "$ref": "#/definitions/timestamp" },
+        "latency_ms": { "type": "number", "minimum": 0 },
+        "cost": {
+          "type": ["object", "null"],
+          "properties": {
+            "amount": { "type": "number", "minimum": 0 },
+            "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
+          },
+          "required": ["amount", "currency"],
+          "additionalProperties": false
+        },
+        "safety": { "type": ["object", "null"] },
+        "plan_id": { "type": "string" },
+        "job_id": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "scorecard": {
+      "type": "object",
+      "required": ["contract_version", "candidate_id", "evaluator", "components", "weighted_total", "eligible", "created_at"],
+      "properties": {
+        "contract_version": { "const": "l7.media.scorecard/1.0" },
+        "candidate_id": { "type": "string", "minLength": 1 },
+        "evaluator": {
+          "type": "object",
+          "required": ["name", "version"],
+          "properties": { "name": { "type": "string" }, "version": { "type": "string" } },
+          "additionalProperties": false
+        },
+        "components": { "type": "object", "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 } },
+        "weighted_total": { "type": "number", "minimum": 0, "maximum": 1 },
+        "eligible": { "type": "boolean" },
+        "evidence": { "type": "object" },
+        "created_at": { "$ref": "#/definitions/timestamp" }
+      },
+      "additionalProperties": false
+    },
+    "selection": {
+      "type": "object",
+      "required": ["contract_version", "plan_id", "layer", "selected_candidate_ids", "authority", "created_at"],
+      "properties": {
+        "contract_version": { "const": "l7.media.selection/1.0" },
+        "plan_id": { "type": "string", "minLength": 1 },
+        "layer": { "$ref": "#/definitions/layerName" },
+        "selected_candidate_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+        "authority": { "enum": ["horizon", "philosopher"] },
+        "reason": { "type": "string", "maxLength": 4000 },
+        "overrides_ranking": { "type": "boolean" },
+        "created_at": { "$ref": "#/definitions/timestamp" }
+      },
+      "additionalProperties": false
+    },
+    "crystallization": {
+      "type": "object",
+      "required": ["contract_version", "plan_id", "layer_receipts", "salt_artifacts", "cycle_locked", "created_at"],
+      "properties": {
+        "contract_version": { "const": "l7.media.crystallization/1.0" },
+        "plan_id": { "type": "string" },
+        "layer_receipts": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "object" } },
+        "salt_artifacts": { "type": "array", "minItems": 3, "items": { "type": "string" } },
+        "cycle_locked": { "const": true },
+        "created_at": { "$ref": "#/definitions/timestamp" }
+      },
+      "additionalProperties": false
+    },
+    "release": {
+      "type": "object",
+      "required": ["contract_version", "plan_id", "asset_hashes", "decision", "authorization", "created_at"],
+      "properties": {
+        "contract_version": { "const": "l7.media.release/1.0" },
+        "plan_id": { "type": "string" },
+        "asset_hashes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/definitions/sha256" } },
+        "decision": { "enum": ["released", "rejected"] },
+        "authorization": {
+          "type": "object",
+          "required": ["method", "verified"],
+          "properties": { "method": { "const": "biometric" }, "verified": { "const": true }, "event_id": { "type": "string" } },
+          "additionalProperties": false
+        },
+        "destination": { "type": ["string", "null"] },
+        "created_at": { "$ref": "#/definitions/timestamp" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

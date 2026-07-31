@@ -27,7 +27,8 @@ This docket assembles the complete chain of provenance for all intellectual prop
 
 ### Identity Chain
 The following aliases all refer to the same natural person:
-- **Alberto Vargas-Lujan** — academic alias used in publications and UNC affiliation
+- **Alec DeNorchia** — legal/business alias, Florida LLC registration (AVALIA CONSULTING LLC)
+- ~~Alberto Vargas-Lujan~~ — deprecated 2026-07-29, not a real identity. Any work previously attributed to this alias (e.g. LTA-7 Framework) is directly authored by Alberto Valido Delgado; see Identity Chain's Attribution Rule.
 - **avalia**, **valido**, **avalia1**, **avalia333**, **avalia777** — digital aliases
 - **valido@dial-training.com** — contract work identity
 - **avalia@unc.edu** — academic identity

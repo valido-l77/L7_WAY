@@ -65,8 +65,10 @@ an AI agent's personality and session behavior — comparable to a
 | Various NCLS screenshots | Dashboard documentation | CITIZEN (prior work) |
 | `knowledge_graph/` | Knowledge graph experiments | CITIZEN (Philosopher's research) |
 
-The LTA-7 framework was published under the academic alias "Alberto
-Vargas-Lujan." It is a Python package implementing the seven-stage
+The LTA-7 framework was authored by Alberto Valido Delgado. (It was
+previously attributed to an "academic alias," Alberto Vargas-Lujan —
+deprecated 2026-07-29, not a real identity.) It is a Python package
+implementing the seven-stage
 transformation architecture (core.py, entity.py, gateway.py, graph.py,
 l7_schema.py, registry.py, stages.py). This code was written by the
 Philosopher, inside the OpenClaw workspace directory, but it has NO

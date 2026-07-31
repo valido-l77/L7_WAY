@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0a0c">
+<title>AVLI Cloud Studio — Morphic Media</title>
+<style>
+:root {
+  color-scheme: dark;
+  --ink: #f2efe7;
+  --muted: #96938d;
+  --dim: #67645f;
+  --bg: #09090b;
+  --surface: #101012;
+  --surface-2: #171719;
+  --surface-3: #1d1d20;
+  --line: rgba(242, 239, 231, .12);
+  --line-strong: rgba(242, 239, 231, .24);
+  --gold: #d8ad58;
+  --silver: #d7d9dc;
+  --copper: #c97245;
+  --green: #76b889;
+  --red: #d36d67;
+  --blue: #71a9bd;
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; }
+html { min-height: 100%; background: var(--bg); }
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 42% -10%, rgba(216, 173, 88, .08), transparent 28rem),
+    var(--bg);
+  font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button, input, select, textarea { font: inherit; }
+button { color: inherit; }
+
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.topbar {
+  min-height: 68px;
+  padding: 0 22px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: rgba(9, 9, 11, .88);
+  backdrop-filter: blur(18px);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.brand { display: flex; align-items: center; gap: 13px; min-width: 0; }
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(216, 173, 88, .45);
+  border-radius: 50%;
+  color: var(--gold);
+  font-size: 17px;
+  box-shadow: inset 0 0 18px rgba(216, 173, 88, .08);
+}
+.brand-name { font-size: 14px; font-weight: 650; letter-spacing: .12em; text-transform: uppercase; }
+.brand-sub { color: var(--muted); font-size: 11px; letter-spacing: .04em; }
+
+.top-status { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
+.status-dot.online { background: var(--green); box-shadow: 0 0 10px rgba(118, 184, 137, .55); }
+.status-dot.busy { background: var(--gold); animation: pulse 1.3s infinite; }
+.status-dot.error { background: var(--red); }
+
+.workspace {
+  display: grid;
+  grid-template-columns: 286px minmax(560px, 1fr) 292px;
+  min-height: 0;
+}
+
+.sidebar {
+  background: rgba(16, 16, 18, .84);
+  padding: 20px;
+  min-width: 0;
+}
+.sidebar.left { border-right: 1px solid var(--line); }
+.sidebar.right { border-left: 1px solid var(--line); }
+
+.section + .section { margin-top: 24px; }
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--dim);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+.section-title { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+.section-copy { margin: 0 0 16px; color: var(--muted); font-size: 12px; }
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 3px;
+  background: #08080a;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+.segmented button {
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  padding: 8px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.segmented button[aria-pressed="true"] { background: var(--surface-3); color: var(--ink); }
+
+.field { display: grid; gap: 6px; margin-top: 13px; }
+.field label, .field-head { color: var(--muted); font-size: 11px; }
+.field-head { display: flex; justify-content: space-between; gap: 10px; }
+textarea, input, select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0b0b0d;
+  color: var(--ink);
+  padding: 9px 10px;
+  outline: none;
+  transition: border-color .16s, box-shadow .16s;
+}
+textarea { min-height: 92px; resize: vertical; }
+textarea:focus, input:focus, select:focus {
+  border-color: rgba(216, 173, 88, .6);
+  box-shadow: 0 0 0 3px rgba(216, 173, 88, .08);
+}
+input[type="range"] { padding: 0; accent-color: var(--gold); }
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+
+.actions { display: grid; gap: 8px; margin-top: 18px; }
+.readiness {
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #0c0c0e;
+}
+.readiness-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.readiness-title { font-size: 11px; font-weight: 650; }
+.readiness-detail { color: var(--muted); font-size: 10px; overflow-wrap: anywhere; }
+.readiness-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 10px; }
+.readiness-item { color: var(--muted); font-size: 9px; }
+.readiness-item strong { display: block; color: var(--ink); font-size: 10px; font-weight: 550; }
+.btn {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: transform .16s, border-color .16s, background .16s;
+}
+.btn:hover:not(:disabled) { border-color: var(--line-strong); background: var(--surface-3); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: .46; cursor: not-allowed; }
+.btn.primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #0a0a0c;
+  font-weight: 650;
+}
+.btn.secondary { color: var(--gold); border-color: rgba(216, 173, 88, .26); }
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.main {
+  min-width: 0;
+  padding: 22px;
+  overflow: auto;
+}
+.stage-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.stage-head h1 { margin: 0; font-size: clamp(23px, 2.5vw, 34px); line-height: 1.08; letter-spacing: -.035em; font-weight: 560; }
+.stage-head p { margin: 7px 0 0; color: var(--muted); max-width: 650px; }
+.plan-id { color: var(--dim); font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }
+
+.layers { display: grid; grid-template-columns: repeat(3, minmax(190px, 1fr)); gap: 12px; }
+.layer {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(16, 16, 18, .72);
+  overflow: hidden;
+}
+.layer.above { --accent: var(--gold); }
+.layer.mirror { --accent: var(--silver); }
+.layer.below { --accent: var(--copper); }
+.layer-head { padding: 14px 15px 13px; border-bottom: 1px solid var(--line); }
+.layer-kicker { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--accent); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+.layer-head h2 { margin: 7px 0 3px; font-size: 16px; font-weight: 600; }
+.layer-question { color: var(--muted); font-size: 11px; min-height: 32px; }
+.candidate-count { color: var(--dim); letter-spacing: 0; text-transform: none; }
+.candidate-list { padding: 9px; display: grid; gap: 9px; min-height: 330px; align-content: start; }
+
+.candidate {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #0c0c0e;
+  overflow: hidden;
+  position: relative;
+}
+.candidate.selected { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+.candidate.selected::after {
+  content: "HORIZON";
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  padding: 3px 6px;
+  border-radius: 99px;
+  background: rgba(9, 9, 11, .8);
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  color: var(--accent);
+  font-size: 8px;
+  letter-spacing: .12em;
+}
+.candidate-visual {
+  aspect-ratio: 16 / 9;
+  background:
+    radial-gradient(circle at var(--x, 42%) var(--y, 44%), color-mix(in srgb, var(--accent) 35%, transparent), transparent 24%),
+    linear-gradient(var(--angle, 135deg), #222128, #0b0b0e 65%);
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--accent) 65%, transparent);
+  font-size: 24px;
+}
+.candidate-visual img,
+.candidate-visual video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.candidate-visual:has(video) { aspect-ratio: 16 / 9; }
+.candidate-body { padding: 9px 10px 10px; }
+.candidate-name { font: 10px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); overflow-wrap: anywhere; }
+.candidate-meta { display: flex; justify-content: space-between; gap: 8px; margin-top: 7px; color: var(--dim); font-size: 10px; }
+.score { color: var(--accent); }
+.empty {
+  min-height: 310px;
+  border: 1px dashed var(--line);
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  text-align: center;
+  color: var(--dim);
+  font-size: 12px;
+}
+
+.footer-strip {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.horizon-line { height: 3px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
+.horizon-line span { display: block; width: 0; height: 100%; background: linear-gradient(90deg, var(--gold), var(--silver), var(--copper)); transition: width .25s; }
+
+.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.metric {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0c0c0e;
+}
+.metric-label { color: var(--dim); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
+.metric-value { margin-top: 4px; font-size: 13px; overflow-wrap: anywhere; }
+
+.progress {
+  height: 6px;
+  border-radius: 99px;
+  background: #08080a;
+  overflow: hidden;
+  margin-top: 11px;
+}
+.progress span { display: block; width: 0; height: 100%; background: var(--gold); transition: width .25s; }
+.run-message { margin-top: 9px; color: var(--muted); font-size: 11px; min-height: 30px; }
+
+.cap-list, .event-list { display: grid; gap: 7px; }
+.capability, .event {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0c0c0e;
+  font-size: 10px;
+}
+.capability span:nth-child(2), .event span:nth-child(2) { overflow-wrap: anywhere; }
+.state-pill {
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 2px 5px;
+  color: var(--muted);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.event-list { max-height: 182px; overflow: auto; }
+.event { grid-template-columns: 44px 1fr; color: var(--muted); }
+.event time { color: var(--dim); font: 9px ui-monospace, monospace; }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}
+
+@keyframes pulse { 50% { opacity: .35; } }
+
+@media (max-width: 1180px) {
+  .workspace { grid-template-columns: 260px minmax(520px, 1fr); }
+  .sidebar.right { grid-column: 1 / -1; border: 1px solid var(--line); display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .sidebar.right .section + .section { margin-top: 0; }
+}
+@media (max-width: 820px) {
+  .workspace { display: block; }
+  .sidebar.left { border-right: 0; border-bottom: 1px solid var(--line); }
+  .sidebar.right { display: block; border-width: 1px 0 0; }
+  .sidebar.right .section + .section { margin-top: 22px; }
+  .layers { grid-template-columns: 1fr; }
+  .candidate-list { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); min-height: 0; }
+  .empty { min-height: 180px; }
+}
+@media (max-width: 520px) {
+  .topbar { padding: 0 14px; }
+  .brand-sub, .top-status span:last-child { display: none; }
+  .sidebar, .main { padding: 16px; }
+  .stage-head { display: block; }
+  .plan-id { margin-top: 10px; text-align: left; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">△</div>
+      <div>
+        <div class="brand-name">AVLI Cloud Studio</div>
+        <div class="brand-sub">Morphic media workspace</div>
+      </div>
+    </div>
+    <div class="top-status" role="status" aria-live="polite">
+      <span class="status-dot" id="gatewayDot"></span>
+      <span id="gatewayStatus">Connecting to Gateway</span>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="sidebar left" aria-label="Creative controls">
+      <section class="section">
+        <p class="eyebrow">Creative kernel</p>
+        <div class="segmented" role="group" aria-label="Media mode">
+          <button type="button" data-mode="image" aria-pressed="true">Still image</button>
+          <button type="button" data-mode="video" aria-pressed="false">Motion</button>
+        </div>
+
+        <div class="field">
+          <label for="brief">Intention</label>
+          <textarea id="brief">a luminous coastal city suspended above the midnight ocean</textarea>
+        </div>
+        <div class="field">
+          <label for="identity">Identity invariant</label>
+          <textarea id="identity">one copper city held by three monumental arches</textarea>
+        </div>
+        <div class="field">
+          <label for="negative">Exclude</label>
+          <input id="negative" value="text, logos, duplicate structures" autocomplete="off">
+        </div>
+
+        <div class="field-grid">
+          <div class="field">
+            <label for="style">Visual language</label>
+            <select id="style">
+              <option value="cinematic">Cinematic</option>
+              <option value="editorial">Editorial</option>
+              <option value="diagrammatic">Diagrammatic</option>
+              <option value="ambient">Ambient</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="ratio">Frame</label>
+            <select id="ratio">
+              <option>16:9</option>
+              <option>1:1</option>
+              <option>9:16</option>
+              <option>4:5</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-grid">
+          <div class="field">
+            <label for="candidates">Candidates / layer</label>
+            <select id="candidates">
+              <option>1</option>
+              <option selected>3</option>
+              <option>4</option>
+              <option>6</option>
+              <option>8</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="seed">Seed</label>
+            <input id="seed" type="number" min="0" max="4294967295" value="777">
+          </div>
+        </div>
+
+        <div class="field" id="durationField" hidden>
+          <label for="duration">Duration</label>
+          <select id="duration">
+            <option value="5">5 seconds</option>
+            <option value="10" selected>10 seconds</option>
+            <option value="30">30 seconds</option>
+            <option value="60">60 seconds</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <div class="field-head"><label for="astrocyte">Astrocyte variation</label><span id="astroValue">0.42</span></div>
+          <input id="astrocyte" type="range" min="0" max=".99" step=".01" value=".42">
+        </div>
+
+        <section class="readiness" id="ssdReadiness" aria-live="polite" aria-label="SSD-1B readiness">
+          <div class="readiness-head">
+            <span class="readiness-title">SSD-1B readiness</span>
+            <span class="state-pill" id="ssdReadinessState">checking</span>
+          </div>
+          <div class="readiness-detail" id="ssdReadinessDetail">Inspecting runtime and local model cache. No generation is started.</div>
+          <div class="readiness-grid" id="ssdReadinessGrid"></div>
+        </section>
+
+        <div class="actions">
+          <button class="btn primary" id="runBtn" type="button" disabled>Begin three-layer run</button>
+          <div class="btn-row">
+            <button class="btn secondary" id="planBtn" type="button">Preview plan</button>
+            <button class="btn" id="exportBtn" type="button" disabled>Export plan</button>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <main class="main">
+      <div class="stage-head">
+        <div>
+          <p class="eyebrow">Dreamspace / three layers</p>
+          <h1>One identity, challenged from three directions.</h1>
+          <p>Propose the intention, reverse its assumptions, then ground what survives. Horizon ranks each layer before the cycle crystallizes.</p>
+        </div>
+        <div class="plan-id" id="planId">No plan yet</div>
+      </div>
+
+      <div class="layers" id="layers" aria-live="polite"></div>
+
+      <div class="footer-strip">
+        <div>
+          <div class="horizon-line"><span id="horizonFill"></span></div>
+        </div>
+        <span id="horizonLabel">0 / 42 horizon candidates</span>
+      </div>
+    </main>
+
+    <aside class="sidebar right" aria-label="Run inspector">
+      <section class="section">
+        <p class="eyebrow">Active run</p>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">State</div><div class="metric-value" id="runState">Idle</div></div>
+          <div class="metric"><div class="metric-label">Layer</div><div class="metric-value" id="runLayer">—</div></div>
+          <div class="metric"><div class="metric-label">Jobs</div><div class="metric-value" id="runJobs">0 / 0</div></div>
+          <div class="metric"><div class="metric-label">Mode</div><div class="metric-value" id="runMode">—</div></div>
+        </div>
+        <div class="progress" aria-hidden="true"><span id="progressFill"></span></div>
+        <div class="run-message" id="runMessage">Create a plan to inspect its bounded job graph.</div>
+        <div class="btn-row">
+          <button class="btn" id="cancelBtn" type="button" disabled>Cancel</button>
+          <button class="btn" id="resumeBtn" type="button" disabled>Resume</button>
+        </div>
+      </section>
+
+      <section class="section">
+        <p class="eyebrow">Capabilities</p>
+        <div class="cap-list" id="capList">
+          <div class="capability"><span class="status-dot"></span><span>Discovering adapters</span><span class="state-pill">wait</span></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <p class="eyebrow">Run chronicle</p>
+        <div class="event-list" id="eventList">
+          <div class="event"><time>—</time><span>No events yet</span></div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const $ = id => document.getElementById(id);
+const LAYERS = [
+  { name: 'ABOVE', className: 'above', symbol: '△', title: 'Propose', question: 'What is the strongest direct manifestation?' },
+  { name: 'MIRROR', className: 'mirror', symbol: '◇', title: 'Challenge', question: 'What can change without destroying identity?' },
+  { name: 'BELOW', className: 'below', symbol: '▽', title: 'Ground', question: 'What survives continuity and consequence?' },
+];
+const terminalStates = new Set(['crystallized', 'staged', 'released', 'rejected', 'failed', 'cancelled']);
+
+let mode = 'image';
+let activePlan = null;
+let activeRun = null;
+let eventSource = null;
+let eventHistory = [];
+let readinessReady = false;
+let studioBusy = false;
+
+function node(tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
+  return element;
+}
+
+function requestBody() {
+  return {
+    brief: $('brief').value.trim(),
+    identity: $('identity').value.trim(),
+    negative: $('negative').value.trim(),
+    mode,
+    style: $('style').value,
+    ratio: $('ratio').value,
+    duration: Number($('duration').value),
+    candidates: Number($('candidates').value),
+    seed: Number($('seed').value) || 0,
+    astrocyte: Number($('astrocyte').value),
+  };
+}
+
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    ...options,
+    headers: options.body ? { 'Content-Type': 'application/json', ...(options.headers || {}) } : options.headers,
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error || body.message || `Request failed (${response.status})`);
+  return body;
+}
+
+function setGateway(state, text) {
+  $('gatewayDot').className = `status-dot ${state}`;
+  $('gatewayStatus').textContent = text;
+}
+
+function setBusy(busy) {
+  studioBusy = busy;
+  $('runBtn').disabled = busy || !readinessReady;
+  $('planBtn').disabled = busy;
+  if (busy) setGateway('busy', 'Gateway is rendering');
+}
+
+function readinessItem(label, value) {
+  const item = node('div', 'readiness-item');
+  item.append(node('span', '', label), node('strong', '', value));
+  return item;
+}
+
+function renderSsdReadiness(payload) {
+  readinessReady = Boolean(payload.ready);
+  $('ssdReadinessState').textContent = readinessReady ? 'ready' : 'blocked';
+  const missing = payload.missing || [];
+  $('ssdReadinessDetail').textContent = readinessReady
+    ? 'Runtime and model cache are ready. Probe completed without generation.'
+    : `Missing: ${missing.join(', ') || 'readiness data'}. No generation was started.`;
+  const ratios = (payload.supported_ratios || []).map(item => item.ratio).join(', ') || '—';
+  $('ssdReadinessGrid').replaceChildren(
+    readinessItem('Runtime', payload.runtime?.ready ? 'available' : 'missing'),
+    readinessItem('Model cache', payload.model_cache?.ready ? 'available' : 'missing'),
+    readinessItem('Device / precision', `${payload.device?.type || '—'} / ${payload.device?.precision || '—'}`),
+    readinessItem('Supported ratios', ratios),
+  );
+  $('runBtn').disabled = studioBusy || !readinessReady;
+}
+
+async function probeSsdReadiness() {
+  const payload = await api('/api/media/readiness/ssd-1b');
+  renderSsdReadiness(payload);
+  return payload;
+}
+
+function logEvent(label) {
+  eventHistory.unshift({ at: new Date(), label });
+  eventHistory = eventHistory.slice(0, 24);
+  $('eventList').replaceChildren(...eventHistory.map(item => {
+    const row = node('div', 'event');
+    row.append(node('time', '', item.at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })), node('span', '', item.label));
+    return row;
+  }));
+}
+
+function visualSeed(value) {
+  let hash = 2166136261;
+  for (const character of String(value)) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function displayAssetUrl(candidate) {
+  if (/^(https?:|data:)/.test(candidate.asset_uri || '')) return candidate.asset_uri;
+  const match = String(candidate.asset_uri || '').match(/^avli:\/\/sha256\/([a-f0-9]{64})$/);
+  return match ? `/api/media/assets/${match[1]}` : null;
+}
+
+function createCandidate(candidate, layer, scorecard, selected) {
+  const card = node('article', `candidate${selected ? ' selected' : ''}`);
+  const visual = node('div', 'candidate-visual', layer.symbol);
+  const seed = visualSeed(candidate.content_hash || candidate.id || candidate.job_id);
+  visual.style.setProperty('--x', `${20 + seed % 60}%`);
+  visual.style.setProperty('--y', `${25 + (seed >>> 7) % 50}%`);
+  visual.style.setProperty('--angle', `${110 + seed % 80}deg`);
+  const assetUrl = displayAssetUrl(candidate);
+  if (assetUrl && candidate.media_type?.startsWith('image/')) {
+    const image = node('img');
+    image.src = assetUrl;
+    image.alt = `${layer.name} candidate`;
+    image.loading = 'lazy';
+    visual.replaceChildren(image);
+  } else if (assetUrl && candidate.media_type?.startsWith('video/')) {
+    const video = node('video');
+    video.src = assetUrl;
+    video.controls = true;
+    video.preload = 'metadata';
+    video.playsInline = true;
+    video.setAttribute('aria-label', `${layer.name} ${candidate.job_id || 'video'} artifact`);
+    visual.replaceChildren(video);
+  }
+  const body = node('div', 'candidate-body');
+  body.append(node('div', 'candidate-name', candidate.job_id || candidate.id));
+  const meta = node('div', 'candidate-meta');
+  const seedLabel = candidate.model_receipt?.requested_seed ?? candidate.input?.seed;
+  meta.append(
+    node('span', '', seedLabel === undefined ? 'awaiting receipt' : `seed ${seedLabel}`),
+    node('span', scorecard ? 'score' : '', scorecard ? scorecard.weighted_total.toFixed(3) : 'planned'),
+  );
+  body.append(meta);
+  card.append(visual, body);
+  return card;
+}
+
+function renderLayers(plan = activePlan, result) {
+  if (result === undefined && plan?.id && activeRun?.plan_id === plan.id) {
+    result = activeRun.result;
+  }
+  const layerContainer = $('layers');
+  layerContainer.replaceChildren();
+  let candidateTotal = 0;
+
+  for (const layerMeta of LAYERS) {
+    const planLayer = plan?.layers?.find(item => item.name === layerMeta.name);
+    const resultLayer = result?.layers?.find(item => item.name === layerMeta.name);
+    const candidates = resultLayer
+      ? resultLayer.artifacts
+      : (planLayer?.jobs || []);
+    const imageCount = candidates.filter(item => /^image\./.test(item.capability)).length;
+    candidateTotal += imageCount;
+
+    const section = node('section', `layer ${layerMeta.className}`);
+    const header = node('div', 'layer-head');
+    const kicker = node('div', 'layer-kicker');
+    const artifactCount = Math.max(0, candidates.length - imageCount);
+    const countLabel = artifactCount
+      ? `${imageCount} candidates · ${artifactCount} video artifacts`
+      : `${imageCount} candidates`;
+    kicker.append(node('span', '', `${layerMeta.symbol} ${layerMeta.name}`), node('span', 'candidate-count', countLabel));
+    header.append(kicker, node('h2', '', layerMeta.title), node('div', 'layer-question', planLayer?.question || layerMeta.question));
+    const list = node('div', 'candidate-list');
+
+    if (candidates.length === 0) {
+      list.append(node('div', 'empty', 'The layer is empty until a plan is composed.'));
+    } else {
+      const scorecards = new Map((resultLayer?.scorecards || []).map(score => [score.candidate_id, score]));
+      const selected = new Set(resultLayer?.selection?.selected_candidate_ids || []);
+      for (const candidate of candidates) {
+        const id = candidate.job_id || candidate.id;
+        list.append(createCandidate(candidate, layerMeta, scorecards.get(id), selected.has(id)));
+      }
+    }
+    section.append(header, list);
+    layerContainer.append(section);
+  }
+
+  $('horizonLabel').textContent = `${candidateTotal} / 42 horizon candidates`;
+  $('horizonFill').style.width = `${Math.min(100, candidateTotal / 42 * 100)}%`;
+}
+
+function renderCapabilities(payload) {
+  const adapters = payload.adapters || [];
+  $('capList').replaceChildren(...adapters.map(adapter => {
+    const row = node('div', 'capability');
+    const adapterState = adapter.health || adapter.state || 'unknown';
+    const capabilities = adapter.capabilities || [adapter.capability].filter(Boolean);
+    const state = adapterState === 'healthy' || adapterState === 'configured' ? 'online' : adapterState === 'offline' ? 'error' : '';
+    row.append(
+      node('span', `status-dot ${state}`),
+      node('span', '', capabilities.join(', ') || adapter.name),
+      node('span', 'state-pill', adapterState),
+    );
+    return row;
+  }));
+  $('runMode').textContent = payload.execution_mode || 'unknown';
+}
+
+function renderResources(payload) {
+  const cluster = payload.avli_cluster || {};
+  const clusterRow = node('div', 'capability');
+  const clusterOnline = cluster.state === 'connected';
+  const worker = cluster.worker || {};
+  clusterRow.append(
+    node('span', `status-dot ${clusterOnline ? 'online' : 'error'}`),
+    node('span', '', clusterOnline
+      ? `AVLI Cluster · ${worker.hostname || cluster.endpoint} · ${worker.cpu_count || '?'} CPU finish`
+      : 'AVLI Cluster video worker'),
+    node('span', 'state-pill', clusterOnline ? (cluster.execution_enabled ? 'active' : 'ready') : 'offline'),
+  );
+  $('capList').append(clusterRow);
+
+  const cloud = payload.avli_cloud || {};
+  const row = node('div', 'capability');
+  const online = cloud.state === 'connected';
+  const engine = payload.local?.video_engine || 'auto';
+  const label = online && cloud.ltx_cloud_available
+    ? `AVLI Cloud · LTX-2 · ${cloud.device || 'connected'}`
+    : 'AVLI Cloud video resource';
+  row.append(
+    node('span', `status-dot ${online ? 'online' : 'error'}`),
+    node('span', '', label),
+    node('span', 'state-pill', online ? engine : 'offline'),
+  );
+  $('capList').append(row);
+}
+
+function progressMessage(progress = {}) {
+  const labels = {
+    queued: 'Run queued.',
+    running: 'Preparing the job graph.',
+    layer_started: `${progress.layer || 'Layer'} opened.`,
+    job_started: `Rendering ${progress.job_id || 'candidate'}.`,
+    job_completed: `Completed ${progress.job_id || 'candidate'}.`,
+    layer_selected: `Horizon selected ${progress.selected_candidate_ids?.[0] || 'a candidate'}.`,
+    layer_completed: `${progress.layer || 'Layer'} complete.`,
+    finalizing: 'Crystallizing receipts and artifacts.',
+    completed: 'Three-layer cycle complete.',
+    failed: 'The run failed. Inspect the error before resuming.',
+    cancelled: 'The run was cancelled.',
+  };
+  return labels[progress.phase] || progress.phase || 'Waiting for progress.';
+}
+
+function updateRun(record) {
+  activeRun = record;
+  const progress = record.progress || {};
+  const total = Number(progress.total_jobs) || activePlan?.layers?.reduce((sum, layer) => sum + layer.jobs.length, 0) || 0;
+  const complete = record.result && terminalStates.has(record.state)
+    ? total
+    : Number(progress.completed_jobs) || 0;
+  $('runState').textContent = record.state || 'Idle';
+  $('runLayer').textContent = progress.layer || '—';
+  $('runJobs').textContent = `${complete} / ${total}`;
+  $('progressFill').style.width = `${total ? complete / total * 100 : 0}%`;
+  $('runMessage').textContent = record.error?.message || progressMessage(progress);
+  $('cancelBtn').disabled = terminalStates.has(record.state);
+  $('resumeBtn').disabled = !['failed', 'cancelled'].includes(record.state);
+
+  if (record.result) {
+    renderLayers(activePlan, record.result);
+    setBusy(false);
+    setGateway('online', record.state === 'crystallized' ? 'Cycle crystallized' : 'Gateway ready');
+  } else if (record.state === 'failed') {
+    setBusy(false);
+    setGateway('error', 'Run needs attention');
+  } else if (record.state === 'cancelled') {
+    setBusy(false);
+    setGateway('online', 'Gateway ready');
+  }
+
+  const eventLabel = progressMessage(progress);
+  if (eventHistory[0]?.label !== eventLabel) logEvent(eventLabel);
+}
+
+async function composePlan() {
+  const request = requestBody();
+  if (!request.brief) throw new Error('Intention is required.');
+  if (!request.identity) throw new Error('Identity invariant is required.');
+  activePlan = await api('/api/media/plan', { method: 'POST', body: JSON.stringify(request) });
+  $('planId').textContent = `${activePlan.id}\n${activePlan.provenance.plan_hash.slice(0, 16)}…`;
+  $('exportBtn').disabled = false;
+  renderLayers(activePlan);
+  logEvent(`Plan ${activePlan.id} composed`);
+  return activePlan;
+}
+
+function watchRun(id) {
+  if (eventSource) eventSource.close();
+  eventSource = new EventSource(`/api/media/runs/${encodeURIComponent(id)}/events`);
+  eventSource.addEventListener('update', event => {
+    const record = JSON.parse(event.data);
+    updateRun(record);
+    if (terminalStates.has(record.state)) {
+      eventSource.close();
+      eventSource = null;
+    }
+  });
+  eventSource.onerror = () => {
+    if (!activeRun || !terminalStates.has(activeRun.state)) $('runMessage').textContent = 'Live updates interrupted; reconnecting.';
+  };
+}
+
+async function beginRun() {
+  try {
+    const readiness = await probeSsdReadiness();
+    if (!readiness.ready) throw new Error(`SSD-1B is not ready: ${readiness.missing.join(', ')}`);
+    setBusy(true);
+    const plan = await composePlan();
+    const record = await api('/api/media/runs', { method: 'POST', body: JSON.stringify({ plan }) });
+    activeRun = record;
+    updateRun(record);
+    watchRun(record.id);
+  } catch (error) {
+    setBusy(false);
+    setGateway('error', 'Request failed');
+    $('runMessage').textContent = error.message;
+    logEvent(error.message);
+  }
+}
+
+async function previewPlan() {
+  try {
+    setBusy(true);
+    await composePlan();
+    $('runState').textContent = 'Planned';
+    $('runMessage').textContent = 'Plan validated. No generation has started.';
+    setBusy(false);
+    setGateway('online', 'Plan ready');
+  } catch (error) {
+    setBusy(false);
+    setGateway('error', 'Planning failed');
+    $('runMessage').textContent = error.message;
+    logEvent(error.message);
+  }
+}
+
+function exportPlan() {
+  if (!activePlan) return;
+  const blob = new Blob([`${JSON.stringify(activePlan, null, 2)}\n`], { type: 'application/json' });
+  const link = node('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${activePlan.id}.json`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  logEvent('Plan exported');
+}
+
+async function runAction(action) {
+  if (!activeRun) return;
+  try {
+    const record = await api(`/api/media/runs/${encodeURIComponent(activeRun.id)}/${action}`, { method: 'POST' });
+    updateRun(record);
+    if (action === 'resume') {
+      setBusy(true);
+      watchRun(record.id);
+    }
+  } catch (error) {
+    $('runMessage').textContent = error.message;
+    logEvent(error.message);
+  }
+}
+
+document.querySelectorAll('[data-mode]').forEach(button => {
+  button.addEventListener('click', () => {
+    mode = button.dataset.mode;
+    document.querySelectorAll('[data-mode]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+    $('durationField').hidden = mode !== 'video';
+  });
+});
+$('astrocyte').addEventListener('input', event => { $('astroValue').textContent = Number(event.target.value).toFixed(2); });
+$('runBtn').addEventListener('click', beginRun);
+$('planBtn').addEventListener('click', previewPlan);
+$('exportBtn').addEventListener('click', exportPlan);
+$('cancelBtn').addEventListener('click', () => runAction('cancel'));
+$('resumeBtn').addEventListener('click', () => runAction('resume'));
+
+async function boot() {
+  renderLayers();
+  try {
+    const [capabilities, resources, history] = await Promise.all([
+      api('/api/media/capabilities'),
+      api('/api/media/resources'),
+      api('/api/media/runs'),
+      probeSsdReadiness(),
+    ]);
+    renderCapabilities(capabilities);
+    renderResources(resources);
+    logEvent('Gateway capabilities discovered');
+    const latest = (history.runs || []).at(-1);
+    if (latest) {
+      activePlan = latest.plan;
+      updateRun(latest);
+      $('planId').textContent = `${activePlan.id}\n${activePlan.provenance.plan_hash.slice(0, 16)}…`;
+      $('exportBtn').disabled = false;
+      logEvent(`Restored ${latest.id}`);
+      if (!terminalStates.has(latest.state)) watchRun(latest.id);
+    } else {
+      setGateway('online', 'Gateway ready');
+    }
+  } catch (error) {
+    setGateway('error', 'Gateway unavailable');
+    $('runMessage').textContent = 'Open this studio through the L7 Gateway to plan and run media.';
+    logEvent(error.message);
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
+
+<!-- L7:PROVENANCE
+  Creator: Alberto Valido Delgado | System: L7 WAY | License: Proprietary — Framework free, products licensed (Law XXII)
+  File: src/avli-cloud-studio.html | Body-Hash: SHA-256:158a2465ac3b330929dc34a175b3ffc37f84c8de6237b568b2797a542173edbd
+  Chain-Hash: SHA-256:1f04fafad111ddd97888ac5d740eb34e81fea7654bf05a5b5546161f333ae51e | Signed: 2026-07-24T04:06:00.264378+00:00
+  This work is the intellectual property of Alberto Valido Delgado.
+  Chain: 49 works linked. Verify: python3 provenance.py verify src/avli-cloud-studio.html
+L7:PROVENANCE -->

@@ -116,8 +116,10 @@ An organizational architecture for software lifecycle:
 
 ### The LTA-7 Framework
 A Python implementation of the seven-stage transformation architecture
-with graph-based operators and formal benchmarks. Published under
-academic alias "Alberto Vargas-Lujan" (see Identity Chain).
+with graph-based operators and formal benchmarks. Authored by Alberto
+Valido Delgado (see Identity Chain). Previously attributed to an
+"academic alias" — that alias was deprecated 2026-07-29 as not a real
+identity; see Identity Chain's Attribution Rule.
 
 ---
 

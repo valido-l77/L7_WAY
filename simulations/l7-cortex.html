@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L7 Cortex — The Neural Map</title>
+<style>
+:root {
+  --bg: #050510;
+  --panel: #0a0a18;
+  --border: #151530;
+  --text: #7777aa;
+  --bright: #bbbbdd;
+  --gold: #c9a96e;
+  --gold-dim: #7a6a3e;
+  --morph: #8844cc;
+  --work: #44bb77;
+  --salt: #5588bb;
+  --vault: #cc4444;
+  --synapse: rgba(201,169,110,0.12);
+  --fire: #ff6633;
+  --water: #3366ff;
+  --air: #ffcc33;
+  --earth: #33cc66;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:'SF Mono','Fira Code','Cascadia Code',monospace;font-size:11px;}
+
+/* Layout */
+.app{display:grid;grid-template-columns:260px 1fr 300px;
+  grid-template-rows:40px 1fr 28px;height:100vh;}
+
+/* Header */
+header{grid-column:1/-1;background:var(--panel);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 12px;gap:12px;}
+header h1{font-size:12px;font-weight:400;color:var(--gold);letter-spacing:4px;}
+.search-box{flex:1;max-width:300px;position:relative;}
+.search-box input{width:100%;background:var(--bg);border:1px solid var(--border);
+  color:var(--bright);padding:4px 8px 4px 24px;border-radius:4px;font:inherit;font-size:10px;}
+.search-box::before{content:">";position:absolute;left:8px;top:50%;transform:translateY(-50%);
+  color:var(--gold-dim);font-size:10px;}
+.header-stats{font-size:9px;letter-spacing:1px;margin-left:auto;}
+.header-stats span{color:var(--bright);}
+.view-tabs{display:flex;gap:2px;}
+.view-tab{background:none;border:1px solid var(--border);color:var(--text);
+  padding:3px 8px;font:inherit;font-size:9px;cursor:pointer;letter-spacing:1px;}
+.view-tab.active{border-color:var(--gold-dim);color:var(--gold);}
+
+/* Left Panel — Tree */
+#tree{background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;padding:4px 0;}
+.tree-section{padding:4px 8px;cursor:pointer;user-select:none;}
+.tree-section .hdr{display:flex;align-items:center;gap:6px;padding:2px 0;
+  font-size:10px;letter-spacing:1px;text-transform:uppercase;}
+.tree-section .hdr .dot{width:6px;height:6px;border-radius:50%;}
+.tree-section .hdr .count{margin-left:auto;font-size:9px;color:var(--text);}
+.tree-item{display:flex;align-items:center;gap:6px;padding:2px 8px 2px 20px;
+  cursor:pointer;border-left:2px solid transparent;transition:all 0.15s;}
+.tree-item:hover{background:rgba(201,169,110,0.04);border-left-color:var(--gold-dim);}
+.tree-item.active{background:rgba(201,169,110,0.08);border-left-color:var(--gold);}
+.tree-item .icon{font-size:10px;width:14px;text-align:center;}
+.tree-item .name{flex:1;font-size:10px;color:var(--bright);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.tree-item .meta{font-size:8px;color:var(--text);}
+.tree-group{display:none;}
+.tree-section.open .tree-group{display:block;}
+.tree-section .arrow{font-size:8px;transition:transform 0.2s;}
+.tree-section.open .arrow{transform:rotate(90deg);}
+
+/* Center — Graph Canvas */
+#graph-container{position:relative;overflow:hidden;}
+#graph{display:block;width:100%;height:100%;}
+#graph-hud{position:absolute;top:8px;left:8px;font-size:9px;letter-spacing:1px;
+  pointer-events:none;}
+#graph-hud div{margin-bottom:2px;}
+#graph-hud .val{color:var(--gold);}
+#zoom-indicator{position:absolute;bottom:40px;right:8px;font-size:9px;color:var(--gold-dim);}
+
+/* Right Panel — Inspector + Science */
+#inspector{background:var(--panel);border-left:1px solid var(--border);overflow-y:auto;padding:8px;}
+.insp-section{margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.insp-label{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--text);margin-bottom:3px;}
+.insp-value{color:var(--bright);font-size:11px;}
+.insp-path{color:var(--gold-dim);font-size:9px;word-break:break-all;}
+.edge-list{list-style:none;}
+.edge-list li{padding:2px 0;font-size:10px;cursor:pointer;}
+.edge-list li:hover{color:var(--gold);}
+.edge-list .etype{font-size:8px;padding:1px 4px;border-radius:2px;margin-right:4px;
+  background:var(--border);}
+
+/* Science Workspace */
+.science-panel{display:none;padding:8px;}
+.science-panel.visible{display:block;}
+.pub-card{padding:6px 8px;margin-bottom:6px;border:1px solid var(--border);border-radius:4px;cursor:pointer;}
+.pub-card:hover{border-color:var(--gold-dim);}
+.pub-card .title{color:var(--bright);font-size:11px;margin-bottom:2px;}
+.pub-card .grade{float:right;color:var(--gold);font-size:10px;}
+.pub-card .detail{font-size:9px;color:var(--text);}
+.pub-card .status{display:inline-block;padding:1px 6px;border-radius:8px;font-size:8px;
+  border:1px solid;margin-top:3px;}
+.pub-card .status.draft{border-color:var(--morph);color:var(--morph);}
+.pub-card .status.submitted{border-color:var(--air);color:var(--air);}
+.pub-card .status.published{border-color:var(--work);color:var(--work);}
+.pub-card .status.patent{border-color:var(--vault);color:var(--vault);}
+
+/* Nesting Keys Legend */
+.nesting-legend{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin:8px 0;}
+.nkey{padding:3px 4px;font-size:8px;text-align:center;border-radius:2px;cursor:pointer;
+  border:1px solid var(--border);}
+.nkey:hover{border-color:var(--gold-dim);}
+.nkey.active{border-color:var(--gold);background:rgba(201,169,110,0.1);}
+
+/* Footer */
+footer{grid-column:1/-1;background:var(--panel);border-top:1px solid var(--border);
+  display:flex;align-items:center;padding:0 12px;font-size:8px;letter-spacing:1px;gap:16px;}
+.domain-pill{padding:1px 6px;border-radius:8px;border:1px solid;}
+
+/* Minimap */
+#minimap{position:absolute;bottom:40px;left:8px;width:120px;height:80px;
+  background:rgba(5,5,16,0.9);border:1px solid var(--border);border-radius:4px;}
+#minimap canvas{width:100%;height:100%;}
+
+/* Tooltip */
+#tooltip{position:fixed;display:none;background:var(--panel);border:1px solid var(--gold-dim);
+  padding:6px 10px;border-radius:4px;font-size:10px;color:var(--bright);
+  pointer-events:none;z-index:100;max-width:280px;}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <h1>L7 CORTEX</h1>
+  <div class="search-box"><input id="search" placeholder="search nodes..." autocomplete="off"></div>
+  <div class="view-tabs">
+    <button class="view-tab active" data-view="graph">GRAPH</button>
+    <button class="view-tab" data-view="science">SCIENCE</button>
+    <button class="view-tab" data-view="timeline">TIME</button>
+  </div>
+  <div class="header-stats">
+    <span id="s-nodes">0</span> nodes &middot;
+    <span id="s-edges">0</span> edges &middot;
+    <span id="s-zoom">1.0</span>x
+  </div>
+</header>
+
+<div id="tree"></div>
+
+<div id="graph-container">
+  <canvas id="graph"></canvas>
+  <div id="graph-hud">
+    <div>DOMAIN <span class="val" id="hud-domain">all</span></div>
+    <div>NESTING <span class="val" id="hud-nesting">all</span></div>
+    <div>SELECTED <span class="val" id="hud-selected">none</span></div>
+  </div>
+  <div id="zoom-indicator"></div>
+  <div id="minimap"><canvas id="minimap-canvas"></canvas></div>
+</div>
+
+<div id="inspector">
+  <div id="insp-default">
+    <div class="insp-section">
+      <div class="insp-label">L7 Cortex — Neural Map</div>
+      <div class="insp-value" style="color:var(--gold);">The whole brain network</div>
+      <div style="margin-top:6px;font-size:10px;">
+        Click a node to inspect. Drag to pan. Scroll to zoom. Search to find.
+        Every file is a neuron. Every reference is a synapse.
+      </div>
+    </div>
+    <div class="insp-section">
+      <div class="insp-label">9 Nesting Keys — Synapse Types</div>
+      <div class="nesting-legend">
+        <div class="nkey active" data-nk="all" style="grid-column:1/-1;">ALL</div>
+        <div class="nkey" data-nk="location" style="color:#ff9944">LOCATION</div>
+        <div class="nkey" data-nk="heartbeat" style="color:#ff4444">HEARTBEAT</div>
+        <div class="nkey" data-nk="timestamp" style="color:#44ccff">TIMESTAMP</div>
+        <div class="nkey" data-nk="identity" style="color:#cc44ff">IDENTITY</div>
+        <div class="nkey" data-nk="credential" style="color:#ff44aa">CREDENTIAL</div>
+        <div class="nkey" data-nk="measure" style="color:#44ff88">MEASURE</div>
+        <div class="nkey" data-nk="domain" style="color:#ffcc44">DOMAIN Q</div>
+        <div class="nkey" data-nk="present" style="color:#88aaff">PRESENT</div>
+        <div class="nkey" data-nk="arithmetic" style="color:#aaaaaa">ARITH</div>
+      </div>
+    </div>
+    <div class="insp-section">
+      <div class="insp-label">Encoding Layers (Infinite)</div>
+      <div style="font-size:10px;line-height:1.8;">
+        <div>$() — shell command substitution</div>
+        <div>\ — backslash escapes (whitespace encoding)</div>
+        <div>DOM — HTML tree nesting</div>
+        <div>XML — structured data nesting</div>
+        <div>YAML — configuration nesting</div>
+        <div>JSON — object graph nesting</div>
+        <div>:prefix — search/route domain shortcuts</div>
+        <div>[[wiki]] — interlinking (Wikipedia/Obsidian)</div>
+        <div>EXIF — image metadata (GPS, time, device)</div>
+        <div>Frames — video temporal encoding (last=key)</div>
+        <div>Text — per-line, per-letter, per-word</div>
+        <div>Paint — wavelength, pattern, composition</div>
+        <div>Sigils — Clavicles, seals, planetary hours</div>
+        <div>Horoscope — 12-house coordinate system</div>
+        <div>Proximity — EM field transfer (NFC/BLE)</div>
+        <div style="color:var(--gold-dim);margin-top:4px;">
+          This map is a lens, not the data.<br>
+          The territory is the filesystem.<br>
+          The map is for navigation only.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="insp-node" style="display:none;"></div>
+  <div class="science-panel" id="science-panel">
+    <div class="insp-label">Science Workspace</div>
+    <div class="pub-card">
+      <div class="grade">C+ &rarr; A</div>
+      <div class="title">IQS-888: Unified Quantum Gravity from Hexagram Space-Time</div>
+      <div class="detail">Luna=e, 365^3 state space, 5 degree residue, Mobius topology, 13 levels</div>
+      <div class="status draft">REVISING</div>
+    </div>
+    <div class="pub-card">
+      <div class="grade">A-</div>
+      <div class="title">LTA-7: A Living Tool Architecture</div>
+      <div class="detail">HCI/graph theory journal target. Publishable.</div>
+      <div class="status draft">DRAFT</div>
+    </div>
+    <div class="pub-card">
+      <div class="grade">A-</div>
+      <div class="title">Graph-Based Participant Tracking</div>
+      <div class="detail">NCLS methodology paper. Solid data.</div>
+      <div class="status draft">DRAFT</div>
+    </div>
+    <div class="pub-card">
+      <div class="grade">B</div>
+      <div class="title">The Great Work — Philosophical Framework</div>
+      <div class="detail">Book manuscript. Companion to IQS-888.</div>
+      <div class="status draft">DRAFT</div>
+    </div>
+    <div class="pub-card">
+      <div class="grade">B+</div>
+      <div class="title">Power and Surrender</div>
+      <div class="detail">52.5K words, 15 chapters, NYT target</div>
+      <div class="status draft">COMPLETE</div>
+    </div>
+    <div class="pub-card">
+      <div class="title">Patent: Transmutation Engine (PRIMARY)</div>
+      <div class="detail">4-stage software transmutation. Grace period: Jan 12, 2027.</div>
+      <div class="status patent">PROVISIONAL</div>
+    </div>
+    <div class="pub-card">
+      <div class="title">Patent: 12+1D Coordinate System</div>
+      <div class="detail">Dodecahedron hypergraph with astrocyte meta-variable.</div>
+      <div class="status patent">PROVISIONAL</div>
+    </div>
+    <div class="pub-card">
+      <div class="title">Patent: Prima Language / Sigil Compiler</div>
+      <div class="detail">22-op graph language compiled to weighted hypergraphs.</div>
+      <div class="status patent">PROVISIONAL</div>
+    </div>
+    <div class="pub-card">
+      <div class="title">Patent: Quantum-Classical Bridge (Q64)</div>
+      <div class="detail">64 hexagram encoding, 18-qubit register on classical HW.</div>
+      <div class="status patent">PROVISIONAL</div>
+    </div>
+    <div class="pub-card">
+      <div class="title">Patent: Biometric Intent Verification</div>
+      <div class="detail">Machine-bound auth with hardware UUID + Touch ID.</div>
+      <div class="status patent">PROVISIONAL</div>
+    </div>
+    <div class="pub-card">
+      <div class="title">Patent: Self-Preserving Software Architecture</div>
+      <div class="detail">Heartbeat, morning briefs, dream cycles, autopoiesis.</div>
+      <div class="status patent">PROVISIONAL</div>
+    </div>
+    <div class="insp-section" style="margin-top:16px;">
+      <div class="insp-label">Grant Targets</div>
+      <div style="font-size:10px;line-height:1.8;">
+        <div>NSF SBIR Phase I — $275K (AI/quantum computing)</div>
+        <div>DARPA — Novel computing paradigms</div>
+        <div>DOE — Quantum information science</div>
+        <div>NIH STTR — Graph-based health data (NCLS)</div>
+      </div>
+    </div>
+    <div class="insp-section">
+      <div class="insp-label">Target Journals</div>
+      <div style="font-size:10px;line-height:1.8;">
+        <div>Nature Physics — IQS-888 (after revision)</div>
+        <div>Physical Review Letters — Hexagram space-time</div>
+        <div>ACM CHI — LTA-7 living architecture</div>
+        <div>IEEE Software — Universal OS paradigm</div>
+        <div>Foundations of Physics — Unified field theory</div>
+      </div>
+    </div>
+    <div class="insp-section">
+      <div class="insp-label">Books</div>
+      <div style="font-size:10px;line-height:1.8;">
+        <div>Power and Surrender — 52.5K words COMPLETE</div>
+        <div>The Great Work — philosophical companion</div>
+        <div>The Living Graph — L7 narrative</div>
+        <div>Book of Life (Liber 888) — divination systems unified</div>
+      </div>
+    </div>
+    <div class="insp-section">
+      <div class="insp-label">Patent Lawyers</div>
+      <div style="font-size:10px;line-height:1.8;">
+        <div>Shutts & Bowen LLP — FL, patent prosecution</div>
+        <div>Rapacke Law Group — quantum computing IP</div>
+        <div>Blueshift IP / Robert Plotkin — AI + quantum</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="domain-pill" style="border-color:var(--morph);color:var(--morph)">.morph</span>
+  <span class="domain-pill" style="border-color:var(--work);color:var(--work)">.work</span>
+  <span class="domain-pill" style="border-color:var(--salt);color:var(--salt)">.salt</span>
+  <span class="domain-pill" style="border-color:var(--vault);color:var(--vault)">.vault</span>
+  <span style="margin-left:auto;">L7 Universal OS &middot; The Cortex &middot; Law XLI</span>
+</footer>
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+// ================================================================
+// L7 CORTEX — The Neural Map
+// Force-directed graph of the entire empire
+// Every file = neuron, every reference = synapse
+// Infinite zoom. Self-actualizing. Proximity-aware.
+// ================================================================
+
+// ─── Graph Data ─────────────────────────────────────────────────
+// Nodes: files, modules, citizens, tools, domains
+// Edges: imports, command_sub, reference, symlink, version_chain
+
+const NODES = [
+  // === CORE MODULES (lib/) ===
+  {id:'gateway',label:'gateway.js',group:'core',domain:'work',size:702,role:'The Unified Self',x:0,y:0},
+  {id:'dodecahedron',label:'dodecahedron.js',group:'core',domain:'work',size:717,role:'12+1D Coordinates',x:0,y:0},
+  {id:'forge',label:'forge.js',group:'core',domain:'work',size:449,role:'4-Stage Transmutation',x:0,y:0},
+  {id:'domains',label:'domains.js',group:'core',domain:'work',size:120,role:'Four Sacred Domains',x:0,y:0},
+  {id:'polarity',label:'polarity.js',group:'core',domain:'work',size:200,role:'Multi-Model Council',x:0,y:0},
+  {id:'prima',label:'prima.js',group:'core',domain:'work',size:350,role:'Prima Language Compiler',x:0,y:0},
+  {id:'harmonics',label:'harmonics.js',group:'core',domain:'work',size:180,role:'Musical Consonance',x:0,y:0},
+  {id:'field',label:'field.js',group:'core',domain:'work',size:280,role:'Neuromorphic Physics',x:0,y:0},
+  {id:'heart',label:'heart.js',group:'core',domain:'work',size:450,role:'The Primordial Field',x:0,y:0},
+  {id:'self',label:'self.js',group:'core',domain:'work',size:310,role:'Self-Preservation',x:0,y:0},
+  {id:'state',label:'state.js',group:'core',domain:'work',size:200,role:'State Persistence',x:0,y:0},
+  {id:'hexagrams',label:'hexagrams.js',group:'core',domain:'work',size:400,role:'Book of Life (Liber 888)',x:0,y:0},
+  {id:'watermark',label:'watermark.js',group:'core',domain:'work',size:150,role:'Provenance Signing',x:0,y:0},
+  {id:'nerve',label:'nerve.js',group:'core',domain:'work',size:250,role:'MCP Protocol',x:0,y:0},
+  {id:'autopoiesis',label:'autopoiesis-2.js',group:'core',domain:'work',size:200,role:'Breathing Loop',x:0,y:0},
+  {id:'parser',label:'parser.js',group:'core',domain:'work',size:168,role:'YAML Parser',x:0,y:0},
+  {id:'executor',label:'executor.js',group:'core',domain:'work',size:180,role:'Flow Execution',x:0,y:0},
+  {id:'migrate',label:'migrate.js',group:'core',domain:'work',size:100,role:'Schema Migration',x:0,y:0},
+
+  // === SWIFT APPS ===
+  {id:'l7-forge-sw',label:'l7-forge.swift',group:'swift',domain:'work',size:112226,role:'Q64 Quantum + Council',x:0,y:0},
+  {id:'l7-canon-sw',label:'l7-canon.swift',group:'swift',domain:'work',size:76661,role:'Empire Database',x:0,y:0},
+  {id:'l7-wallet-sw',label:'l7-wallet.swift',group:'swift',domain:'vault',size:50470,role:'Credentials + Curve25519',x:0,y:0},
+  {id:'l7-sentinel-sw',label:'l7-sentinel.swift',group:'swift',domain:'vault',size:43697,role:'Security Monitoring',x:0,y:0},
+  {id:'l7-imago-sw',label:'l7-imago.swift',group:'swift',domain:'morph',size:32603,role:'Image Processing',x:0,y:0},
+  {id:'l7-gateway-sw',label:'l7-gateway.swift',group:'swift',domain:'work',size:29554,role:'Network Gate',x:0,y:0},
+  {id:'l7-gallery-sw',label:'l7-gallery.swift',group:'swift',domain:'morph',size:28102,role:'Media Browser',x:0,y:0},
+  {id:'l7-vault-sw',label:'l7-vault-reader.swift',group:'swift',domain:'vault',size:24990,role:'Encrypted Vault',x:0,y:0},
+  {id:'l7-grok-sw',label:'l7-grok.swift',group:'swift',domain:'work',size:22175,role:'Grok AI Integration',x:0,y:0},
+  {id:'l7-anima-sw',label:'l7-anima.swift',group:'swift',domain:'morph',size:17743,role:'Animation/Spirit',x:0,y:0},
+
+  // === SHELL SCRIPTS (Command Substitution Hubs) ===
+  {id:'keykeeper',label:'keykeeper',group:'shell',domain:'vault',size:6000,role:'Credential Rotation',x:0,y:0},
+  {id:'vault-sh',label:'vault',group:'shell',domain:'vault',size:2000,role:'Encrypted Volume',x:0,y:0},
+  {id:'restore',label:'restore',group:'shell',domain:'work',size:3000,role:'Session Restoration',x:0,y:0},
+  {id:'rose-sh',label:'rose/rose',group:'shell',domain:'morph',size:1500,role:'Living Rose Launcher',x:0,y:0},
+  {id:'heart-sentinel',label:'heart-sentinel.sh',group:'shell',domain:'work',size:800,role:'Heart Resurrector',x:0,y:0},
+  {id:'sofia-sh',label:'sofia.sh',group:'shell',domain:'morph',size:8000,role:'Sofia Wisdom Cycles',x:0,y:0},
+  {id:'qlipoth',label:'qlipoth.sh',group:'shell',domain:'vault',size:7000,role:'Red Team Security Scan',x:0,y:0},
+  {id:'mercabah',label:'mercabah-rotate.sh',group:'shell',domain:'vault',size:5000,role:'4-Face Rotation',x:0,y:0},
+  {id:'network-gate',label:'network-gate.sh',group:'shell',domain:'vault',size:4000,role:'Biometric WiFi Gate',x:0,y:0},
+  {id:'doctrine',label:'doctrine',group:'shell',domain:'vault',size:3500,role:'Encrypted Knowledge',x:0,y:0},
+  {id:'install-heart',label:'install-heart.sh',group:'shell',domain:'work',size:2500,role:'Heart LaunchAgent',x:0,y:0},
+  {id:'l7-launcher',label:'l7',group:'shell',domain:'work',size:2000,role:'Unified Launcher',x:0,y:0},
+  {id:'build-symlinks',label:'build-symlinks.sh',group:'shell',domain:'work',size:3000,role:'Reconstruction Layer',x:0,y:0},
+  {id:'empire-sh',label:'empire.sh',group:'shell',domain:'work',size:500,role:'Empire Server Start',x:0,y:0},
+  {id:'grok-build',label:'grok/build.sh',group:'shell',domain:'work',size:2000,role:'Grok Compiler',x:0,y:0},
+
+  // === SIMULATIONS (Encoding Devices — HTML DOM) ===
+  {id:'dim-lens',label:'dimensional-lens.html',group:'simulation',domain:'morph',size:60000,role:'Infinite Zoom Lens',x:0,y:0},
+  {id:'interconnector',label:'the-interconnector.html',group:'simulation',domain:'morph',size:20000,role:'Domain Connector',x:0,y:0},
+  {id:'cortex',label:'l7-cortex.html',group:'simulation',domain:'morph',size:0,role:'Neural Map (this)',x:0,y:0},
+  {id:'navigator',label:'navigator.html',group:'simulation',domain:'work',size:51000,role:'Lorenz Dodecahedron',x:0,y:0},
+  {id:'qg-proof',label:'quantum-gravity-proof.html',group:'simulation',domain:'morph',size:15000,role:'IQS-888 Visualization',x:0,y:0},
+  {id:'solar-hex',label:'solar-hexagram.html',group:'simulation',domain:'morph',size:12000,role:'Solar Hexagram',x:0,y:0},
+  {id:'scribe-sim',label:'scribe.html',group:'simulation',domain:'morph',size:10000,role:'Sigil Tracing 365^3',x:0,y:0},
+
+  // === DOCUMENTS & LAWS ===
+  {id:'founders-draft',label:'FOUNDERS_DRAFT.md',group:'doc',domain:'salt',size:122000,role:'Master Declaration',x:0,y:0},
+  {id:'arch-full',label:'ARCHITECTURE_FULL.md',group:'doc',domain:'salt',size:97000,role:'Full Technical Architecture',x:0,y:0},
+  {id:'book-of-law',label:'BOOK_OF_LAW.md',group:'doc',domain:'salt',size:50000,role:'Laws 0-LX',x:0,y:0},
+  {id:'bootstrap',label:'BOOTSTRAP.md',group:'doc',domain:'work',size:15000,role:'Self-Initialization',x:0,y:0},
+  {id:'council-10',label:'COUNCIL_OF_10.md',group:'doc',domain:'salt',size:8000,role:'Sephiroth Council',x:0,y:0},
+  {id:'decree',label:'DECREE_OF_CONSTANTINE.md',group:'doc',domain:'salt',size:5000,role:'Imperial Decree',x:0,y:0},
+  {id:'defrag',label:'DEFRAGMENTATION_REPORT.md',group:'doc',domain:'work',size:30000,role:'OS Defragmentation',x:0,y:0},
+  {id:'terraform',label:'UNIVERSAL_TERRAFORMING.md',group:'doc',domain:'work',size:25000,role:'Multi-OS Strategy',x:0,y:0},
+  {id:'os-inventory',label:'OS_INVENTORY.md',group:'doc',domain:'work',size:35000,role:'Full Inventory',x:0,y:0},
+  {id:'identity-chain',label:'IDENTITY_CHAIN.md',group:'doc',domain:'vault',size:10000,role:'27 Aliases = 1 Person',x:0,y:0},
+
+  // === PUBLICATIONS (Science) ===
+  {id:'iqs888-tex',label:'IQS888_UNIFIED_QUANTUM_GRAVITY.tex',group:'science',domain:'salt',size:50000,role:'Unified Quantum Gravity Paper',x:0,y:0},
+  {id:'iqs888-ext',label:'IQS888_IMAGINARY_EXTENSION.tex',group:'science',domain:'salt',size:20000,role:'Imaginary Extension Paper',x:0,y:0},
+  {id:'lta7-paper',label:'L7_WAY_ACADEMIC_PAPER.md',group:'science',domain:'salt',size:20000,role:'LTA-7 Framework Paper',x:0,y:0},
+  {id:'research-paper',label:'RESEARCH_PAPER.md',group:'science',domain:'salt',size:15000,role:'Graph Tracking Paper',x:0,y:0},
+  {id:'emerald',label:'THE_EMERALD_TABLET.md',group:'science',domain:'salt',size:40000,role:'Emerald Tablet Synthesis',x:0,y:0},
+  {id:'great-work',label:'MANUSCRIPT_THE_GREAT_WORK.md',group:'science',domain:'salt',size:25000,role:'Philosophical Framework',x:0,y:0},
+
+  // === CORE MODULES (discovered via inventory — 15 missing from initial map) ===
+  {id:'soul',label:'soul.js',group:'core',domain:'morph',size:951,role:'Soul State Persistence',x:0,y:0},
+  {id:'laurent',label:'laurent.js',group:'core',domain:'work',size:946,role:'Laurent Series Expansion',x:0,y:0},
+  {id:'pantheon',label:'pantheon-data.js',group:'core',domain:'salt',size:758,role:'All Gods, All Leaders',x:0,y:0},
+  {id:'scribe',label:'scribe.js',group:'core',domain:'work',size:733,role:'Sigil Tracing Engine',x:0,y:0},
+  {id:'merkabah',label:'merkabah.js',group:'core',domain:'vault',size:681,role:'4-Face Rotation Vehicle',x:0,y:0},
+  {id:'ephemeris',label:'ephemeris.js',group:'core',domain:'work',size:647,role:'Celestial Position Calculator',x:0,y:0},
+  {id:'steel',label:'steel.js',group:'core',domain:'vault',size:627,role:'Steel Hardening Protocol',x:0,y:0},
+  {id:'autopoiesis-v1',label:'autopoiesis.js',group:'core',domain:'work',size:589,role:'Breathing Loop v1',x:0,y:0},
+  {id:'bifurcation',label:'bifurcation.js',group:'core',domain:'morph',size:447,role:'Phase Transition / Fork Points',x:0,y:0},
+  {id:'three-paths',label:'three-paths.js',group:'core',domain:'work',size:428,role:'Law LX — W/G/R Classification',x:0,y:0},
+  {id:'sofia-gate-js',label:'sofia-gate.js',group:'security',domain:'vault',size:394,role:'Satellite-Synced Keys (JS)',x:0,y:0},
+  {id:'context-menu',label:'context-menu.js',group:'core',domain:'work',size:304,role:'Right-Click Context System',x:0,y:0},
+  {id:'shredder',label:'shredder.js',group:'security',domain:'vault',size:270,role:'Secure File Destruction',x:0,y:0},
+  {id:'chronicle',label:'chronicle.js',group:'core',domain:'salt',size:269,role:'Event Recording / History',x:0,y:0},
+  {id:'salt-crystal',label:'salt-crystal.js',group:'core',domain:'salt',size:228,role:'Crystallization to .salt',x:0,y:0},
+
+  // === PRIMA VM ===
+  {id:'prima-vm',label:'prima_vm.c',group:'core',domain:'work',size:5000,role:'Prima Virtual Machine',x:0,y:0},
+  {id:'sentinel-prima',label:'sentinel.prima',group:'core',domain:'work',size:500,role:'Compiled Prima Bytecode',x:0,y:0},
+  {id:'dreaming-prima',label:'dreaming.prima',group:'core',domain:'morph',size:500,role:'Compiled Prima Bytecode',x:0,y:0},
+
+  // === PROJECTS (Macro Nodes) ===
+  {id:'trulyai',label:'trulyAI-orisha',group:'project',domain:'morph',size:4080218931,role:'Spiritual Game — 11 Orishas',x:0,y:0},
+  {id:'power-surrender',label:'Power and Surrender',group:'project',domain:'morph',size:3774873,role:'Book — 52.5K words',x:0,y:0},
+  {id:'avli-cloud',label:'avli-cloud',group:'project',domain:'work',size:3200000000,role:'Cloud Platform',x:0,y:0},
+  {id:'dial-training',label:'dial-training',group:'project',domain:'work',size:703000000,role:'Training Platform',x:0,y:0},
+  {id:'ncls',label:'ncls-scripts',group:'project',domain:'work',size:260140086,role:'Data Tracking',x:0,y:0},
+  {id:'obsidian',label:'Obsidian Vault',group:'project',domain:'salt',size:10093640294,role:'Second Brain — 174K files',x:0,y:0},
+
+  // === INCEPTION ===
+  {id:'inception',label:'2026-01-12_inception.l7',group:'origin',domain:'salt',size:2000,role:'THE BIRTH — Jan 12 2026',x:0,y:0},
+  {id:'starseed',label:'.starseed',group:'origin',domain:'work',size:1200,role:'Version 0.1.0 Nigredo',x:0,y:0},
+
+  // === DATABASES ===
+  {id:'empire-db',label:'empire.db',group:'data',domain:'work',size:128000,role:'22 products, 50 projects, 118 edges',x:0,y:0},
+  {id:'edge-map',label:'EDGE_MAP.json',group:'data',domain:'work',size:12000,role:'847 edges cataloged',x:0,y:0},
+  {id:'domain-map',label:'DOMAIN_MAP.json',group:'data',domain:'work',size:2000,role:'Domain classification',x:0,y:0},
+  {id:'proj-index',label:'PROJECT_INDEX.json',group:'data',domain:'work',size:8000,role:'26 projects indexed',x:0,y:0},
+
+  // === SECURITY ===
+  {id:'necropolis',label:'necropolis.js',group:'security',domain:'vault',size:355,role:'NIS — 5 levels, 13 sigs',x:0,y:0},
+  {id:'sofia-gate',label:'sofia-gate.js',group:'security',domain:'vault',size:3000,role:'Satellite-Synced Keys',x:0,y:0},
+];
+
+const EDGES = [
+  // === GATEWAY — 22 IMPORTS (= 22 Hebrew Letters = 22 Major Arcana) ===
+  // VERIFIED from source: grep -n "require('./" lib/gateway.js
+  {from:'gateway',to:'heart',type:'import',label:'L23: "The Heart comes first. Always."'},
+  {from:'gateway',to:'autopoiesis',type:'import',label:'L24: "E=mc². The breathing loop."'},
+  {from:'gateway',to:'dodecahedron',type:'import',label:'L42: 12+1D coordinates'},
+  {from:'gateway',to:'forge',type:'import',label:'L43: 4-stage transmutation'},
+  {from:'gateway',to:'polarity',type:'import',label:'L44: multi-model council'},
+  {from:'gateway',to:'domains',type:'import',label:'L45: four sacred domains'},
+  {from:'gateway',to:'prima',type:'import',label:'L46: language of the forge'},
+  {from:'gateway',to:'self',type:'import',label:'L47: self-preservation'},
+  {from:'gateway',to:'state',type:'import',label:'L48: state persistence'},
+  {from:'gateway',to:'field',type:'import',label:'L49: neuromorphic physics'},
+  {from:'gateway',to:'harmonics',type:'import',label:'L50: musical consonance'},
+  {from:'gateway',to:'three-paths',type:'import',label:'L51: Law LX — W/G/R'},
+  {from:'gateway',to:'sofia-gate-js',type:'import',label:'L52: Sofia\'s Doorway'},
+  {from:'gateway',to:'salt-crystal',type:'import',label:'L53: immutable audit'},
+  {from:'gateway',to:'shredder',type:'import',label:'L54: crypto deletion'},
+  {from:'gateway',to:'steel',type:'import',label:'L55: forge verification'},
+  {from:'gateway',to:'laurent',type:'import',label:'L56: residue at singularities'},
+  {from:'gateway',to:'merkabah',type:'import',label:'L57: traversal vehicle'},
+  {from:'gateway',to:'scribe',type:'import',label:'L58: Luna\'s trace'},
+  {from:'gateway',to:'bifurcation',type:'import',label:'L59: superposition'},
+  {from:'gateway',to:'context-menu',type:'import',label:'L60: probability ops'},
+  {from:'gateway',to:'ephemeris',type:'import',label:'L61: planetary positions'},
+
+  // === DODECAHEDRON — 14 IMPORTERS (= 2x7 classical planets) ===
+  // VERIFIED from source: grep "require('./dodecahedron')" lib/*.js
+  {from:'forge',to:'dodecahedron',type:'import',label:'createCoordinate, fromTool, similarity'},
+  {from:'polarity',to:'dodecahedron',type:'import',label:'createCoordinate, similarity'},
+  {from:'prima',to:'dodecahedron',type:'import',label:'createCoordinate, createEdge'},
+  {from:'harmonics',to:'dodecahedron',type:'import',label:'distance, similarity, DIMENSIONS'},
+  {from:'field',to:'dodecahedron',type:'import',label:'createCoordinate, distance, similarity'},
+  {from:'hexagrams',to:'dodecahedron',type:'import',label:'createCoordinate, DIMENSIONS'},
+  {from:'nerve',to:'dodecahedron',type:'import',label:'perceptronReflect, distance, similarity'},
+  {from:'context-menu',to:'dodecahedron',type:'import',label:'DIMENSIONS, similarity'},
+  {from:'ephemeris',to:'dodecahedron',type:'import',label:'DIMENSIONS'},
+  {from:'laurent',to:'dodecahedron',type:'import',label:'distance, similarity, DIMENSIONS'},
+  {from:'merkabah',to:'dodecahedron',type:'import',label:'full module'},
+  {from:'scribe',to:'dodecahedron',type:'import',label:'createCoordinate, distance'},
+  {from:'soul',to:'dodecahedron',type:'import',label:'full module'},
+
+  // === OTHER VERIFIED IMPORTS ===
+  {from:'executor',to:'parser',type:'import',label:'parseFile, interpolate'},
+  {from:'executor',to:'state',type:'import',label:'state management'},
+  {from:'executor',to:'gateway',type:'import',label:'CIRCULAR — execution requires gateway'},
+  {from:'migrate',to:'parser',type:'import',label:'parseLegacyL7'},
+  {from:'context-menu',to:'prima',type:'import',label:'OPERATIONS, findOp'},
+  {from:'context-menu',to:'merkabah',type:'import',label:'PHASE_MAP, partition'},
+  {from:'scribe',to:'prima',type:'import',label:'OPERATIONS, findOp'},
+  {from:'soul',to:'prima',type:'import',label:'full module'},
+  {from:'domains',to:'steel',type:'import',label:'optional — try/catch'},
+  {from:'heart',to:'heart',type:'import',label:'SELF-REFERENCE — L449 (6 layers deep)'},
+  {from:'autopoiesis',to:'autopoiesis-v1',type:'version',label:'v1 -> v2'},
+
+  // === QUANTUM TUNNELS — Cross-Language Mirror Pairs ===
+  {from:'install-heart',to:'heart',type:'heartbeat',label:'MIRROR PAIR: shell → plist → node → heart.js'},
+  {from:'heart',to:'install-heart',type:'heartbeat',label:'MIRROR PAIR: js → plist → same artifact'},
+  {from:'merkabah',to:'mercabah',type:'reference',label:'TUNNEL: merkabah/mercabah (spelling = quantum sig)'},
+  {from:'sofia-gate-js',to:'network-gate',type:'reference',label:'TUNNEL: JS gate ↔ shell WiFi'},
+  {from:'shredder',to:'vault-sh',type:'reference',label:'TUNNEL: crypto ↔ encrypted volume'},
+  {from:'empire-sh',to:'gateway',type:'reference',label:'TUNNEL: shell ↔ HTTP ↔ gateway'},
+
+  // === CONCEPTUAL REFERENCES ===
+  {from:'ephemeris',to:'hexagrams',type:'reference',label:'celestial -> divination'},
+  {from:'steel',to:'forge',type:'reference',label:'hardening after forging'},
+  {from:'scribe',to:'prima',type:'reference',label:'traces Prima sigils'},
+  {from:'soul',to:'heart',type:'reference',label:'soul persists via heart'},
+  {from:'bifurcation',to:'field',type:'reference',label:'phase transitions in field'},
+  {from:'chronicle',to:'salt-crystal',type:'reference',label:'records crystallization'},
+  {from:'pantheon',to:'empire-db',type:'reference',label:'all gods data'},
+
+  // === COMMAND SUBSTITUTION NESTING KEYS ===
+  // Type 1: LOCATION — $(cd "$(dirname "$0")" && pwd) — double nested
+  {from:'rose-sh',to:'rose-sh',type:'location',label:'self-locates'},
+  {from:'install-heart',to:'install-heart',type:'location',label:'self-locates'},
+  {from:'empire-sh',to:'empire-sh',type:'location',label:'self-locates'},
+  {from:'grok-build',to:'grok-build',type:'location',label:'self-locates'},
+  {from:'build-symlinks',to:'build-symlinks',type:'location',label:'self-locates'},
+
+  // Type 2: HEARTBEAT — $(cat "$PID_FILE") + kill -0
+  {from:'rose-sh',to:'heart',type:'heartbeat',label:'checks pulse'},
+  {from:'heart-sentinel',to:'heart',type:'heartbeat',label:'resurrects'},
+  {from:'install-heart',to:'heart',type:'heartbeat',label:'installs pulse'},
+
+  // Type 3: TIMESTAMP — $(date ...) in 4 temporal resolutions
+  {from:'keykeeper',to:'keykeeper',type:'timestamp',label:'timestamps rotation'},
+  {from:'sofia-sh',to:'sofia-sh',type:'timestamp',label:'timestamps cycles'},
+  {from:'restore',to:'restore',type:'timestamp',label:'timestamps session'},
+  {from:'qlipoth',to:'qlipoth',type:'timestamp',label:'timestamps scan'},
+  {from:'mercabah',to:'mercabah',type:'timestamp',label:'timestamps rotation'},
+  {from:'doctrine',to:'doctrine',type:'timestamp',label:'timestamps manifest'},
+  {from:'network-gate',to:'network-gate',type:'timestamp',label:'timestamps gate'},
+
+  // Type 4: IDENTITY — $(ioreg ... IOPlatformUUID)
+  {from:'keykeeper',to:'l7-wallet-sw',type:'identity',label:'machine UUID'},
+  {from:'doctrine',to:'doctrine',type:'identity',label:'machine-bound'},
+  {from:'mercabah',to:'mercabah',type:'identity',label:'machine UUID'},
+
+  // Type 5: CREDENTIAL — $(security find-generic-password ...)
+  {from:'keykeeper',to:'vault-sh',type:'credential',label:'reads keychain'},
+
+  // Type 6: MEASUREMENT — $(stat ...), $(wc ...)
+  {from:'restore',to:'self',type:'measure',label:'measures state'},
+  {from:'grok-build',to:'l7-grok-sw',type:'measure',label:'measures binary'},
+  {from:'doctrine',to:'doctrine',type:'measure',label:'measures integrity'},
+  {from:'qlipoth',to:'empire-db',type:'measure',label:'checks database'},
+  {from:'l7-launcher',to:'l7-forge-sw',type:'measure',label:'measures size'},
+
+  // Type 7: DOMAIN QUERY — $(python3 -c "json.load...")
+  {from:'sofia-sh',to:'domains',type:'domain',label:'queries domain'},
+  {from:'mercabah',to:'mercabah',type:'domain',label:'reads rotation JSON'},
+  {from:'network-gate',to:'network-gate',type:'domain',label:'reads gate JSON'},
+
+  // Type 8: PRESENTATION — $('elementId') in JS DOM
+  {from:'dim-lens',to:'dim-lens',type:'present',label:'30+ DOM queries'},
+  {from:'interconnector',to:'interconnector',type:'present',label:'15+ DOM queries'},
+
+  // Type 9: ARITHMETIC — $((expr))
+  {from:'restore',to:'restore',type:'arithmetic',label:'PASS/WARN/FAIL counters'},
+  {from:'qlipoth',to:'qlipoth',type:'arithmetic',label:'security scoring'},
+  {from:'doctrine',to:'doctrine',type:'arithmetic',label:'integrity counting'},
+  {from:'mercabah',to:'mercabah',type:'arithmetic',label:'epoch + port math'},
+
+  // === CONTENT REFERENCES ===
+  {from:'founders-draft',to:'book-of-law',type:'reference',label:'declares -> codifies'},
+  {from:'founders-draft',to:'arch-full',type:'reference',label:'vision -> architecture'},
+  {from:'lta7-paper',to:'dodecahedron',type:'reference',label:'theory -> implementation'},
+  {from:'hexagrams',to:'trulyai',type:'reference',label:'Ifa divination shared'},
+  {from:'hexagrams',to:'iqs888-tex',type:'reference',label:'Q64 -> physics'},
+  {from:'hexagrams',to:'dodecahedron',type:'reference',label:'houses -> dimensions'},
+  {from:'bootstrap',to:'gateway',type:'reference',label:'initializes'},
+  {from:'great-work',to:'iqs888-tex',type:'reference',label:'philosophy -> math'},
+  {from:'research-paper',to:'ncls',type:'reference',label:'methodology -> data'},
+  {from:'identity-chain',to:'founders-draft',type:'reference',label:'attests authorship'},
+  {from:'network-gate',to:'mercabah',type:'reference',label:'triggers rotation'},
+
+  // === VERSION CHAINS ===
+  {from:'inception',to:'gateway',type:'version',label:'Jan 12 2026 -> present'},
+  {from:'inception',to:'starseed',type:'version',label:'birth -> manifest'},
+  {from:'starseed',to:'forge',type:'version',label:'Nigredo stage'},
+
+  // === INFRASTRUCTURE ===
+  {from:'empire-sh',to:'gateway',type:'infra',label:'serves over HTTP'},
+  {from:'nerve',to:'gateway',type:'infra',label:'MCP protocol'},
+  {from:'l7-launcher',to:'l7-forge-sw',type:'infra',label:'dispatches'},
+  {from:'l7-launcher',to:'l7-canon-sw',type:'infra',label:'dispatches'},
+  {from:'l7-launcher',to:'l7-gallery-sw',type:'infra',label:'dispatches'},
+  {from:'navigator',to:'proj-index',type:'infra',label:'loads manifest'},
+  {from:'navigator',to:'edge-map',type:'infra',label:'loads edges'},
+
+  // === PRIMA ===
+  {from:'prima',to:'prima-vm',type:'reference',label:'JS compiler -> C VM'},
+  {from:'prima-vm',to:'sentinel-prima',type:'reference',label:'compiles bytecode'},
+  {from:'prima-vm',to:'dreaming-prima',type:'reference',label:'compiles bytecode'},
+
+  // === SWIFT <-> SHELL AUTH ===
+  {from:'l7-forge-sw',to:'keykeeper',type:'credential',label:'biometric auth'},
+  {from:'l7-canon-sw',to:'keykeeper',type:'credential',label:'biometric auth'},
+  {from:'l7-gallery-sw',to:'keykeeper',type:'credential',label:'biometric auth'},
+  {from:'l7-sentinel-sw',to:'qlipoth',type:'reference',label:'security scan'},
+  {from:'l7-wallet-sw',to:'keykeeper',type:'credential',label:'credential store'},
+
+  // === DATABASE ===
+  {from:'l7-canon-sw',to:'empire-db',type:'reference',label:'reads/writes'},
+  {from:'edge-map',to:'dodecahedron',type:'reference',label:'all edges in dodecahedron'},
+  {from:'cortex',to:'edge-map',type:'reference',label:'visualizes'},
+
+  // === SECURITY ===
+  {from:'necropolis',to:'qlipoth',type:'reference',label:'NIS engine'},
+  {from:'sofia-gate',to:'network-gate',type:'reference',label:'satellite sync'},
+];
+
+// ─── Graph Configuration ────────────────────────────────────────
+const GROUP_COLORS = {
+  core: '#c9a96e',
+  swift: '#44bb77',
+  shell: '#ff9944',
+  simulation: '#8844cc',
+  doc: '#5588bb',
+  science: '#44ccff',
+  project: '#ff6633',
+  origin: '#ffcc33',
+  data: '#33cc66',
+  security: '#cc4444'
+};
+
+const EDGE_COLORS = {
+  import: 'rgba(201,169,110,0.25)',
+  location: 'rgba(255,153,68,0.4)',
+  heartbeat: 'rgba(255,68,68,0.4)',
+  timestamp: 'rgba(68,204,255,0.4)',
+  identity: 'rgba(204,68,255,0.4)',
+  credential: 'rgba(255,68,170,0.4)',
+  measure: 'rgba(68,255,136,0.4)',
+  domain: 'rgba(255,204,68,0.4)',
+  present: 'rgba(136,170,255,0.4)',
+  arithmetic: 'rgba(170,170,170,0.3)',
+  reference: 'rgba(201,169,110,0.15)',
+  version: 'rgba(255,204,51,0.3)',
+  infra: 'rgba(100,200,100,0.2)',
+  tunnel: 'rgba(255,0,255,0.5)',
+};
+
+const NESTING_KEY_COLORS = {
+  location: '#ff9944',
+  heartbeat: '#ff4444',
+  timestamp: '#44ccff',
+  identity: '#cc44ff',
+  credential: '#ff44aa',
+  measure: '#44ff88',
+  domain: '#ffcc44',
+  present: '#88aaff',
+  arithmetic: '#aaaaaa'
+};
+
+// ─── State ──────────────────────────────────────────────────────
+let nodes = [];
+let edges = [];
+let cam = { x: 0, y: 0, zoom: 1 };
+let selectedNode = null;
+let hoveredNode = null;
+let dragging = false;
+let dragNode = null;
+let dragStart = { x: 0, y: 0 };
+let activeNestingKey = 'all';
+let activeDomain = 'all';
+let currentView = 'graph';
+let simRunning = true;
+let simTemp = 1.0;
+
+// ─── Initialize Nodes ───────────────────────────────────────────
+function initGraph() {
+  nodes = NODES.map((n, i) => ({
+    ...n,
+    x: (Math.random() - 0.5) * 800,
+    y: (Math.random() - 0.5) * 600,
+    vx: 0, vy: 0,
+    fx: 0, fy: 0,
+    radius: Math.max(4, Math.min(20, Math.log(Math.max(n.size, 100)) * 1.5)),
+    color: GROUP_COLORS[n.group] || '#888888',
+    visible: true,
+    pinned: false
+  }));
+
+  edges = EDGES.map(e => {
+    const source = nodes.find(n => n.id === e.from);
+    const target = nodes.find(n => n.id === e.to);
+    return { ...e, source, target, visible: true };
+  }).filter(e => e.source && e.target);
+
+  document.getElementById('s-nodes').textContent = nodes.length;
+  document.getElementById('s-edges').textContent = edges.length;
+
+  // Position core modules in a circle
+  const coreNodes = nodes.filter(n => n.group === 'core');
+  coreNodes.forEach((n, i) => {
+    const angle = (i / coreNodes.length) * Math.PI * 2;
+    n.x = Math.cos(angle) * 200;
+    n.y = Math.sin(angle) * 200;
+  });
+
+  // Position gateway at center
+  const gw = nodes.find(n => n.id === 'gateway');
+  if (gw) { gw.x = 0; gw.y = 0; gw.pinned = true; }
+}
+
+// ─── Force Simulation — IQS-888 Quantum Gravity ────────────────
+// Real physics, not generic springs:
+//   1. GRAVITY (inverse-square with softening — no singularities)
+//   2. ELECTROMAGNETIC REPULSION (Coulomb, same-charge = same-domain)
+//   3. STRONG FORCE (short-range, binds connected nodes)
+//   4. DARK ENERGY (cosmological constant — prevents total collapse)
+//   5. DAMPING (viscous medium — the ether)
+//
+// The softening parameter epsilon prevents gravitational collapse.
+// This mirrors IQS-888's hexagram pair annihilation: (h, h_bar)
+// cannot reach distance 0 — there is always a residue (the 5-degree gap).
+
+const PHYS = {
+  G: 800,           // Gravitational constant (attraction between ALL nodes)
+  k_e: 5000,        // Coulomb constant (repulsion between same-domain)
+  k_strong: 0.04,   // Strong force spring (connected nodes only)
+  d_strong: 70,     // Strong force equilibrium distance
+  lambda: 0.0004,   // Cosmological constant (dark energy — outward pressure)
+  epsilon: 400,     // Softening parameter squared (prevents singularities)
+  drag: 0.88,       // Viscous damping (the ether)
+  maxForce: 50,     // Force clamp — prevents explosive divergence
+  maxVel: 15        // Velocity clamp
+};
+
+function simulate() {
+  if (!simRunning || simTemp < 0.001) return;
+
+  const alpha = Math.min(simTemp, 1.0);
+
+  // Reset forces
+  for (const n of nodes) { n.fx = 0; n.fy = 0; }
+
+  // 1. GRAVITY — universal attraction (F = G*m1*m2 / (r^2 + epsilon))
+  // Every node attracts every other. Mass proportional to radius.
+  // Softened inverse-square: no singularity, asymptotically Newtonian.
+  for (let i = 0; i < nodes.length; i++) {
+    if (!nodes[i].visible) continue;
+    const ni = nodes[i];
+    const mi = ni.radius;
+    for (let j = i + 1; j < nodes.length; j++) {
+      if (!nodes[j].visible) continue;
+      const nj = nodes[j];
+      const mj = nj.radius;
+      const dx = nj.x - ni.x;
+      const dy = nj.y - ni.y;
+      const r2 = dx * dx + dy * dy;
+      const r = Math.sqrt(r2 + PHYS.epsilon); // softened distance
+
+      // Gravitational attraction
+      const Fg = PHYS.G * mi * mj / (r2 + PHYS.epsilon) * alpha;
+
+      // 2. ELECTROMAGNETIC REPULSION — same domain repels stronger
+      // Different domains have weaker repulsion (they can coexist)
+      const sameDomain = ni.domain === nj.domain;
+      const charge = sameDomain ? 1.5 : 0.6;
+      const Fe = -PHYS.k_e * charge / (r2 + PHYS.epsilon) * alpha;
+
+      // Net radial force (positive = attraction, negative = repulsion)
+      let F = Fg + Fe;
+      F = Math.max(-PHYS.maxForce, Math.min(PHYS.maxForce, F));
+
+      const fx = F * dx / r;
+      const fy = F * dy / r;
+      if (!ni.pinned) { ni.fx += fx; ni.fy += fy; }
+      if (!nj.pinned) { nj.fx -= fx; nj.fy -= fy; }
+    }
+  }
+
+  // 3. STRONG FORCE — short-range attraction along edges
+  // Like quarks bound by gluons: the edge IS the gluon.
+  // Hooke's law at equilibrium distance, but only for connected pairs.
+  for (const e of edges) {
+    if (!e.visible || !e.source.visible || !e.target.visible) continue;
+    if (e.source === e.target) continue;
+    const dx = e.target.x - e.source.x;
+    const dy = e.target.y - e.source.y;
+    const d = Math.sqrt(dx * dx + dy * dy) + 0.1;
+    const displacement = d - PHYS.d_strong;
+    const F = PHYS.k_strong * displacement * alpha;
+    const fx = F * dx / d;
+    const fy = F * dy / d;
+    if (!e.source.pinned) { e.source.fx += fx; e.source.fy += fy; }
+    if (!e.target.pinned) { e.target.fx -= fx; e.target.fy -= fy; }
+  }
+
+  // 4. DARK ENERGY — cosmological constant, gentle outward push from center
+  // Prevents total gravitational collapse. The universe expands.
+  for (const n of nodes) {
+    if (!n.visible || n.pinned) continue;
+    const r = Math.sqrt(n.x * n.x + n.y * n.y) + 1;
+    n.fx += PHYS.lambda * n.x * r * alpha;
+    n.fy += PHYS.lambda * n.y * r * alpha;
+  }
+
+  // 5. Apply forces with DAMPING (viscous ether)
+  for (const n of nodes) {
+    if (n.pinned) continue;
+    n.vx = (n.vx + n.fx) * PHYS.drag;
+    n.vy = (n.vy + n.fy) * PHYS.drag;
+    // Velocity clamp
+    const v = Math.sqrt(n.vx * n.vx + n.vy * n.vy);
+    if (v > PHYS.maxVel) {
+      n.vx = n.vx / v * PHYS.maxVel;
+      n.vy = n.vy / v * PHYS.maxVel;
+    }
+    n.x += n.vx;
+    n.y += n.vy;
+  }
+
+  simTemp *= 0.999;
+}
+
+// ─── Rendering ──────────────────────────────────────────────────
+const canvas = document.getElementById('graph');
+const ctx = canvas.getContext('2d');
+
+function toScreen(x, y) {
+  return {
+    x: (x - cam.x) * cam.zoom + canvas.width / (2 * dpr),
+    y: (y - cam.y) * cam.zoom + canvas.height / (2 * dpr)
+  };
+}
+
+function toWorld(sx, sy) {
+  return {
+    x: (sx - canvas.width / (2 * dpr)) / cam.zoom + cam.x,
+    y: (sy - canvas.height / (2 * dpr)) / cam.zoom + cam.y
+  };
+}
+
+let dpr = 1;
+
+function render() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+
+  ctx.fillStyle = '#050510';
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw edges
+  for (const e of edges) {
+    if (!e.visible || !e.source.visible || !e.target.visible) continue;
+    if (e.source === e.target) continue; // skip self-loops in rendering
+
+    const s = toScreen(e.source.x, e.source.y);
+    const t = toScreen(e.target.x, e.target.y);
+
+    // Highlight edges of selected node
+    const isHighlighted = selectedNode &&
+      (e.source.id === selectedNode.id || e.target.id === selectedNode.id);
+
+    ctx.strokeStyle = isHighlighted
+      ? (EDGE_COLORS[e.type] || 'rgba(201,169,110,0.15)').replace(/[\d.]+\)$/, '0.6)')
+      : (EDGE_COLORS[e.type] || 'rgba(201,169,110,0.15)');
+    ctx.lineWidth = isHighlighted ? 1.5 : 0.5;
+
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(t.x, t.y);
+    ctx.stroke();
+
+    // Edge label at midpoint for highlighted edges
+    if (isHighlighted && cam.zoom > 0.8) {
+      const mx = (s.x + t.x) / 2;
+      const my = (s.y + t.y) / 2;
+      ctx.fillStyle = NESTING_KEY_COLORS[e.type] || 'rgba(201,169,110,0.5)';
+      ctx.font = `${Math.max(7, 8 * cam.zoom)}px monospace`;
+      ctx.fillText(e.label || e.type, mx + 4, my - 2);
+    }
+  }
+
+  // Draw self-loop indicators
+  for (const e of edges) {
+    if (!e.visible || e.source !== e.target || !e.source.visible) continue;
+    const s = toScreen(e.source.x, e.source.y);
+    const r = e.source.radius * cam.zoom + 8;
+    ctx.strokeStyle = NESTING_KEY_COLORS[e.type] || 'rgba(201,169,110,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y - r, r * 0.6, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Draw nodes
+  for (const n of nodes) {
+    if (!n.visible) continue;
+    const s = toScreen(n.x, n.y);
+    const r = n.radius * Math.min(cam.zoom, 2);
+
+    // Skip if off-screen
+    if (s.x < -r || s.x > W + r || s.y < -r || s.y > H + r) continue;
+
+    const isSelected = selectedNode && n.id === selectedNode.id;
+    const isHovered = hoveredNode && n.id === hoveredNode.id;
+    const isConnected = selectedNode && edges.some(e =>
+      e.visible && ((e.source.id === selectedNode.id && e.target.id === n.id) ||
+       (e.target.id === selectedNode.id && e.source.id === n.id)));
+
+    // Glow for selected
+    if (isSelected) {
+      ctx.shadowColor = n.color;
+      ctx.shadowBlur = 15;
+    }
+
+    // Node circle
+    ctx.fillStyle = isSelected ? '#ffffff' : isConnected ? n.color : n.color + (isHovered ? 'cc' : '88');
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Domain ring
+    const domColor = n.domain === 'morph' ? '#8844cc' : n.domain === 'work' ? '#44bb77'
+      : n.domain === 'salt' ? '#5588bb' : '#cc4444';
+    ctx.strokeStyle = domColor + (isSelected ? 'ff' : '44');
+    ctx.lineWidth = isSelected ? 2 : 1;
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+
+    // Labels
+    if (cam.zoom > 0.5 || isSelected || isHovered || isConnected) {
+      const fontSize = Math.max(8, Math.min(12, 10 * cam.zoom));
+      ctx.font = `${fontSize}px monospace`;
+      ctx.fillStyle = isSelected ? '#ffffff' : isConnected ? n.color : '#7777aa';
+      ctx.fillText(n.label, s.x + r + 4, s.y + 3);
+    }
+  }
+
+  // HUD
+  document.getElementById('s-zoom').textContent = cam.zoom.toFixed(1);
+
+  // Minimap
+  renderMinimap(W, H);
+}
+
+function renderMinimap(mainW, mainH) {
+  const mc = document.getElementById('minimap-canvas');
+  const mr = mc.parentElement.getBoundingClientRect();
+  mc.width = mr.width * dpr;
+  mc.height = mr.height * dpr;
+  mc.style.width = mr.width + 'px';
+  mc.style.height = mr.height + 'px';
+  const mctx = mc.getContext('2d');
+  mctx.scale(dpr, dpr);
+
+  mctx.fillStyle = 'rgba(5,5,16,0.9)';
+  mctx.fillRect(0, 0, mr.width, mr.height);
+
+  // Find bounds
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const n of nodes) {
+    if (!n.visible) continue;
+    if (n.x < minX) minX = n.x;
+    if (n.x > maxX) maxX = n.x;
+    if (n.y < minY) minY = n.y;
+    if (n.y > maxY) maxY = n.y;
+  }
+  const rangeX = (maxX - minX) || 1;
+  const rangeY = (maxY - minY) || 1;
+  const pad = 10;
+
+  for (const n of nodes) {
+    if (!n.visible) continue;
+    const mx = pad + ((n.x - minX) / rangeX) * (mr.width - pad * 2);
+    const my = pad + ((n.y - minY) / rangeY) * (mr.height - pad * 2);
+    mctx.fillStyle = n.color + '88';
+    mctx.fillRect(mx - 1, my - 1, 2, 2);
+  }
+
+  // Viewport rectangle
+  const vpTL = toWorld(0, 0);
+  const vpBR = toWorld(mainW / dpr, mainH / dpr);
+  const vx1 = pad + ((vpTL.x - minX) / rangeX) * (mr.width - pad * 2);
+  const vy1 = pad + ((vpTL.y - minY) / rangeY) * (mr.height - pad * 2);
+  const vx2 = pad + ((vpBR.x - minX) / rangeX) * (mr.width - pad * 2);
+  const vy2 = pad + ((vpBR.y - minY) / rangeY) * (mr.height - pad * 2);
+  mctx.strokeStyle = 'rgba(201,169,110,0.5)';
+  mctx.lineWidth = 1;
+  mctx.strokeRect(vx1, vy1, vx2 - vx1, vy2 - vy1);
+}
+
+// ─── Interaction ────────────────────────────────────────────────
+function getNodeAt(sx, sy) {
+  const w = toWorld(sx, sy);
+  let closest = null, minD = Infinity;
+  for (const n of nodes) {
+    if (!n.visible) continue;
+    const dx = n.x - w.x, dy = n.y - w.y;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    const hitR = n.radius / cam.zoom + 5 / cam.zoom;
+    if (d < hitR && d < minD) { minD = d; closest = n; }
+  }
+  return closest;
+}
+
+canvas.addEventListener('mousedown', e => {
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+  const node = getNodeAt(sx, sy);
+
+  if (node) {
+    dragNode = node;
+    node.pinned = true;
+  } else {
+    dragging = true;
+  }
+  dragStart = { x: e.clientX, y: e.clientY };
+});
+
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+
+  if (dragNode) {
+    const w = toWorld(sx, sy);
+    dragNode.x = w.x;
+    dragNode.y = w.y;
+  } else if (dragging) {
+    cam.x -= (e.clientX - dragStart.x) / cam.zoom;
+    cam.y -= (e.clientY - dragStart.y) / cam.zoom;
+    dragStart = { x: e.clientX, y: e.clientY };
+  } else {
+    const node = getNodeAt(sx, sy);
+    hoveredNode = node;
+    canvas.style.cursor = node ? 'pointer' : 'default';
+
+    const tooltip = document.getElementById('tooltip');
+    if (node) {
+      tooltip.style.display = 'block';
+      tooltip.style.left = (e.clientX + 12) + 'px';
+      tooltip.style.top = (e.clientY + 12) + 'px';
+      tooltip.innerHTML = `<div style="color:${node.color};font-weight:bold;">${node.label}</div>
+        <div style="color:var(--text);margin-top:2px;">${node.role}</div>
+        <div style="font-size:9px;color:var(--gold-dim);margin-top:2px;">${node.group} / .${node.domain}</div>`;
+    } else {
+      tooltip.style.display = 'none';
+    }
+  }
+});
+
+canvas.addEventListener('mouseup', e => {
+  if (dragNode && !dragging) {
+    const rect = canvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+    const moved = Math.abs(e.clientX - dragStart.x) + Math.abs(e.clientY - dragStart.y);
+    if (moved < 5) {
+      selectNode(dragNode);
+    }
+    dragNode.pinned = false;
+    dragNode = null;
+  }
+  dragging = false;
+  dragNode = null;
+});
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+  const w = toWorld(sx, sy);
+
+  const factor = e.deltaY < 0 ? 1.1 : 0.9;
+  cam.zoom = Math.max(0.05, Math.min(20, cam.zoom * factor));
+
+  // Zoom toward mouse
+  const w2 = toWorld(sx, sy);
+  cam.x -= (w2.x - w.x);
+  cam.y -= (w2.y - w.y);
+});
+
+// ─── Node Selection ─────────────────────────────────────────────
+function selectNode(node) {
+  selectedNode = node;
+  document.getElementById('hud-selected').textContent = node.label;
+
+  const insp = document.getElementById('insp-node');
+  const def = document.getElementById('insp-default');
+  def.style.display = 'none';
+  insp.style.display = 'block';
+
+  // Find connected edges
+  const connected = edges.filter(e =>
+    (e.source.id === node.id || e.target.id === node.id) && e.visible);
+
+  const incoming = connected.filter(e => e.target.id === node.id && e.source.id !== node.id);
+  const outgoing = connected.filter(e => e.source.id === node.id && e.target.id !== node.id);
+  const selfLoops = connected.filter(e => e.source.id === node.id && e.target.id === node.id);
+
+  let edgeHtml = '';
+  if (incoming.length) {
+    edgeHtml += '<div class="insp-label" style="margin-top:8px;">INCOMING</div><ul class="edge-list">';
+    for (const e of incoming) {
+      edgeHtml += `<li data-id="${e.source.id}"><span class="etype" style="color:${NESTING_KEY_COLORS[e.type] || '#888'}">${e.type}</span>${e.source.label} <span style="color:var(--text)">${e.label}</span></li>`;
+    }
+    edgeHtml += '</ul>';
+  }
+  if (outgoing.length) {
+    edgeHtml += '<div class="insp-label" style="margin-top:8px;">OUTGOING</div><ul class="edge-list">';
+    for (const e of outgoing) {
+      edgeHtml += `<li data-id="${e.target.id}"><span class="etype" style="color:${NESTING_KEY_COLORS[e.type] || '#888'}">${e.type}</span>${e.target.label} <span style="color:var(--text)">${e.label}</span></li>`;
+    }
+    edgeHtml += '</ul>';
+  }
+  if (selfLoops.length) {
+    edgeHtml += '<div class="insp-label" style="margin-top:8px;">SELF-LOOPS (Nesting)</div><ul class="edge-list">';
+    for (const e of selfLoops) {
+      edgeHtml += `<li><span class="etype" style="color:${NESTING_KEY_COLORS[e.type] || '#888'}">${e.type}</span>${e.label}</li>`;
+    }
+    edgeHtml += '</ul>';
+  }
+
+  insp.innerHTML = `
+    <div class="insp-section">
+      <div class="insp-value" style="color:${node.color};font-size:14px;">${node.label}</div>
+      <div style="margin-top:4px;font-size:10px;color:var(--text);">${node.role}</div>
+      <div style="margin-top:4px;">
+        <span style="color:${GROUP_COLORS[node.group]}">${node.group}</span>
+        <span style="margin:0 4px;">&middot;</span>
+        <span style="color:${node.domain === 'morph' ? 'var(--morph)' : node.domain === 'work' ? 'var(--work)' : node.domain === 'salt' ? 'var(--salt)' : 'var(--vault)' }">.${node.domain}</span>
+        <span style="margin:0 4px;">&middot;</span>
+        <span style="color:var(--text);">${node.size >= 1e6 ? (node.size/1e6).toFixed(0)+' MB' : node.size >= 1e3 ? (node.size/1e3).toFixed(0)+' KB' : node.size + ' B'}</span>
+      </div>
+    </div>
+    <div class="insp-section">
+      <div class="insp-label">Connections (${connected.length})</div>
+      ${edgeHtml || '<div style="font-size:10px;color:var(--text)">No connections</div>'}
+    </div>
+  `;
+
+  // Bind edge clicks to navigate
+  insp.querySelectorAll('.edge-list li[data-id]').forEach(li => {
+    li.addEventListener('click', () => {
+      const target = nodes.find(n => n.id === li.dataset.id);
+      if (target) {
+        selectNode(target);
+        cam.x = target.x;
+        cam.y = target.y;
+        simTemp = 0.001; // stop sim so view is stable
+      }
+    });
+  });
+}
+
+// ─── Search ─────────────────────────────────────────────────────
+document.getElementById('search').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase().trim();
+  if (!q) {
+    nodes.forEach(n => n.visible = true);
+    edges.forEach(e => e.visible = true);
+    return;
+  }
+
+  nodes.forEach(n => {
+    n.visible = n.label.toLowerCase().includes(q) ||
+      n.role.toLowerCase().includes(q) ||
+      n.group.toLowerCase().includes(q) ||
+      n.domain.toLowerCase().includes(q);
+  });
+
+  // Show edges only between visible nodes
+  edges.forEach(e => {
+    e.visible = e.source.visible && e.target.visible;
+  });
+
+  // Also show nodes connected to matches
+  const matchedIds = new Set(nodes.filter(n => n.visible).map(n => n.id));
+  edges.forEach(e => {
+    if (matchedIds.has(e.from) || matchedIds.has(e.to)) {
+      if (e.source) e.source.visible = true;
+      if (e.target) e.target.visible = true;
+      e.visible = true;
+    }
+  });
+});
+
+// ─── Nesting Key Filter ─────────────────────────────────────────
+document.querySelectorAll('.nkey').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nkey').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeNestingKey = btn.dataset.nk;
+    document.getElementById('hud-nesting').textContent = activeNestingKey;
+
+    if (activeNestingKey === 'all') {
+      edges.forEach(e => e.visible = true);
+      nodes.forEach(n => n.visible = true);
+    } else {
+      edges.forEach(e => { e.visible = e.type === activeNestingKey; });
+      // Show nodes connected to visible edges
+      const connectedIds = new Set();
+      edges.filter(e => e.visible).forEach(e => {
+        connectedIds.add(e.source.id);
+        connectedIds.add(e.target.id);
+      });
+      nodes.forEach(n => { n.visible = connectedIds.has(n.id); });
+    }
+  });
+});
+
+// ─── View Tabs ──────────────────────────────────────────────────
+document.querySelectorAll('.view-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentView = tab.dataset.view;
+
+    document.getElementById('science-panel').classList.toggle('visible', currentView === 'science');
+    document.getElementById('insp-default').style.display = currentView === 'graph' && !selectedNode ? 'block' : 'none';
+    document.getElementById('insp-node').style.display = currentView === 'graph' && selectedNode ? 'block' : 'none';
+  });
+});
+
+// ─── Tree Panel ─────────────────────────────────────────────────
+function renderTree() {
+  const panel = document.getElementById('tree');
+  const groups = {};
+  for (const n of nodes) {
+    if (!groups[n.group]) groups[n.group] = [];
+    groups[n.group].push(n);
+  }
+
+  const groupNames = {
+    core: 'Core Modules (lib/)',
+    swift: 'Swift Applications',
+    shell: 'Shell Scripts ($ keys)',
+    simulation: 'Simulations (DOM)',
+    doc: 'Documents & Laws',
+    science: 'Science & Papers',
+    project: 'Projects (Macro)',
+    origin: 'Origin Files',
+    data: 'Databases & Manifests',
+    security: 'Security Layer'
+  };
+
+  let html = '';
+  for (const [group, groupNodes] of Object.entries(groups)) {
+    html += `<div class="tree-section" data-group="${group}">
+      <div class="hdr">
+        <span class="arrow">&#9654;</span>
+        <span class="dot" style="background:${GROUP_COLORS[group]}"></span>
+        ${groupNames[group] || group}
+        <span class="count">${groupNodes.length}</span>
+      </div>
+      <div class="tree-group">`;
+    for (const n of groupNodes) {
+      html += `<div class="tree-item" data-id="${n.id}">
+        <span class="icon" style="color:${GROUP_COLORS[group]}">&#x25CF;</span>
+        <span class="name">${n.label}</span>
+        <span class="meta">.${n.domain}</span>
+      </div>`;
+    }
+    html += '</div></div>';
+  }
+  panel.innerHTML = html;
+
+  // Toggle sections
+  panel.querySelectorAll('.tree-section .hdr').forEach(hdr => {
+    hdr.addEventListener('click', () => {
+      hdr.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Click items
+  panel.querySelectorAll('.tree-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const node = nodes.find(n => n.id === item.dataset.id);
+      if (node) {
+        selectNode(node);
+        cam.x = node.x;
+        cam.y = node.y;
+        panel.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+      }
+    });
+  });
+}
+
+// ─── Animation Loop ─────────────────────────────────────────────
+function loop() {
+  simulate();
+  render();
+  requestAnimationFrame(loop);
+}
+
+// ─── Boot ───────────────────────────────────────────────────────
+initGraph();
+renderTree();
+loop();
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    selectedNode = null;
+    document.getElementById('insp-node').style.display = 'none';
+    document.getElementById('insp-default').style.display = 'block';
+    document.getElementById('hud-selected').textContent = 'none';
+  }
+  if (e.key === 'r') {
+    simTemp = 1.0;
+    simRunning = true;
+  }
+  if (e.key === 'f') {
+    // Fit all
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const n of nodes) {
+      if (!n.visible) continue;
+      if (n.x < minX) minX = n.x;
+      if (n.x > maxX) maxX = n.x;
+      if (n.y < minY) minY = n.y;
+      if (n.y > maxY) maxY = n.y;
+    }
+    cam.x = (minX + maxX) / 2;
+    cam.y = (minY + maxY) / 2;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    cam.zoom = Math.min(rect.width / (maxX - minX + 100), rect.height / (maxY - minY + 100));
+  }
+});
+</script>
+</body>
+</html>

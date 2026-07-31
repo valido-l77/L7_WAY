@@ -1,5 +1,3 @@
-
-
 #!/usr/bin/env node
 /**
  * L7 INDEX — Build directory index from scan manifest

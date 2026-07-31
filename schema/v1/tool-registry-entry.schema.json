@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://avli.cloud/l7/schema/v1/tool-registry-entry.schema.json",
+  "title": "L7 Public Tool Registry Entry v1",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "tool",
+    "version",
+    "description",
+    "parameters",
+    "returns",
+    "entity_id",
+    "l7"
+  ],
+  "properties": {
+    "contract_version": { "const": "l7.tool/1.0" },
+    "tool": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+    "version": { "type": "string", "pattern": "^v[0-9]+$" },
+    "description": { "type": "string", "minLength": 1 },
+    "parameters": { "type": "object" },
+    "returns": { "type": "object" },
+    "entity_id": { "type": "string", "minLength": 1 },
+    "l7": {
+      "$ref": "https://avli.cloud/l7/schema/v1/common-lingua.schema.json"
+    },
+    "internal_projection": {
+      "type": "object",
+      "required": ["version", "coordinate", "astrocyte"],
+      "properties": {
+        "version": { "const": "l7.projection.12d/1.0" },
+        "coordinate": {
+          "type": "array",
+          "minItems": 12,
+          "maxItems": 12,
+          "items": { "type": "number", "minimum": 0, "maximum": 10 }
+        },
+        "astrocyte": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

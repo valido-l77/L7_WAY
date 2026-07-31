@@ -49,6 +49,28 @@ test('validate accepts a well-formed flow', () => {
   assert.equal(result.valid, true);
 });
 
+test('validate accepts implemented retry and throttle step controls', () => {
+  const result = parser.validate(
+    { name: 'controlled-flow', steps: [{ do: 'sample_tool', retry: 2, throttle: '50/minute' }] },
+    'flow'
+  );
+  assert.equal(result.valid, true);
+});
+
+test('validate rejects unsupported wait timeouts and global max rules', () => {
+  const timeoutResult = parser.validate(
+    { name: 'timeout-flow', steps: [{ wait: 'pause', timeout: '1h' }] },
+    'flow'
+  );
+  assert.equal(timeoutResult.valid, false);
+
+  const maxResult = parser.validate(
+    { name: 'max-flow', steps: [{ do: 'sample_tool' }], rules: [{ max: '10/hour' }] },
+    'flow'
+  );
+  assert.equal(maxResult.valid, false);
+});
+
 test('detectType infers type from extension', () => {
   assert.equal(parser.detectType('x.flow', {}), 'flow');
   assert.equal(parser.detectType('x.tool', {}), 'tool');
@@ -75,6 +97,45 @@ test('parseLegacyL7 parses key/value, sections, booleans, and lists', () => {
   assert.equal(obj.retries, 3);
   assert.deepEqual(obj.tags, ['alpha', 'beta', 'gamma']);
   assert.equal(obj.meta.owner, 'philosopher');
+});
+
+test('interpolateValue preserves exact variable types and nested structures', () => {
+  const context = {
+    name: 'Sofia',
+    enabled: true,
+    count: 3,
+    payload: { a: 1 },
+    list: [1, 2],
+    person: { email: 'a@x' },
+  };
+
+  assert.equal(parser.interpolateValue('$count', context), 3);
+  assert.equal(parser.interpolateValue('{{ enabled }}', context), true);
+  assert.equal(parser.interpolateValue('Hi $name', context), 'Hi Sofia');
+  assert.deepEqual(parser.interpolateValue({
+    count: '$count',
+    enabled: '{{ enabled }}',
+    payload: '$payload',
+    list: ['$count', 'fixed'],
+    nested: { email: '$person.email' },
+  }, context), {
+    count: 3,
+    enabled: true,
+    payload: { a: 1 },
+    list: [3, 'fixed'],
+    nested: { email: 'a@x' },
+  });
+});
+
+test('evaluateExpr handles comparison operators without truncating >= or <=', () => {
+  const context = { count: 3 };
+
+  assert.equal(parser.evaluateExpr('count >= 3', context), true);
+  assert.equal(parser.evaluateExpr('count <= 3', context), true);
+  assert.equal(parser.evaluateExpr('count > 2', context), true);
+  assert.equal(parser.evaluateExpr('count < 4', context), true);
+  assert.equal(parser.evaluateExpr('count == 3', context), true);
+  assert.equal(parser.evaluateExpr('count != 4', context), true);
 });
 
 test('listFiles finds .tool files under L7_DIR/tools', () => {

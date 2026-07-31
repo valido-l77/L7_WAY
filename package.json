@@ -4,9 +4,12 @@
   "description": "L7 Flow System - Tool orchestration DSL",
   "main": "lib/parser.js",
   "bin": {
-    "l7": "./bin/l7.js"
+    "l7": "./bin/l7.js",
+    "l7-morph-media": "./bin/l7-morph-media.js"
   },
   "scripts": {
+    "start": "node serve.js",
+    "gateway": "node serve.js",
     "validate": "node lib/parser.js validate",
     "parse": "node lib/parser.js parse",
     "list": "node lib/parser.js list",

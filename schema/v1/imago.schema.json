@@ -1,0 +1,200 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://avli.cloud/l7/schema/v1/imago.schema.json",
+  "title": "L7 IMAGO generative field v0.1",
+  "type": "object",
+  "required": [
+    "version",
+    "id",
+    "seed",
+    "intent",
+    "basis",
+    "waves",
+    "morphology",
+    "root_patch",
+    "provenance"
+  ],
+  "properties": {
+    "version": { "const": "l7.imago/0.1" },
+    "id": { "type": "string", "pattern": "^imago-[a-f0-9]{24}$" },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+    "intent": {
+      "type": "object",
+      "required": ["brief", "identity", "coordinate", "astrocyte"],
+      "properties": {
+        "brief": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "identity": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "coordinate": {
+          "type": "array",
+          "minItems": 12,
+          "maxItems": 12,
+          "items": { "type": "number", "minimum": 0, "maximum": 10 }
+        },
+        "astrocyte": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "basis": {
+      "type": "object",
+      "required": ["axes", "governor"],
+      "properties": {
+        "axes": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "governor": { "const": "potential" }
+      },
+      "additionalProperties": false
+    },
+    "waves": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": { "$ref": "#/definitions/wave" }
+    },
+    "morphology": {
+      "type": "object",
+      "required": ["layers", "crystallizes_after", "target", "restart_requires_approval"],
+      "properties": {
+        "layers": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": [
+            { "const": "ABOVE" },
+            { "const": "MIRROR" },
+            { "const": "BELOW" }
+          ],
+          "additionalItems": false
+        },
+        "crystallizes_after": { "const": 3 },
+        "target": { "const": ".salt" },
+        "restart_requires_approval": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "root_patch": { "$ref": "#/definitions/patch" },
+    "provenance": {
+      "type": "object",
+      "required": ["source_hash", "address_rule"],
+      "properties": {
+        "source_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "address_rule": { "const": "dyadic-quadtree/v1" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "vector3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": { "type": "number" }
+    },
+    "field10": {
+      "type": "object",
+      "required": ["components", "potential"],
+      "properties": {
+        "components": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": { "type": "number", "minimum": 0, "maximum": 10 }
+        },
+        "potential": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "wave": {
+      "type": "object",
+      "required": ["name", "amplitude", "frequency", "phase", "velocity"],
+      "properties": {
+        "name": { "enum": ["geometry", "matter", "detail"] },
+        "amplitude": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "frequency": { "$ref": "#/definitions/vector3" },
+        "phase": { "type": "number", "minimum": 0, "maximum": 6.283186 },
+        "velocity": { "type": "number", "minimum": -4, "maximum": 4 }
+      },
+      "additionalProperties": false
+    },
+    "vertex": {
+      "type": "object",
+      "required": ["id", "uv", "position", "field", "valence", "spin", "charge"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^v-[a-f0-9]{20}$" },
+        "uv": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "position": { "$ref": "#/definitions/vector3" },
+        "field": { "$ref": "#/definitions/field10" },
+        "valence": { "type": "integer", "minimum": 2, "maximum": 4 },
+        "spin": { "enum": [-1, 1] },
+        "charge": { "type": "number", "minimum": -1, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "edge": {
+      "type": "object",
+      "required": ["id", "from", "to", "path", "valence", "spin", "charge"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^e-[a-f0-9]{20}$" },
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "path": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "$ref": "#/definitions/vector3" }
+        },
+        "valence": { "type": "integer", "minimum": 2, "maximum": 4 },
+        "spin": { "enum": [-1, 1] },
+        "charge": { "type": "number", "minimum": -1, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "patch": {
+      "type": "object",
+      "required": ["address", "cell", "bounds", "corners", "edges", "field"],
+      "properties": {
+        "address": { "type": "string", "pattern": "^q(?:/[0-3])*$" },
+        "cell": {
+          "type": "object",
+          "required": ["level", "x", "y"],
+          "properties": {
+            "level": { "type": "integer", "minimum": 0, "maximum": 24 },
+            "x": { "type": "integer", "minimum": 0 },
+            "y": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "bounds": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "corners": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "$ref": "#/definitions/vertex" }
+        },
+        "edges": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "$ref": "#/definitions/edge" }
+        },
+        "field": { "$ref": "#/definitions/field10" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

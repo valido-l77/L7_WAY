@@ -169,7 +169,7 @@
 ### ⚜ LTA-7 Framework (Python)
 - **Path:** `Backup/00_PYTHON_PROJECTS/00 Clawbot/openclaw/workspace/lta7-framework/`
 - **Type:** Python package implementing seven-stage transformation
-- **Published Under:** Alberto Vargas-Lujan (academic alias)
+- **Published Under:** ~~Alberto Vargas-Lujan (academic alias)~~ — deprecated 2026-07-29, not a real identity
 - **True Author:** Alberto Valido Delgado
 - **Differentiation:** Original Python implementation of L7 architecture. Published under pseudonym but the man was always the same.
 

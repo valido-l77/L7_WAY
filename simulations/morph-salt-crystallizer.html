@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L7 Morph Salt Crystallizer</title>
+<style>
+* { box-sizing: border-box; }
+:root {
+  color-scheme: dark;
+  --bg: #07080d;
+  --fg: #f1eee7;
+  --muted: #a9a5ad;
+  --line: rgba(241, 238, 231, 0.18);
+  --panel: rgba(20, 23, 31, 0.82);
+  --above: #f3c74f;
+  --mirror: #d9dde8;
+  --below: #c96e53;
+  --salt: #5fbf8f;
+  --work: #6fa8dc;
+  --vault: #a27ee8;
+  --shadow: rgba(0, 0, 0, 0.28);
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 14% 18%, rgba(111, 168, 220, 0.16), transparent 28%),
+    radial-gradient(circle at 82% 12%, rgba(95, 191, 143, 0.13), transparent 25%),
+    radial-gradient(circle at 50% 88%, rgba(201, 110, 83, 0.12), transparent 30%),
+    var(--bg);
+  color: var(--fg);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+  padding: 22px;
+}
+
+main {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: end;
+  margin-bottom: 18px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(26px, 4vw, 50px);
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  color: var(--muted);
+  max-width: 760px;
+}
+
+.status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.badge {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: var(--fg);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.controls, .log, .visual-shell {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 20px 70px var(--shadow);
+  backdrop-filter: blur(14px);
+}
+
+.controls {
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+input[type="text"], input[type="range"], select {
+  width: 100%;
+}
+
+input[type="text"], select {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 11px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--fg);
+  font: inherit;
+}
+
+select {
+  appearance: none;
+}
+
+input[type="range"] {
+  accent-color: var(--above);
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.range-row output {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+button.primary {
+  background: color-mix(in srgb, var(--above) 34%, transparent);
+  border-color: color-mix(in srgb, var(--above) 60%, var(--line));
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.mini-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.metric {
+  min-height: 76px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.metric span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.metric strong {
+  font-size: 24px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.source-card {
+  display: grid;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.source-title {
+  font-size: 13px;
+  color: var(--fg);
+}
+
+.source-summary {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.source-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.source-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 7px;
+  color: var(--muted);
+  font-size: 11px;
+  max-width: 100%;
+}
+
+.visual-shell {
+  position: relative;
+  min-height: 650px;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 650px;
+}
+
+.overlay {
+  position: absolute;
+  inset: 14px 14px auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.domain-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.seal {
+  color: var(--salt);
+  font-size: 13px;
+  text-align: right;
+  max-width: 320px;
+}
+
+.log {
+  margin-top: 18px;
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.log h2 {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.events {
+  display: grid;
+  gap: 7px;
+  max-height: 150px;
+  overflow: auto;
+}
+
+.event {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.event b {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+@media (max-width: 860px) {
+  body { padding: 14px; }
+  header, .stage { grid-template-columns: 1fr; }
+  .status-strip { justify-content: flex-start; }
+  .visual-shell { min-height: 560px; }
+  canvas { height: 560px; }
+}
+
+@media (max-width: 520px) {
+  .button-row, .mini-grid { grid-template-columns: 1fr; }
+  .overlay { position: static; padding: 12px 12px 0; }
+  .visual-shell { display: flex; flex-direction: column-reverse; }
+  canvas { height: 460px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Morph Salt Crystallizer</h1>
+      <p class="subtitle">Three mutable dreams pass through Above, Mirror, and Below. The fourth movement crystallizes every morph artifact into read-only salt and locks the cycle until approval.</p>
+    </div>
+    <div class="status-strip" aria-live="polite">
+      <div class="badge" id="layerBadge">Layer 1: ABOVE</div>
+      <div class="badge" id="lockBadge">Morph open</div>
+      <div class="badge" id="sourceBadge">source: doctrine</div>
+      <div class="badge" id="checksumBadge">checksum: pending</div>
+    </div>
+  </header>
+
+  <section class="stage">
+    <aside class="controls" aria-label="Simulation controls">
+      <div class="field">
+        <label for="sourceSelect">Seed source</label>
+        <select id="sourceSelect">
+          <option value="synthetic">Doctrine sample</option>
+          <option value="home">Home .l7 snapshot</option>
+          <option value="avli">AVLI Cloud work map</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="intention">Intention seed</label>
+        <input id="intention" type="text" value="forge a citizen" maxlength="36">
+      </div>
+
+      <div class="field">
+        <div class="range-row">
+          <label for="astrocyte">Astrocyte certainty</label>
+          <output id="astrocyteValue" for="astrocyte">0.48</output>
+        </div>
+        <input id="astrocyte" type="range" min="0" max="1" step="0.01" value="0.48">
+      </div>
+
+      <div class="button-row">
+        <button id="dreamBtn" class="primary" type="button">Dream layer</button>
+        <button id="approveBtn" type="button" disabled>Approve cycle</button>
+        <button id="resetBtn" type="button">Reset</button>
+        <button id="autoBtn" type="button">Auto step</button>
+      </div>
+
+      <div class="mini-grid" aria-label="Live metrics">
+        <div class="metric"><span>Morph depth</span><strong id="depthValue">0</strong></div>
+        <div class="metric"><span>Salt crystals</span><strong id="saltValue">0</strong></div>
+        <div class="metric"><span>Entropy</span><strong id="entropyValue">0.52</strong></div>
+        <div class="metric"><span>Artifacts</span><strong id="artifactValue">3</strong></div>
+      </div>
+
+      <div class="source-card" aria-live="polite">
+        <div class="source-title" id="sourceTitle">Doctrine sample</div>
+        <div class="source-summary" id="sourceSummary">Synthetic seed material for testing the three-layer recursion.</div>
+        <div class="source-list" id="sourceList"></div>
+      </div>
+    </aside>
+
+    <section class="visual-shell" aria-label="Morph to salt simulation">
+      <canvas id="simCanvas"></canvas>
+      <div class="overlay">
+        <div class="domain-key" aria-hidden="true">
+          <span class="key-item" style="color: var(--above)"><span class="dot"></span>Above</span>
+          <span class="key-item" style="color: var(--mirror)"><span class="dot"></span>Mirror</span>
+          <span class="key-item" style="color: var(--below)"><span class="dot"></span>Below</span>
+          <span class="key-item" style="color: var(--salt)"><span class="dot"></span>Salt</span>
+        </div>
+        <div class="seal" id="sealText">Mutable field awaiting first dream.</div>
+      </div>
+    </section>
+  </section>
+
+  <section class="log" aria-label="Execution trace">
+    <h2>Execution trace</h2>
+    <div class="events" id="events"></div>
+  </section>
+</main>
+
+<script>
+'use strict';
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+const sourceSelect = document.getElementById('sourceSelect');
+const intentionInput = document.getElementById('intention');
+const astrocyteInput = document.getElementById('astrocyte');
+const astrocyteValue = document.getElementById('astrocyteValue');
+const dreamBtn = document.getElementById('dreamBtn');
+const approveBtn = document.getElementById('approveBtn');
+const resetBtn = document.getElementById('resetBtn');
+const autoBtn = document.getElementById('autoBtn');
+const depthValue = document.getElementById('depthValue');
+const saltValue = document.getElementById('saltValue');
+const entropyValue = document.getElementById('entropyValue');
+const artifactValue = document.getElementById('artifactValue');
+const layerBadge = document.getElementById('layerBadge');
+const lockBadge = document.getElementById('lockBadge');
+const sourceBadge = document.getElementById('sourceBadge');
+const checksumBadge = document.getElementById('checksumBadge');
+const sealText = document.getElementById('sealText');
+const eventsEl = document.getElementById('events');
+const sourceTitle = document.getElementById('sourceTitle');
+const sourceSummary = document.getElementById('sourceSummary');
+const sourceList = document.getElementById('sourceList');
+
+const layers = [
+  { name: 'ABOVE', symbol: '△', color: '#f3c74f', y: 0.25 },
+  { name: 'MIRROR', symbol: '◇', color: '#d9dde8', y: 0.50 },
+  { name: 'BELOW', symbol: '▽', color: '#c96e53', y: 0.75 },
+  { name: 'SALT', symbol: '◆', color: '#5fbf8f', y: 0.50 }
+];
+
+const sourceProfiles = {
+  synthetic: {
+    title: 'Doctrine sample',
+    badge: 'doctrine',
+    seed: 'forge a citizen',
+    summary: 'Synthetic seed material for testing the three-layer recursion before crystallization.',
+    chips: ['3 morph artifacts', 'Above/Mirror/Below', 'automatic Salt lock'],
+    items: [
+      { label: 'seed', domain: 'morph', detail: 'initial citizen intention' },
+      { label: 'fold', domain: 'morph', detail: 'mirror recursion carrier' },
+      { label: 'echo', domain: 'morph', detail: 'below-domain reflection' }
+    ]
+  },
+  home: {
+    title: 'Home .l7 snapshot',
+    badge: 'home .l7',
+    seed: 'integrate home citizens',
+    summary: 'Snapshot from ~/.l7 programs, origin, flows, and tools: 4 .l7 citizens, 3 .flow pathways, and 67 .tool definitions.',
+    chips: ['~/.l7/programs/*.l7', '~/.l7/origin/*.l7', '~/.l7/DIAL_ENTITY.l7', '~/.l7/flows/*.flow', '~/.l7/tools/*.tool'],
+    items: [
+      { label: 'resonance-chronos.l7', domain: 'program', detail: '~/.l7/programs' },
+      { label: 'voice-stop.l7', domain: 'program', detail: '~/.l7/programs' },
+      { label: '2026-01-12_inception.l7', domain: 'origin', detail: '~/.l7/origin' },
+      { label: 'DIAL_ENTITY.l7', domain: 'entity', detail: '~/.l7' },
+      { label: 'mirror_across_devices.flow', domain: 'flow', detail: '~/.l7/flows' },
+      { label: 'openclaw_gateway.flow', domain: 'flow', detail: '~/.l7/flows' },
+      { label: 'edge_to_field.flow', domain: 'flow', detail: '~/.l7/flows' },
+      { label: 'xr suite', domain: 'tool', detail: '19 .tool files' },
+      { label: 'codex suite', domain: 'tool', detail: '7 .tool files' },
+      { label: 'herald suite', domain: 'tool', detail: '6 .tool files' },
+      { label: 'resonance suite', domain: 'tool', detail: '5 .tool files' },
+      { label: 'tesseract/meridian/flux/kinesis', domain: 'tool', detail: '16 .tool files' }
+    ]
+  },
+  avli: {
+    title: 'AVLI Cloud work map',
+    badge: 'AVLI Cloud',
+    seed: 'map avli cloud lineage',
+    summary: 'Local manifests show AVLI Cloud as a three-step temporal chain, with related L7, NCLS, OpenClaw, DIAL, and Sofia Node work nearby.',
+    chips: ['TEMPORAL_VERSIONS.json', 'PROJECT_INDEX.json', 'EDGE_MAP.json', 'CITIZEN_REGISTRY.md', 'deploy/README.md'],
+    items: [
+      { label: 'avli-cloud-v1', domain: 'salt', detail: '400741 files, 19.3 GB' },
+      { label: 'avli-cloud-v2', domain: 'salt', detail: '400780 files, 19.3 GB' },
+      { label: 'avli-cloud-latest', domain: 'work', detail: '119568 files, latest' },
+      { label: 'l7-way', domain: 'work', detail: '293616 files' },
+      { label: 'l7-runtime', domain: 'work', detail: '289218 files' },
+      { label: 'ncls-scripts', domain: 'work', detail: '432 files' },
+      { label: 'ncls-dashboard', domain: 'work', detail: '477 files' },
+      { label: 'openclaw', domain: 'work', detail: '99 files' },
+      { label: 'dial-training', domain: 'work', detail: '31236 files' },
+      { label: 'sofia-node deploy', domain: 'vault', detail: 'Tor-hidden Bibliotheca package' }
+    ]
+  }
+};
+
+let dpr = 1;
+let W = 1;
+let H = 1;
+let morphDepth = 0;
+let locked = false;
+let saltCount = 0;
+let checksum = 'pending';
+let autoTimer = null;
+let tick = 0;
+let artifacts = [];
+let events = [];
+let activeSourceKey = 'synthetic';
+
+function hashString(value) {
+  let h = 2166136261;
+  for (let i = 0; i < value.length; i++) {
+    h ^= value.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(16).padStart(8, '0');
+}
+
+function getActiveSource() {
+  return sourceProfiles[activeSourceKey] || sourceProfiles.synthetic;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function seedArtifacts() {
+  activeSourceKey = sourceSelect.value;
+  const profile = getActiveSource();
+  const seed = intentionInput.value.trim() || 'unnamed intention';
+  const base = hashString(seed);
+  const baseRadius = Math.max(10, Math.min(18, 25 - profile.items.length));
+  artifacts = profile.items.map((item, i) => ({
+    id: i,
+    label: item.label,
+    domain: item.domain,
+    detail: item.detail,
+    phase: i * 1.9,
+    radius: baseRadius + (i % 3) * 1.8,
+    energy: Math.min(0.82, 0.38 + (i % 5) * 0.06),
+    salt: item.domain === 'salt',
+    sourceSalt: item.domain === 'salt',
+    hash: hashString(`${base}:${item.label}:${item.domain}:${i}`),
+    x: 0,
+    y: 0
+  }));
+  morphDepth = 0;
+  locked = false;
+  saltCount = artifacts.filter((artifact) => artifact.salt).length;
+  checksum = 'pending';
+  events = [];
+  renderSourceProfile();
+  logEvent('boot', `${profile.title} opened with ${artifacts.length} artifacts.`);
+  updateUi();
+}
+
+function renderSourceProfile() {
+  const profile = getActiveSource();
+  sourceTitle.textContent = profile.title;
+  sourceSummary.textContent = profile.summary;
+  sourceList.innerHTML = profile.chips.map((chip) =>
+    `<span class="source-chip">${escapeHtml(chip)}</span>`
+  ).join('');
+}
+
+function logEvent(stage, message) {
+  events.unshift({
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    stage,
+    message
+  });
+  events = events.slice(0, 12);
+  eventsEl.innerHTML = events.map((event) =>
+    `<div class="event"><span>${event.time}</span><span><b>${event.stage}</b> ${event.message}</span></div>`
+  ).join('');
+}
+
+function dreamLayer() {
+  if (locked) return;
+
+  if (morphDepth >= 3) {
+    crystallize();
+    return;
+  }
+
+  const layer = layers[morphDepth];
+  const certainty = Number(astrocyteInput.value);
+  const seed = intentionInput.value.trim() || 'unnamed intention';
+  const profile = getActiveSource();
+  morphDepth++;
+  let altered = 0;
+
+  artifacts.forEach((artifact, i) => {
+    if (artifact.salt) return;
+    const foldHash = hashString(`${profile.badge}:${seed}:${artifact.hash}:${layer.name}:${certainty}:${i}`);
+    artifact.hash = foldHash;
+    artifact.energy = Math.min(1, artifact.energy + 0.12 + certainty * 0.16);
+    artifact.phase += 0.8 + i * 0.22 + certainty;
+    artifact.radius = Math.min(28, artifact.radius + 2 + morphDepth * 0.9);
+    altered++;
+  });
+
+  logEvent(layer.name.toLowerCase(), `${layer.symbol} layer ${morphDepth} altered ${altered} mutable artifacts.`);
+  if (morphDepth === 3) {
+    logEvent('threshold', 'Next dream step will fire SALT and lock morph.');
+  }
+  updateUi();
+}
+
+function crystallize() {
+  const seed = intentionInput.value.trim() || 'unnamed intention';
+  const profile = getActiveSource();
+  let crystallized = 0;
+  artifacts.forEach((artifact, i) => {
+    if (artifact.salt) return;
+    artifact.salt = true;
+    artifact.hash = hashString(`${profile.badge}:${seed}:salt:${artifact.hash}:${i}`);
+    artifact.energy = 1;
+    crystallized++;
+  });
+  saltCount = artifacts.filter((artifact) => artifact.salt).length;
+  checksum = hashString(artifacts.map((a) => a.hash).join('|'));
+  locked = true;
+  morphDepth = 0;
+  stopAuto();
+  logEvent('salt', `◆ ${crystallized} artifacts crystallized; ${saltCount} total salt artifacts.`);
+  updateUi();
+}
+
+function approveCycle() {
+  if (!locked) return;
+  const baseRadius = Math.max(10, Math.min(18, 25 - artifacts.length));
+  artifacts.forEach((artifact, i) => {
+    artifact.salt = artifact.sourceSalt;
+    artifact.energy = artifact.sourceSalt ? 1 : 0.42 + (i % 5) * 0.06;
+    artifact.radius = baseRadius + (i % 3) * 1.8;
+    if (!artifact.sourceSalt) {
+      artifact.hash = hashString(`approved:${checksum}:${i}`);
+    }
+  });
+  locked = false;
+  saltCount = artifacts.filter((artifact) => artifact.salt).length;
+  checksum = 'pending';
+  logEvent('approval', 'Dream cycle approved; morph reopened at layer 1.');
+  updateUi();
+}
+
+function stopAuto() {
+  if (autoTimer) clearInterval(autoTimer);
+  autoTimer = null;
+  autoBtn.textContent = 'Auto step';
+}
+
+function toggleAuto() {
+  if (autoTimer) {
+    stopAuto();
+    return;
+  }
+  autoBtn.textContent = 'Stop auto';
+  autoTimer = setInterval(() => {
+    if (locked) {
+      stopAuto();
+      return;
+    }
+    dreamLayer();
+  }, 950);
+}
+
+function updateUi() {
+  const certainty = Number(astrocyteInput.value);
+  const entropy = locked ? 0 : Math.max(0.02, 1 - certainty - morphDepth * 0.14);
+  const nextLayer = locked ? layers[3] : layers[Math.min(morphDepth, 2)];
+  const profile = getActiveSource();
+
+  astrocyteValue.textContent = certainty.toFixed(2);
+  depthValue.textContent = String(morphDepth);
+  saltValue.textContent = String(artifacts.filter((artifact) => artifact.salt).length);
+  entropyValue.textContent = entropy.toFixed(2);
+  artifactValue.textContent = String(artifacts.length);
+  layerBadge.textContent = locked ? 'Layer 4: SALT' : `Layer ${morphDepth + 1}: ${nextLayer.name}`;
+  lockBadge.textContent = locked ? 'Morph locked' : 'Morph open';
+  sourceBadge.textContent = `source: ${profile.badge}`;
+  checksumBadge.textContent = `checksum: ${checksum}`;
+  dreamBtn.disabled = locked;
+  approveBtn.disabled = !locked;
+  sealText.textContent = locked
+    ? 'Salt artifacts are immutable. Approval is required before a new dream cycle.'
+    : morphDepth === 3
+      ? 'Three dreams complete. The next step crystallizes the field.'
+      : 'Mutable field. Each dream folds the artifacts into a deeper layer.';
+}
+
+function resize() {
+  const rect = canvas.getBoundingClientRect();
+  dpr = Math.max(1, window.devicePixelRatio || 1);
+  W = Math.max(320, Math.floor(rect.width));
+  H = Math.max(420, Math.floor(rect.height));
+  canvas.width = Math.floor(W * dpr);
+  canvas.height = Math.floor(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function drawRoundedRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawDomain(label, x, y, w, h, color, active) {
+  ctx.save();
+  ctx.globalAlpha = active ? 0.9 : 0.45;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = active ? `${color}22` : 'rgba(255,255,255,0.035)';
+  ctx.lineWidth = active ? 2 : 1;
+  drawRoundedRect(x, y, w, h, 24);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = active ? color : 'rgba(241,238,231,0.55)';
+  ctx.font = '500 13px system-ui, sans-serif';
+  ctx.fillText(label, x + 18, y + 26);
+  ctx.restore();
+}
+
+function drawArtifact(artifact, x, y, color) {
+  ctx.save();
+  const pulse = Math.sin(tick * 0.035 + artifact.phase) * 0.12 + 0.88;
+  const r = artifact.radius * pulse;
+  ctx.globalAlpha = artifact.salt ? 0.92 : 0.78;
+  ctx.fillStyle = artifact.salt ? 'rgba(95,191,143,0.24)' : `${color}29`;
+  ctx.strokeStyle = artifact.salt ? layers[3].color : color;
+  ctx.lineWidth = artifact.salt ? 2.5 : 1.5;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = artifact.salt ? layers[3].color : color;
+  ctx.font = '500 16px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(artifact.salt ? '◆' : String(artifact.id + 1), x, y - 1);
+  ctx.fillStyle = 'rgba(241,238,231,0.76)';
+  ctx.font = '12px system-ui, sans-serif';
+  ctx.fillText(artifact.label, x, y + r + 14, 86);
+  ctx.fillStyle = 'rgba(241,238,231,0.54)';
+  ctx.fillText(artifact.hash.slice(0, 6), x, y + r + 28);
+  ctx.restore();
+}
+
+function gridPoint(index, count, x, w, top, h, yMid, ySpread) {
+  const cols = Math.min(3, Math.ceil(Math.sqrt(count)));
+  const rows = Math.max(1, Math.ceil(count / cols));
+  const col = index % cols;
+  const row = Math.floor(index / cols);
+  const px = x + w * ((col + 1) / (cols + 1));
+  const rowOffset = rows === 1 ? 0 : (row / (rows - 1) - 0.5) * ySpread;
+  return { x: px, y: top + h * (yMid + rowOffset) };
+}
+
+function draw() {
+  tick++;
+  ctx.clearRect(0, 0, W, H);
+
+  const margin = Math.max(22, W * 0.04);
+  const laneW = Math.max(110, (W - margin * 2) / 4 - 12);
+  const laneH = H - margin * 2;
+  const top = margin;
+  const gap = 12;
+  const morphX = margin;
+  const workX = morphX + laneW + gap;
+  const vaultX = workX + laneW + gap;
+  const saltX = vaultX + laneW + gap;
+
+  drawDomain('.morph', morphX, top, laneW, laneH, layers[Math.max(0, morphDepth - 1)]?.color || layers[0].color, !locked);
+  drawDomain('.work', workX, top, laneW, laneH, '#6fa8dc', false);
+  drawDomain('.vault', vaultX, top, laneW, laneH, '#a27ee8', false);
+  drawDomain('.salt', saltX, top, laneW, laneH, layers[3].color, locked || artifacts.some((artifact) => artifact.salt));
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(241,238,231,0.16)';
+  ctx.lineWidth = 1;
+  [0.25, 0.50, 0.75].forEach((p, i) => {
+    const y = top + laneH * p;
+    ctx.beginPath();
+    ctx.moveTo(morphX + 14, y);
+    ctx.lineTo(saltX + laneW - 14, y);
+    ctx.stroke();
+    ctx.fillStyle = layers[i].color;
+    ctx.font = '500 12px system-ui, sans-serif';
+    ctx.fillText(`${layers[i].symbol} ${layers[i].name}`, morphX + 18, y - 9);
+  });
+  ctx.restore();
+
+  const activeLayer = locked ? layers[3] : layers[Math.max(0, morphDepth - 1)] || layers[0];
+  artifacts.forEach((artifact, i) => {
+    const activeCount = artifacts.length;
+    const layerY = (layers[Math.max(0, morphDepth - 1)] || layers[0]).y;
+    const morphPoint = gridPoint(i, activeCount, morphX, laneW, top, laneH, layerY, 0.36);
+    const saltPoint = gridPoint(i, activeCount, saltX, laneW, top, laneH, 0.50, 0.58);
+    const targetX = artifact.salt ? saltPoint.x : morphPoint.x;
+    const targetY = artifact.salt
+      ? saltPoint.y
+      : morphPoint.y + Math.sin(tick * 0.018 + artifact.phase) * laneH * 0.018;
+    if (!artifact.x && !artifact.y) {
+      artifact.x = targetX;
+      artifact.y = targetY;
+    }
+    artifact.x += (targetX - artifact.x) * 0.08;
+    artifact.y += (targetY - artifact.y) * 0.08;
+
+    ctx.save();
+    ctx.strokeStyle = artifact.salt ? 'rgba(95,191,143,0.42)' : `${activeLayer.color}55`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(morphX + laneW * 0.5, top + laneH * 0.5);
+    ctx.quadraticCurveTo(W * 0.5, artifact.y - 30, artifact.x, artifact.y);
+    ctx.stroke();
+    ctx.restore();
+
+    drawArtifact(artifact, artifact.x, artifact.y, artifact.salt ? layers[3].color : activeLayer.color);
+  });
+
+  if (locked) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(95,191,143,0.55)';
+    ctx.lineWidth = 2;
+    drawRoundedRect(saltX + 15, top + 50, laneW - 30, laneH - 90, 18);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(95,191,143,0.13)';
+    ctx.fill();
+    ctx.fillStyle = layers[3].color;
+    ctx.font = '500 18px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('chmod 444', saltX + laneW * 0.5, top + laneH - 52);
+    ctx.restore();
+  }
+
+  requestAnimationFrame(draw);
+}
+
+dreamBtn.addEventListener('click', dreamLayer);
+approveBtn.addEventListener('click', approveCycle);
+resetBtn.addEventListener('click', () => {
+  stopAuto();
+  seedArtifacts();
+});
+autoBtn.addEventListener('click', toggleAuto);
+astrocyteInput.addEventListener('input', updateUi);
+intentionInput.addEventListener('change', seedArtifacts);
+sourceSelect.addEventListener('change', () => {
+  stopAuto();
+  activeSourceKey = sourceSelect.value;
+  const profile = getActiveSource();
+  intentionInput.value = profile.seed;
+  seedArtifacts();
+});
+window.addEventListener('resize', resize);
+
+resize();
+renderSourceProfile();
+seedArtifacts();
+draw();
+</script>
+</body>
+</html>

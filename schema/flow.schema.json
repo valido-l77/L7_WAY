@@ -95,16 +95,6 @@
         "if": {
           "type": "string",
           "description": "Only show checkpoint if condition is true"
-        },
-        "timeout": {
-          "type": "string",
-          "pattern": "^[0-9]+(m|h|d)$",
-          "description": "Auto-action after timeout (e.g., 24h)"
-        },
-        "on_timeout": {
-          "type": "string",
-          "enum": ["continue", "halt", "abort"],
-          "default": "halt"
         }
       },
       "additionalProperties": false
@@ -117,11 +107,6 @@
         "only": {
           "type": "string",
           "description": "Time constraint (e.g., 9am-6pm, weekdays)"
-        },
-        "max": {
-          "type": "string",
-          "pattern": "^[0-9]+/(second|minute|hour|day)$",
-          "description": "Rate limit (e.g., 200/hour)"
         },
         "skip": {
           "type": "string",

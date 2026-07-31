@@ -1,0 +1,6 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://avli.cloud/l7/schema/v1/media-request.schema.json",
+  "title": "L7 Media Request v1",
+  "$ref": "media-definitions.schema.json#/definitions/request"
+}

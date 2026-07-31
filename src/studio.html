@@ -125,6 +125,7 @@ html, body {
 }
 #viz-controls {
   display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;
+  align-items: center;
 }
 #viz-controls button {
   background: var(--bg3);
@@ -139,6 +140,30 @@ html, body {
 }
 #viz-controls button:hover { border-color: var(--gold-dim); color: var(--text); }
 #viz-controls button.active { border-color: var(--gold); color: var(--gold); background: rgba(212,168,83,0.1); }
+#viz-controls button.input-active { border-color: var(--green); color: var(--green); background: rgba(68,204,102,0.1); }
+.viz-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.viz-select select {
+  background: var(--bg3);
+  border: 1px solid var(--panel-border);
+  color: var(--gold);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+#viz-status {
+  margin-top: 6px;
+  min-height: 14px;
+  font-size: 10px;
+  color: var(--gold-dim);
+}
 #watermark-overlay {
   position: absolute;
   bottom: 50px;
@@ -505,6 +530,25 @@ html, body {
   border-color: var(--panel-border);
   color: var(--text-dim);
 }
+#export-dialog label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: var(--text-dim);
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+#export-dialog select {
+  background: var(--bg3);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 7px 10px;
+  border-radius: 4px;
+}
 #export-status {
   margin-top: 12px;
   font-size: 11px;
@@ -615,7 +659,17 @@ html, body {
       <button data-viz="spectrum">SPECTRUM</button>
       <button data-viz="particles">PARTICLES</button>
       <button data-viz="mandala">MANDALA</button>
+      <button id="btn-mic" type="button">MIC INPUT</button>
+      <label class="viz-select" for="palette-select">PALETTE
+        <select id="palette-select">
+          <option value="gold">GOLD</option>
+          <option value="neon">NEON</option>
+          <option value="ember">EMBER</option>
+          <option value="ice">ICE</option>
+        </select>
+      </label>
     </div>
+    <div id="viz-status" aria-live="polite"></div>
   </div>
 
   <!-- SYNTH -->
@@ -700,9 +754,21 @@ html, body {
 <div id="export-overlay">
   <div id="export-dialog">
     <h2>EXPORT</h2>
-    <button id="export-audio">EXPORT AUDIO (WAV)</button>
-    <button id="export-video">EXPORT VIDEO (WebM)</button>
-    <button id="export-both">EXPORT AUDIO + VIDEO</button>
+    <label for="export-duration">DURATION
+      <select id="export-duration">
+        <option value="5">5 seconds</option>
+        <option value="10" selected>10 seconds</option>
+        <option value="30">30 seconds</option>
+        <option value="60">60 seconds</option>
+      </select>
+    </label>
+    <button id="export-image">EXPORT IMAGE (PNG)</button>
+    <button id="export-audio">EXPORT AUDIO (WebM)</button>
+    <button id="export-video">EXPORT VIDEO ONLY (WebM)</button>
+    <button id="export-both">EXPORT VIDEO + AUDIO (WebM)</button>
+    <button id="export-project">EXPORT PROJECT (JSON)</button>
+    <button id="import-project">IMPORT PROJECT (JSON)</button>
+    <input id="project-file" type="file" accept="application/json" hidden>
     <div id="export-status"></div>
     <button class="close-btn" id="export-close">CLOSE</button>
   </div>
@@ -720,6 +786,8 @@ html, body {
       <tr><td>1 2 3 4 5 6 7 8</td><td>Trigger drum pads</td></tr>
       <tr><td>Ctrl + E</td><td>Export dialog</td></tr>
       <tr><td>Ctrl + 1/2/3/4</td><td>Switch visualization</td></tr>
+      <tr><td>Export image</td><td>Save current visual frame as PNG</td></tr>
+      <tr><td>Export project</td><td>Save synth, sequencer, mixer, and visual settings</td></tr>
       <tr><td>[ / ]</td><td>BPM down / up</td></tr>
       <tr><td>?</td><td>Toggle this help</td></tr>
       <tr><td>Esc</td><td>Close dialogs</td></tr>
@@ -1599,6 +1667,31 @@ function setupMiniKnob(el, min, max, initial, onChange) {
   onChange._currentVal = initial;
 }
 
+function applySynthParam(param, val) {
+  synthState[param] = val;
+  if (!actx) return;
+  if (param === 'filterFreq' && filterNode) filterNode.frequency.value = val;
+  if (param === 'reverb' && reverbGain) reverbGain.gain.value = val;
+  if (param === 'delay' && delayGain) delayGain.gain.value = val;
+  if (param === 'distortion' && distortionNode) distortionNode.curve = makeDistortionCurve(val);
+}
+
+function syncKnobUi() {
+  document.querySelectorAll('.knob[data-param]').forEach(knob => {
+    const param = knob.dataset.param;
+    const min = parseFloat(knob.dataset.min);
+    const max = parseFloat(knob.dataset.max);
+    const val = Number(synthState[param]);
+    const pct = (val - min) / (max - min);
+    const angle = -135 + Math.max(0, Math.min(1, pct)) * 270;
+    const valueEl = knob.parentElement.querySelector('.knob-value');
+    knob.dataset.value = String(val);
+    knob.style.setProperty('--angle', angle + 'deg');
+    if (valueEl) valueEl.textContent = val >= 100 ? Math.round(val) : val.toFixed(2);
+    applySynthParam(param, val);
+  });
+}
+
 // --- Knobs ---
 function setupKnobs() {
   document.querySelectorAll('.knob[data-param]').forEach(knob => {
@@ -1616,15 +1709,7 @@ function setupKnobs() {
       if (valueEl) {
         valueEl.textContent = val >= 100 ? Math.round(val) : val.toFixed(2);
       }
-      synthState[param] = val;
-
-      // Live update effects
-      if (actx) {
-        if (param === 'filterFreq' && filterNode) filterNode.frequency.value = val;
-        if (param === 'reverb' && reverbGain) reverbGain.gain.value = val;
-        if (param === 'delay' && delayGain) delayGain.gain.value = val;
-        if (param === 'distortion' && distortionNode) distortionNode.curve = makeDistortionCurve(val);
-      }
+      applySynthParam(param, val);
     }
 
     updateKnob(value);
@@ -1702,6 +1787,30 @@ document.getElementById('btn-rec').addEventListener('click', () => {
 let vizMode = 'waveform';
 const vizCanvas = document.getElementById('viz-canvas');
 const vizCtx = vizCanvas.getContext('2d');
+const visualState = { palette: 'gold' };
+const idleAnalyserData = new Uint8Array(1024);
+const idleAnalyserFreq = new Uint8Array(1024);
+const palettes = {
+  gold: { primary: '#d4a853', secondary: '#f0c866', hue: 34, spread: 32 },
+  neon: { primary: '#44cccc', secondary: '#cc44aa', hue: 188, spread: 120 },
+  ember: { primary: '#cc8844', secondary: '#cc4444', hue: 18, spread: 44 },
+  ice: { primary: '#8ecae6', secondary: '#ffffff', hue: 198, spread: 50 }
+};
+
+function activePalette() {
+  return palettes[visualState.palette] || palettes.gold;
+}
+
+function hexToRgb(hex) {
+  const value = hex.replace('#', '');
+  const n = parseInt(value.length === 3 ? value.split('').map(ch => ch + ch).join('') : value, 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+function rgba(hex, alpha) {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 // Particle system
 let particles = [];
@@ -1727,7 +1836,7 @@ function resizeCanvas() {
   const rect = vizCanvas.getBoundingClientRect();
   vizCanvas.width = rect.width * dpr;
   vizCanvas.height = rect.height * dpr;
-  vizCtx.scale(dpr, dpr);
+  vizCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
 let vizFrameCount = 0;
@@ -1735,6 +1844,7 @@ let vizFrameCount = 0;
 function drawViz() {
   const w = vizCanvas.getBoundingClientRect().width;
   const h = vizCanvas.getBoundingClientRect().height;
+  const palette = activePalette();
 
   // Full clear on first frame, then trail effect
   if (vizFrameCount === 0) {
@@ -1746,13 +1856,12 @@ function drawViz() {
   }
   vizFrameCount++;
 
-  if (!analyser) {
-    requestAnimationFrame(drawViz);
-    return;
+  if (analyser) {
+    analyser.getByteTimeDomainData(analyserData);
+    analyser.getByteFrequencyData(analyserFreq);
+  } else {
+    synthesizeIdleAnalysis();
   }
-
-  analyser.getByteTimeDomainData(analyserData);
-  analyser.getByteFrequencyData(analyserFreq);
 
   // Compute energy
   let bassEnergy = 0, midEnergy = 0, trebleEnergy = 0;
@@ -1776,7 +1885,7 @@ function drawViz() {
 
   // Watermark on canvas
   vizCtx.font = '10px Courier New';
-  vizCtx.fillStyle = 'rgba(212, 168, 83, 0.2)';
+  vizCtx.fillStyle = rgba(palette.primary, 0.22);
   vizCtx.textAlign = 'right';
   vizCtx.fillText('L7 RESONANCE STUDIO | Alberto Valido Delgado', w - 10, h - 10);
   vizCtx.textAlign = 'left';
@@ -1784,9 +1893,27 @@ function drawViz() {
   requestAnimationFrame(drawViz);
 }
 
+function synthesizeIdleAnalysis() {
+  const t = vizFrameCount * 0.026;
+  for (let i = 0; i < idleAnalyserData.length; i++) {
+    const wave =
+      Math.sin(i * 0.035 + t * 2.1) * 24 +
+      Math.sin(i * 0.011 + t * 1.2) * 15 +
+      Math.sin(i * 0.071 - t * 0.8) * 8;
+    idleAnalyserData[i] = Math.max(0, Math.min(255, 128 + wave));
+    const band = i / idleAnalyserFreq.length;
+    const pulse = Math.max(0, Math.sin(t * 2.4 + band * 12));
+    const shimmer = Math.max(0, Math.sin(t * 4.2 + band * 37));
+    idleAnalyserFreq[i] = Math.max(0, Math.min(255, (1 - band) * 62 + pulse * 80 + shimmer * 28));
+  }
+  analyserData = idleAnalyserData;
+  analyserFreq = idleAnalyserFreq;
+}
+
 function drawWaveform(w, h) {
+  const palette = activePalette();
   vizCtx.lineWidth = 2;
-  vizCtx.strokeStyle = `rgba(212, 168, 83, 0.8)`;
+  vizCtx.strokeStyle = rgba(palette.primary, 0.8);
   vizCtx.beginPath();
   const sliceWidth = w / analyserData.length;
   let x = 0;
@@ -1801,7 +1928,7 @@ function drawWaveform(w, h) {
 
   // Glow
   vizCtx.lineWidth = 1;
-  vizCtx.strokeStyle = 'rgba(212, 168, 83, 0.3)';
+  vizCtx.strokeStyle = rgba(palette.secondary, 0.32);
   vizCtx.beginPath();
   x = 0;
   for (let i = 0; i < analyserData.length; i++) {
@@ -1815,6 +1942,7 @@ function drawWaveform(w, h) {
 }
 
 function drawSpectrum(w, h) {
+  const palette = activePalette();
   const barCount = 64;
   const barWidth = w / barCount;
   const binSize = Math.floor(analyserFreq.length / barCount);
@@ -1829,18 +1957,19 @@ function drawSpectrum(w, h) {
     const pct = i / barCount;
 
     // Color from frequency
-    const hue = 30 + pct * 30; // gold range
+    const hue = palette.hue + pct * palette.spread;
     const lightness = 40 + (avg / 255) * 30;
     vizCtx.fillStyle = `hsl(${hue}, 70%, ${lightness}%)`;
     vizCtx.fillRect(i * barWidth + 1, h - barH, barWidth - 2, barH);
 
     // Peak cap
-    vizCtx.fillStyle = 'rgba(212, 168, 83, 0.9)';
+    vizCtx.fillStyle = rgba(palette.secondary, 0.9);
     vizCtx.fillRect(i * barWidth + 1, h - barH - 3, barWidth - 2, 2);
   }
 }
 
 function drawParticles(w, h, bass, mid, treble) {
+  const palette = activePalette();
   const energy = (bass + mid + treble) / 3;
 
   for (let p of particles) {
@@ -1864,7 +1993,7 @@ function drawParticles(w, h, bass, mid, treble) {
     const py = p.y * h;
 
     // Bass = warm colors, treble = bright colors
-    const hue = bass > treble ? 20 + bass * 40 : 40 + treble * 20;
+    const hue = bass > treble ? palette.hue + bass * palette.spread : palette.hue + treble * palette.spread;
     const sat = 60 + mid * 40;
     const light = 40 + energy * 30;
     const alpha = 0.3 + energy * 0.5;
@@ -1876,7 +2005,7 @@ function drawParticles(w, h, bass, mid, treble) {
   }
 
   // Connect nearby particles
-  vizCtx.strokeStyle = `rgba(212, 168, 83, ${0.02 + energy * 0.08})`;
+  vizCtx.strokeStyle = rgba(palette.primary, 0.02 + energy * 0.08);
   vizCtx.lineWidth = 0.5;
   for (let i = 0; i < particles.length; i++) {
     for (let j = i + 1; j < particles.length; j++) {
@@ -1896,6 +2025,7 @@ function drawParticles(w, h, bass, mid, treble) {
 let mandalaAngle = 0;
 
 function drawMandala(w, h, bass, mid, treble) {
+  const palette = activePalette();
   const cx = w / 2;
   const cy = h / 2;
   const maxR = Math.min(w, h) * 0.45;
@@ -1927,7 +2057,7 @@ function drawMandala(w, h, bass, mid, treble) {
       else vizCtx.lineTo(x, y);
     }
 
-    const hue = 30 + bass * 20;
+    const hue = palette.hue + bass * palette.spread;
     const sat = 50 + mid * 50;
     const light = 35 + treble * 30;
     vizCtx.strokeStyle = `hsla(${hue}, ${sat}%, ${light}%, ${0.3 + energy * 0.4})`;
@@ -1940,12 +2070,61 @@ function drawMandala(w, h, bass, mid, treble) {
   // Center circle
   vizCtx.beginPath();
   vizCtx.arc(cx, cy, 5 + bass * 30, 0, Math.PI * 2);
-  vizCtx.fillStyle = `rgba(212, 168, 83, ${0.2 + bass * 0.5})`;
+  vizCtx.fillStyle = rgba(palette.secondary, 0.2 + bass * 0.5);
   vizCtx.fill();
 }
 
+// Live visual input
+let micStream = null;
+let micSource = null;
+let micEnabled = false;
+
+function setVizStatus(message) {
+  document.getElementById('viz-status').textContent = message;
+}
+
+async function toggleMicInput() {
+  const btn = document.getElementById('btn-mic');
+
+  if (micEnabled) {
+    if (micSource) micSource.disconnect();
+    if (micStream) micStream.getTracks().forEach(track => track.stop());
+    micSource = null;
+    micStream = null;
+    micEnabled = false;
+    btn.classList.remove('input-active');
+    setVizStatus('Mic input off.');
+    return;
+  }
+
+  try {
+    initAudio();
+    if (actx.state === 'suspended') await actx.resume();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('Microphone input is not available in this browser.');
+    }
+
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
+      }
+    });
+    micSource = actx.createMediaStreamSource(micStream);
+    micSource.connect(analyser);
+    micEnabled = true;
+    btn.classList.add('input-active');
+    setVizStatus('Mic input feeding the visual engine.');
+  } catch (err) {
+    micEnabled = false;
+    btn.classList.remove('input-active');
+    setVizStatus('Mic input error: ' + err.message);
+  }
+}
+
 // Viz mode buttons
-document.querySelectorAll('#viz-controls button').forEach(btn => {
+document.querySelectorAll('#viz-controls button[data-viz]').forEach(btn => {
   btn.addEventListener('click', () => {
     vizMode = btn.dataset.viz;
     updateVizButtons();
@@ -1954,10 +2133,17 @@ document.querySelectorAll('#viz-controls button').forEach(btn => {
 });
 
 function updateVizButtons() {
-  document.querySelectorAll('#viz-controls button').forEach(b => {
+  document.querySelectorAll('#viz-controls button[data-viz]').forEach(b => {
     b.classList.toggle('active', b.dataset.viz === vizMode);
   });
 }
+
+document.getElementById('btn-mic').addEventListener('click', toggleMicInput);
+document.getElementById('palette-select').addEventListener('change', (e) => {
+  visualState.palette = e.target.value;
+  vizFrameCount = 0;
+  setVizStatus(`Palette set to ${e.target.options[e.target.selectedIndex].text}.`);
+});
 
 // --- Export ---
 function toggleExport() {
@@ -1977,8 +2163,57 @@ document.getElementById('help-close').addEventListener('click', () => {
   document.getElementById('help-overlay').classList.remove('visible');
 });
 
+function createRecorder(stream, preferredTypes) {
+  if (!window.MediaRecorder) {
+    throw new Error('MediaRecorder is not available in this browser.');
+  }
+  const mimeType = preferredTypes.find(type => MediaRecorder.isTypeSupported(type));
+  return mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+}
+
+function mediaExtension(mimeType, fallback) {
+  if (mimeType.includes('ogg')) return 'ogg';
+  if (mimeType.includes('mp4')) return 'mp4';
+  if (mimeType.includes('webm')) return 'webm';
+  return fallback;
+}
+
+function nowStamp() {
+  return new Date().toISOString().replace(/[:.]/g, '-');
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.download = filename;
+  a.href = url;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function exportDurationMs() {
+  return Math.max(1, Number(document.getElementById('export-duration').value) || 10) * 1000;
+}
+
+function disconnectSafely(source, target) {
+  try { source.disconnect(target); } catch (_) {}
+}
+
+function exportImage() {
+  const status = document.getElementById('export-status');
+  status.textContent = 'Exporting image...';
+  vizCanvas.toBlob((blob) => {
+    if (!blob) {
+      status.textContent = 'Error: image export failed.';
+      return;
+    }
+    downloadBlob(blob, `L7_Resonance_Frame_${nowStamp()}.png`);
+    status.textContent = 'Image exported!';
+  }, 'image/png');
+}
+
 // Audio export
-document.getElementById('export-audio').addEventListener('click', async () => {
+async function recordAudio() {
   const status = document.getElementById('export-status');
   status.textContent = 'Recording audio... Play something!';
   initAudio();
@@ -1986,67 +2221,150 @@ document.getElementById('export-audio').addEventListener('click', async () => {
   try {
     const dest = actx.createMediaStreamDestination();
     masterGain.connect(dest);
-    const recorder = new MediaRecorder(dest.stream, { mimeType: 'audio/webm' });
+    const recorder = createRecorder(dest.stream, ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus']);
     const chunks = [];
     recorder.ondataavailable = (e) => chunks.push(e.data);
     recorder.onstop = () => {
-      masterGain.disconnect(dest);
-      const blob = new Blob(chunks, { type: 'audio/webm' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const ts = new Date().toISOString().replace(/[:.]/g, '-');
-      a.download = `L7_Resonance_${ts}.webm`;
-      a.href = url;
-      a.click();
+      disconnectSafely(masterGain, dest);
+      const mimeType = recorder.mimeType || 'audio/webm';
+      const blob = new Blob(chunks, { type: mimeType });
+      downloadBlob(blob, `L7_Resonance_${nowStamp()}.${mediaExtension(mimeType, 'webm')}`);
       status.textContent = 'Audio exported!';
     };
     recorder.start();
-    status.textContent = 'Recording... (10 seconds)';
-    setTimeout(() => recorder.stop(), 10000);
+    status.textContent = `Recording audio... (${exportDurationMs() / 1000} seconds)`;
+    setTimeout(() => recorder.stop(), exportDurationMs());
   } catch (err) {
     status.textContent = 'Error: ' + err.message;
   }
-});
+}
 
 // Video export
-document.getElementById('export-video').addEventListener('click', async () => {
+async function recordVideo(includeAudio) {
   const status = document.getElementById('export-status');
-  status.textContent = 'Recording video...';
+  status.textContent = includeAudio ? 'Recording video + audio...' : 'Recording video...';
 
   try {
-    const stream = vizCanvas.captureStream(30);
+    if (!vizCanvas.captureStream) {
+      throw new Error('Canvas capture is not available in this browser.');
+    }
 
-    // Add audio if available
-    if (actx) {
-      const dest = actx.createMediaStreamDestination();
+    const stream = vizCanvas.captureStream(30);
+    let dest = null;
+
+    if (includeAudio && actx) {
+      dest = actx.createMediaStreamDestination();
       masterGain.connect(dest);
       dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
     }
 
-    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    const recorder = createRecorder(stream, ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']);
     const chunks = [];
     recorder.ondataavailable = (e) => chunks.push(e.data);
     recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/webm' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const ts = new Date().toISOString().replace(/[:.]/g, '-');
-      a.download = `L7_Resonance_Video_${ts}.webm`;
-      a.href = url;
-      a.click();
+      if (dest) disconnectSafely(masterGain, dest);
+      const mimeType = recorder.mimeType || 'video/webm';
+      const blob = new Blob(chunks, { type: mimeType });
+      const suffix = includeAudio ? 'Video_Audio' : 'Video';
+      downloadBlob(blob, `L7_Resonance_${suffix}_${nowStamp()}.${mediaExtension(mimeType, 'webm')}`);
       status.textContent = 'Video exported!';
     };
     recorder.start();
-    status.textContent = 'Recording video... (10 seconds)';
-    setTimeout(() => recorder.stop(), 10000);
+    status.textContent = `${includeAudio ? 'Recording video + audio' : 'Recording video'}... (${exportDurationMs() / 1000} seconds)`;
+    setTimeout(() => recorder.stop(), exportDurationMs());
   } catch (err) {
     status.textContent = 'Error: ' + err.message;
   }
-});
+}
 
-// Both export
-document.getElementById('export-both').addEventListener('click', () => {
-  document.getElementById('export-video').click();
+function serializeProject() {
+  return {
+    version: 1,
+    created: new Date().toISOString(),
+    studio: 'L7 RESONANCE STUDIO',
+    synthState: { ...synthState },
+    bpm,
+    vizMode,
+    visualState: { ...visualState },
+    seqGrid: seqGrid.map(row => row ? row.slice() : []),
+    tracks: tracks.map(track => ({ ...track })),
+    loopEvents: loopEvents.slice()
+  };
+}
+
+function exportProject() {
+  const status = document.getElementById('export-status');
+  const blob = new Blob([JSON.stringify(serializeProject(), null, 2)], { type: 'application/json' });
+  downloadBlob(blob, `L7_Resonance_Project_${nowStamp()}.json`);
+  status.textContent = 'Project exported!';
+}
+
+function restoreProject(project) {
+  if (!project || typeof project !== 'object') throw new Error('Invalid project file.');
+  if (project.synthState) Object.assign(synthState, project.synthState);
+  if (Number.isFinite(project.bpm)) bpm = Math.max(60, Math.min(200, project.bpm));
+  if (project.vizMode) vizMode = project.vizMode;
+  if (project.visualState?.palette && palettes[project.visualState.palette]) {
+    visualState.palette = project.visualState.palette;
+  }
+  if (Array.isArray(project.seqGrid)) {
+    for (let d = 0; d < 8; d++) {
+      seqGrid[d] = new Array(SEQ_STEPS).fill(false);
+      (project.seqGrid[d] || []).slice(0, SEQ_STEPS).forEach((value, step) => {
+        seqGrid[d][step] = Boolean(value);
+      });
+    }
+  }
+  if (Array.isArray(project.tracks)) {
+    tracks.splice(0, tracks.length, ...project.tracks.map((track, i) => ({
+      name: track.name || ['SYNTH', 'DRUMS', 'LOOP', 'AUX'][i] || `TRACK ${i + 1}`,
+      volume: Math.max(0, Math.min(1, Number(track.volume) || 0)),
+      pan: Math.max(-1, Math.min(1, Number(track.pan) || 0)),
+      muted: Boolean(track.muted),
+      solo: Boolean(track.solo)
+    })));
+  }
+  loopEvents = Array.isArray(project.loopEvents) ? project.loopEvents.slice() : [];
+  document.getElementById('bpm-display').textContent = bpm;
+  document.getElementById('bpm-slider').value = bpm;
+  document.querySelectorAll('.osc-selector button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.osc === synthState.oscType);
+  });
+  document.querySelectorAll('.filter-selector button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === synthState.filterType);
+  });
+  if (filterNode) filterNode.type = synthState.filterType;
+  document.getElementById('palette-select').value = visualState.palette;
+  syncKnobUi();
+  buildSequencer();
+  buildMixer();
+  updateVizButtons();
+  if (vizMode === 'particles') initParticles();
+  vizFrameCount = 0;
+}
+
+async function importProjectFile(file) {
+  const status = document.getElementById('export-status');
+  try {
+    restoreProject(JSON.parse(await file.text()));
+    status.textContent = 'Project imported!';
+  } catch (err) {
+    status.textContent = 'Error: ' + err.message;
+  }
+}
+
+document.getElementById('export-image').addEventListener('click', exportImage);
+document.getElementById('export-audio').addEventListener('click', recordAudio);
+document.getElementById('export-video').addEventListener('click', () => recordVideo(false));
+document.getElementById('export-both').addEventListener('click', () => recordVideo(true));
+document.getElementById('export-project').addEventListener('click', exportProject);
+document.getElementById('import-project').addEventListener('click', () => {
+  document.getElementById('project-file').click();
+});
+document.getElementById('project-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) importProjectFile(file);
+  e.target.value = '';
 });
 
 // --- Init ---

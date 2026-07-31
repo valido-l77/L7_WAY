@@ -27,9 +27,9 @@ Every human-authored commit across all 25 repositories on this machine resolves 
 | Git Author | Email | Found In |
 |-----------|-------|----------|
 | Alberto Valido | avalia@unc.edu | L7_WAY, NCLS_SCRIPTS, nc-life-scripts, dial-training, eco_dev, Legalsimulationplatform, avli_cloud, NCLIFE dashboard |
-| Alberto Vargas-Lujan | (academic alias) | LTA-7 framework, scientific papers |
+| ~~Alberto Vargas-Lujan~~ (deprecated 2026-07-29) | (academic alias — not a real identity) | LTA-7 framework, scientific papers — attributed directly to Alberto Valido Delgado |
 
-**Context:** UNC Chapel Hill affiliation. "Vargas-Lujan" was an academic alias used in publications. The name change from working alias to legal name occurred during career transitions. All work under this branch was created by the same hands on machines owned by Alberto Valido Delgado.
+**Context:** UNC Chapel Hill affiliation. "Vargas-Lujan" was previously recorded as an academic alias used in publications; this was corrected 2026-07-29 — it is not a real identity, and all work formerly attributed to it (including the LTA-7 framework and scientific papers) is authored directly by Alberto Valido Delgado. All work under this branch was created by the same hands on machines owned by Alberto Valido Delgado.
 
 ### Branch 2: Current Legal Identity
 | Git Author | Email | Found In |
@@ -132,7 +132,7 @@ These were created on the Founder's machines, committed under his identities, wi
 | `Backup/VPS RECOVERY/L7_WAY/` | Alberto Valido | Jan 2026 | VPS backup of L7 WAY |
 | `Backup/VPS RECOVERY/nc-life-scripts-backup/` | Alberto Valido | 2024-2025 | VPS backup of NC Life scripts |
 | `Backup/VPS RECOVERY/avli_cloud/` | Alberto / avalia1 | 2025-2026 | VPS backup of AVLI Cloud |
-| LTA-7 Framework (inside openclaw workspace) | Alberto Vargas-Lujan | Feb 2026 | Python implementation of 7-stage architecture |
+| LTA-7 Framework (inside openclaw workspace) | Alberto Valido Delgado (formerly attributed to deprecated alias "Alberto Vargas-Lujan") | Feb 2026 | Python implementation of 7-stage architecture |
 
 **NOTE on DIAL Training:** The www.dial-training.com work was contract work. IP ownership depends on the contract terms. If the contract assigned IP to DIAL, the code belongs to them (FOREIGN). If the contract retained IP with the developer, it is the Founder's (CITIZEN). **This must be examined.**
 
@@ -161,7 +161,7 @@ These were created by third parties and cloned/downloaded for reference or use. 
 
 **Path:** `Backup/00_PYTHON_PROJECTS/00 Clawbot/openclaw/workspace/lta7-framework/`
 
-**Published Under:** Alberto Vargas-Lujan (academic alias)
+**Published Under:** ~~Alberto Vargas-Lujan (academic alias)~~ — deprecated 2026-07-29, not a real identity
 **True Author:** Alberto Valido Delgado
 
 **Contents:**
@@ -178,7 +178,7 @@ These were created by third parties and cloned/downloaded for reference or use. 
 - `lta7/stages.py` — Seven transformation stages
 
 **Classification:** ⚜ CITIZEN OF EMPIRE
-The LTA-7 framework is the Python implementation of the L7 seven-stage transformation architecture. It was created by Alberto Valido Delgado under the academic alias "Alberto Vargas-Lujan." The source is Empire. The pseudonym was a cloak; the man was always the same. The Founder has full right to this work.
+The LTA-7 framework is the Python implementation of the L7 seven-stage transformation architecture. It was created by Alberto Valido Delgado. (It was previously attributed to an academic alias, "Alberto Vargas-Lujan" — deprecated 2026-07-29, not a real identity.) The source is Empire. The Founder has full right to this work.
 
 ---
 
@@ -199,8 +199,8 @@ Alberto Valido Delgado (Legal Name, Root)
 │   ├── Legalsimulationplatform
 │   ├── eco_dev
 │   └── avli_cloud
-├── Alberto Vargas-Lujan (Academic Alias)
-│   └── LTA-7 Framework (Python, 8 modules)
+├── LTA-7 Framework (Python, 8 modules) — direct, not via alias
+│   └── (formerly misattributed to deprecated "Alberto Vargas-Lujan")
 ├── avalia1 (GitHub)
 │   ├── NCLS_SCRIPTS (some commits)
 │   └── avli_cloud (some commits)

@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://avli.cloud/l7/schema/v1/entity.schema.json",
+  "title": "L7 Entity v1",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "entity_id",
+    "entity_type",
+    "birth_date",
+    "owner",
+    "lifecycle",
+    "lineage",
+    "l7_declaration"
+  ],
+  "properties": {
+    "contract_version": { "const": "l7.entity/1.0" },
+    "entity_id": { "type": "string", "minLength": 1 },
+    "entity_type": { "enum": ["tool", "service", "workflow", "ui", "project"] },
+    "birth_date": { "type": "string", "format": "date" },
+    "owner": { "type": "string", "minLength": 1 },
+    "lifecycle": {
+      "enum": ["summoned", "oath", "formed", "serving", "mature", "sunset", "archived"]
+    },
+    "lineage": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      ]
+    },
+    "l7_declaration": {
+      "$ref": "https://avli.cloud/l7/schema/v1/common-lingua.schema.json"
+    },
+    "projection": {
+      "type": "object",
+      "description": "Derived internal projection; never identity or authority.",
+      "required": ["version", "coordinate", "astrocyte"],
+      "properties": {
+        "version": { "const": "l7.projection.12d/1.0" },
+        "coordinate": {
+          "type": "array",
+          "minItems": 12,
+          "maxItems": 12,
+          "items": { "type": "number", "minimum": 0, "maximum": 10 }
+        },
+        "astrocyte": { "type": "number", "minimum": 0, "maximum": 1 },
+        "evidence": { "type": "array", "items": { "type": "object" } }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

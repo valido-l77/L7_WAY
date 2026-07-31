@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://avli.cloud/l7/schema/v1/media-plan.schema.json",
+  "title": "L7 Morphic Media Plan v1",
+  "type": "object",
+  "required": ["contract_version", "id", "version", "request", "coordinate", "layers", "horizon", "crystallization", "release", "provenance"],
+  "properties": {
+    "contract_version": { "const": "l7.media.plan/1.0" },
+    "id": { "type": "string", "pattern": "^morph-[a-f0-9]{16}$" },
+    "version": { "const": "l7-morphic-media/1.0" },
+    "request": { "$ref": "media-definitions.schema.json#/definitions/request" },
+    "coordinate": {
+      "type": "object",
+      "required": ["real", "imaginary", "nodal_axis", "astrocyte", "gamma"],
+      "properties": {
+        "real": { "type": "array", "minItems": 10, "maxItems": 10, "items": { "type": "number" } },
+        "imaginary": { "type": "array", "minItems": 10, "maxItems": 10, "items": { "type": "number" } },
+        "nodal_axis": {
+          "type": "object",
+          "required": ["caput", "cauda"],
+          "properties": { "caput": { "type": "number" }, "cauda": { "type": "number" } },
+          "additionalProperties": false
+        },
+        "astrocyte": { "type": "number" },
+        "gamma": { "type": "number", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["depth", "name", "symbol", "color", "purpose", "invariant", "question", "jobs"],
+        "properties": {
+          "depth": { "type": "integer", "minimum": 1, "maximum": 3 },
+          "name": { "$ref": "media-definitions.schema.json#/definitions/layerName" },
+          "symbol": { "type": "string" },
+          "color": { "type": "string" },
+          "purpose": { "enum": ["propose", "challenge", "ground"] },
+          "invariant": { "type": "string", "minLength": 1 },
+          "question": { "type": "string", "minLength": 1 },
+          "jobs": { "type": "array", "minItems": 1, "items": { "$ref": "media-definitions.schema.json#/definitions/job" } },
+          "complement": { "type": "object" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "horizon": { "type": "object" },
+    "crystallization": { "type": "object" },
+    "release": { "type": "object" },
+    "provenance": {
+      "type": "object",
+      "required": ["creator", "system", "plan_hash"],
+      "properties": {
+        "creator": { "type": "string" },
+        "system": { "type": "string" },
+        "plan_hash": { "$ref": "media-definitions.schema.json#/definitions/sha256" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

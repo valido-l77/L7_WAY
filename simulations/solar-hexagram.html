@@ -98,8 +98,8 @@ canvas#wheel {
 <canvas id="wheel" width="180" height="180"></canvas>
 
 <div id="title">
-  <span>IQS-888</span> SOLAR SYSTEM IN HEXAGRAM SPACE-TIME<br>
-  E = mc&sup2; &times; 64 &nbsp;|&nbsp; c = 64 &nbsp;|&nbsp; Operations are lookup tables
+  <span>IQS-888</span> SOLAR SYSTEM — REAL KEPLER ORBITS (J2000 elements) + OPTIONAL SYMBOLIC OVERLAY<br>
+  Real G, real masses, real N-body gravity &nbsp;|&nbsp; Hexagram resonance is OFF by default — symbolic layer, not physics
 </div>
 
 <div id="panel">
@@ -117,6 +117,11 @@ canvas#wheel {
   <button id="btn-waves">Waves</button>
   <button id="btn-trails">Trails</button>
   <button id="btn-res">Resonance</button>
+  <button id="btn-symbolic" title="Toggle the I-Ching resonance overlay on real gravity">Symbolic Gravity</button>
+  <button id="btn-zodiac-wheel" title="Switch the wheel between King Wen (symbolic) and real zodiac">Zodiac Wheel</button>
+  <label>Epoch</label>
+  <input type="date" id="epoch-date">
+  <button id="btn-now">Now</button>
 </div>
 
 <div id="resonance"></div>
@@ -140,9 +145,30 @@ canvas#wheel {
 // ════════════════════════════════════════════════════════════════
 
 // ═══ CONSTANTS ═══
-const G    = 4 * Math.PI * Math.PI;  // G·M☉ in AU³/yr²
-const C_HEX = 64;                     // Speed of light in hexagram space
+const G    = 4 * Math.PI * Math.PI;  // G·M☉ in AU³/yr² — real, standard astronomical convention
+const C_HEX = 64;                     // Symbolic "speed of light" in hexagram space — NOT physical, labeled as such in the UI
+const C_REAL = 63241.077;             // Real speed of light in AU/year (299,792,458 m/s)
 const TAU  = 2 * Math.PI;
+
+// ═══ ZODIAC (real geocentric ecliptic longitude → traditional sign) ═══
+// This is genuine astronomy (the actual angle of a planet as seen from
+// Earth, projected onto the ecliptic) mapped onto the traditional
+// 12-sign, 30°-each zodiac. The physics is real; the sign names/meanings
+// are the historical human symbolic layer laid on top of real data —
+// exactly the "Interstellar compromise": science underneath, story on top.
+const ZODIAC_SIGNS = [
+  'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+  'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
+];
+
+function computeZodiac(body, earth) {
+  const dx = body.x - earth.x;
+  const dy = body.y - earth.y;
+  const lambda = normDeg(Math.atan2(dy, dx) * 180 / Math.PI);
+  const signIdx = Math.floor(lambda / 30);
+  const degInSign = lambda - signIdx * 30;
+  return { lambda, sign: ZODIAC_SIGNS[signIdx], signIdx, degInSign };
+}
 
 // ═══ TRIGRAMS (Fu Xi binary: bottom line = MSB) ═══
 const TRI = [
@@ -181,6 +207,97 @@ function hexResonance(bin1, bin2) {
   return 0.82 + (matching / 6) * 0.32 + nucBonus + complement + sharedLower + sharedUpper;
 }
 
+// ═══ REAL ORBITAL ELEMENTS (J2000, approximate) ═══
+// Source: Standish & Williams, "Keplerian Elements for Approximate
+// Positions of the Major Planets," NASA JPL Solar System Dynamics.
+// https://ssd.jpl.nasa.gov/planets/approx_pos.html — valid 1800-2050,
+// accurate to a few arcminutes. This is real astronomy, not invented:
+// a = semi-major axis (AU), e = eccentricity, i = inclination (deg),
+// L = mean longitude at epoch (deg), peri = longitude of perihelion (deg),
+// node = longitude of ascending node (deg). "dot" suffix = rate per Julian century.
+const J2000_ELEMENTS = {
+  Mercury: { a: 0.38709927, adot: 0.00000037, e: 0.20563593, edot: 0.00001906, i: 7.00497902, idot: -0.00594749, L: 252.25032350, Ldot: 149472.67411175, peri: 77.45779628, peridot: 0.16047689, node: 48.33076593, nodedot: -0.12534081 },
+  Venus:   { a: 0.72333566, adot: 0.00000390, e: 0.00677672, edot: -0.00004107, i: 3.39467605, idot: -0.00078890, L: 181.97909950, Ldot: 58517.81538729, peri: 131.60246718, peridot: 0.00268329, node: 76.67984255, nodedot: -0.27769418 },
+  Earth:   { a: 1.00000261, adot: 0.00000562, e: 0.01671123, edot: -0.00004392, i: -0.00001531, idot: -0.01294668, L: 100.46457166, Ldot: 35999.37244981, peri: 102.93768193, peridot: 0.32327364, node: 0.0, nodedot: 0.0 },
+  Mars:    { a: 1.52371034, adot: 0.00001847, e: 0.09339410, edot: 0.00007882, i: 1.84969142, idot: -0.00813131, L: -4.55343205, Ldot: 19140.30268499, peri: -23.94362959, peridot: 0.44441088, node: 49.55953891, nodedot: -0.29257343 },
+  Jupiter: { a: 5.20288700, adot: -0.00011607, e: 0.04838624, edot: -0.00013253, i: 1.30439695, idot: -0.00183714, L: 34.39644051, Ldot: 3034.74612775, peri: 14.72847983, peridot: 0.21252668, node: 100.47390909, nodedot: 0.20469106 },
+  Saturn:  { a: 9.53667594, adot: -0.00125060, e: 0.05386179, edot: -0.00050991, i: 2.48599187, idot: 0.00193609, L: 49.95424423, Ldot: 1222.49362201, peri: 92.59887831, peridot: -0.41897216, node: 113.66242448, nodedot: -0.28867794 },
+  Uranus:  { a: 19.18916464, adot: -0.00196176, e: 0.04725744, edot: -0.00004397, i: 0.77263783, idot: -0.00242939, L: 313.23810451, Ldot: 428.48202785, peri: 170.95427630, peridot: 0.40805281, node: 74.01692503, nodedot: 0.04240589 },
+  Neptune: { a: 30.06992276, adot: 0.00026291, e: 0.00859048, edot: 0.00005105, i: 1.77004347, idot: 0.00035372, L: -55.12002969, Ldot: 218.45945325, peri: 44.96476227, peridot: -0.32241464, node: 131.78422574, nodedot: -0.00508664 },
+  // Pluto: not part of the JPL 8-planet table (dwarf planet, 3:2 resonance
+  // with Neptune makes its long-term orbit non-Keplerian). Approximate
+  // elements only — treat as illustrative, less precise than the above.
+  Pluto:   { a: 39.48211675, adot: -0.00031596, e: 0.24882730, edot: 0.00005170, i: 17.14001206, idot: 0.00004818, L: 238.92903833, Ldot: 145.20780515, peri: 224.06891629, peridot: -0.04062942, node: 110.30393684, nodedot: -0.01183482 },
+};
+
+// Julian centuries since J2000.0 (JD 2451545.0) for a JS Date
+function centuriesSinceJ2000(date) {
+  const JD = date.getTime() / 86400000 + 2440587.5;
+  return (JD - 2451545.0) / 36525;
+}
+
+function normDeg(deg) {
+  let d = deg % 360;
+  if (d < 0) d += 360;
+  return d;
+}
+
+// Solve Kepler's equation M = E - e*sin(E) for eccentric anomaly E (Newton-Raphson)
+function solveKepler(Mdeg, e) {
+  const M = (Mdeg * Math.PI / 180);
+  let E = M + e * Math.sin(M); // initial guess
+  for (let iter = 0; iter < 30; iter++) {
+    const dE = (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+    E -= dE;
+    if (Math.abs(dE) < 1e-12) break;
+  }
+  return E; // radians
+}
+
+// Real heliocentric ecliptic position (x, y in AU, 2D projection) at time T
+// (centuries since J2000) from real orbital elements. Standard two-body
+// Kepler orbit — see Meeus, "Astronomical Algorithms," ch. 33.
+function keplerPosition(el, T) {
+  const a = el.a + el.adot * T;
+  const e = el.e + el.edot * T;
+  const i = (el.i + el.idot * T) * Math.PI / 180;
+  const L = normDeg(el.L + el.Ldot * T);
+  const peri = normDeg(el.peri + el.peridot * T);
+  const node = normDeg(el.node + el.nodedot * T);
+  const M = normDeg(L - peri);           // mean anomaly
+  const w = ((peri - node) % 360 + 360) % 360; // argument of perihelion
+
+  const E = solveKepler(M, e);
+  // Position in the orbital plane
+  const xOrb = a * (Math.cos(E) - e);
+  const yOrb = a * Math.sqrt(1 - e * e) * Math.sin(E);
+
+  // Rotate by argument of perihelion, inclination, then node —
+  // then project onto the ecliptic (x,y) plane (drop z for this 2D view).
+  const wRad = w * Math.PI / 180, nodeRad = node * Math.PI / 180;
+  const cosW = Math.cos(wRad), sinW = Math.sin(wRad);
+  const cosN = Math.cos(nodeRad), sinN = Math.sin(nodeRad);
+  const cosI = Math.cos(i);
+
+  const xw = xOrb * cosW - yOrb * sinW;
+  const yw = xOrb * sinW + yOrb * cosW;
+
+  const x = xw * cosN - yw * cosI * sinN;
+  const y = xw * sinN + yw * cosI * cosN;
+
+  return { x, y, a, e };
+}
+
+// Velocity via central finite difference (real, not modeled analytically —
+// simple and accurate enough to seed the N-body integrator correctly).
+function keplerVelocity(el, T) {
+  const dT = 1e-6; // ~52 minutes, in centuries
+  const p1 = keplerPosition(el, T - dT);
+  const p2 = keplerPosition(el, T + dT);
+  const dtYears = dT * 100 * 2; // centuries -> years, *2 for the two-sided diff
+  return { vx: (p2.x - p1.x) / dtYears, vy: (p2.y - p1.y) / dtYears };
+}
+
 // ═══ CELESTIAL BODIES ═══
 // Each body: hexagram identity, real orbital parameters, Fourier state
 const BODY_DEFS = [
@@ -212,31 +329,37 @@ let showField = false;
 let showWaves = true;
 let showTrails = true;
 let showResonance = false;
+let symbolicResonance = false; // false = pure real Newtonian gravity (default, honest); true = I-Ching resonance overlay modulates gravity, clearly labeled as symbolic
+let showZodiac = false;        // wheel mode: false = King Wen (symbolic), true = real geocentric zodiac
 let fieldCanvas, fieldCtx;
 
-// ═══ INITIALIZE BODIES ═══
+// Resonance actually used in physics — real gravity unless the symbolic
+// overlay is explicitly turned on. Keeps "real" and "symbolic" honestly
+// separate instead of silently blending them.
+function activeResonance(bin1, bin2) {
+  return symbolicResonance ? hexResonance(bin1, bin2) : 1.0;
+}
+
+// ═══ INITIALIZE BODIES — REAL POSITIONS AT A REAL EPOCH ═══
+let epochDate = new Date(); // defaults to "now"; see setEpoch()
+
 function initBodies() {
   bodies = [];
   trails = [];
   wavefronts = [];
   time = 0;
 
-  // Spread planets at different initial angles for visual variety
-  const initAngles = [0, 0, Math.PI/3, 2*Math.PI/3, Math.PI, 5*Math.PI/3, Math.PI/6, Math.PI/2, 4*Math.PI/3, 5*Math.PI/6];
+  const T = centuriesSinceJ2000(epochDate);
 
-  BODY_DEFS.forEach((def, i) => {
-    const theta = initAngles[i] || 0;
+  BODY_DEFS.forEach((def) => {
     let x = 0, y = 0, vx = 0, vy = 0;
 
-    if (def.a > 0) {
-      // Place at distance a (circular orbit approximation)
-      const r = def.a;
-      x = r * Math.cos(theta);
-      y = r * Math.sin(theta);
-      // Circular orbit velocity: v = sqrt(GM/r) = 2π/sqrt(a)
-      const v = TAU / Math.sqrt(def.a);
-      vx = -v * Math.sin(theta);
-      vy =  v * Math.cos(theta);
+    const el = J2000_ELEMENTS[def.name];
+    if (el) {
+      const pos = keplerPosition(el, T);
+      const vel = keplerVelocity(el, T);
+      x = pos.x; y = pos.y;
+      vx = vel.vx; vy = vel.vy;
     }
 
     bodies.push({
@@ -247,10 +370,18 @@ function initBodies() {
       energy: { kinetic: 0, potential: 0, hexagram: 0, total: 0 },
       // Angular momentum
       L: 0,
+      // Real geocentric zodiac placement (computed each frame)
+      zodiac: { lambda: 0, sign: '', signIdx: 0, degInSign: 0 },
     });
 
     trails.push([]);
   });
+}
+
+function setEpoch(date) {
+  epochDate = date;
+  initBodies();
+  computeAccelerations();
 }
 
 // ═══ PHYSICS: N-BODY GRAVITY WITH HEXAGRAM RESONANCE ═══
@@ -270,8 +401,9 @@ function computeAccelerations() {
 
       if (r < 0.001) continue; // softening
 
-      // Hexagram resonance modulates the gravitational constant
-      const resonance = hexResonance(bi.bin, bj.bin);
+      // Real gravity by default; hexagram resonance only modulates it
+      // when the symbolic overlay is explicitly enabled (see activeResonance)
+      const resonance = activeResonance(bi.bin, bj.bin);
 
       // F = G * mi * mj * resonance / r²
       // a_i = G * mj * resonance / r² * (r_hat)
@@ -343,6 +475,15 @@ function updateFourier() {
   }
 }
 
+// ═══ ZODIAC UPDATE (real geocentric ecliptic longitude) ═══
+function updateZodiac() {
+  const earth = bodies[3]; // Sun, Mercury, Venus, Earth = index 3
+  for (let i = 0; i < bodies.length; i++) {
+    if (i === 3) continue; // Earth has no geocentric zodiac position relative to itself
+    bodies[i].zodiac = computeZodiac(bodies[i], earth);
+  }
+}
+
 // ═══ ENERGY: E = mc² × 64 ═══
 function updateEnergy() {
   for (let i = 0; i < bodies.length; i++) {
@@ -352,8 +493,10 @@ function updateEnergy() {
     // Kinetic energy: ½mv²
     b.energy.kinetic = 0.5 * b.mass * v2;
 
-    // Rest energy: E = mc² where c = 64
-    b.energy.hexagram = b.mass * C_HEX * C_HEX; // mc² × (implicit ×1, c=64)
+    // Symbolic rest energy: E = mc² with the invented c=64 hexagram constant (NOT physical)
+    b.energy.hexagram = b.mass * C_HEX * C_HEX;
+    // Real rest energy: E = mc² with the real speed of light, in M☉·(AU/yr)² units
+    b.energy.restReal = b.mass * C_REAL * C_REAL;
 
     // Gravitational potential energy (sum of pairs)
     let pe = 0;
@@ -363,7 +506,7 @@ function updateEnergy() {
       const dy = bodies[j].y - b.y;
       const r = Math.sqrt(dx * dx + dy * dy);
       if (r > 0.001) {
-        pe -= G * b.mass * bodies[j].mass * hexResonance(b.bin, bodies[j].bin) / r;
+        pe -= G * b.mass * bodies[j].mass * activeResonance(b.bin, bodies[j].bin) / r;
       }
     }
     b.energy.potential = pe;
@@ -743,13 +886,22 @@ function updatePanel() {
     <h3>&#9836; Harmonics (6 lines = 6 modes)</h3>
     ${fourierHTML}
 
-    <h3>&#9889; Energy (E = mc&sup2; &times; 64)</h3>
+    <h3>&#9889; Energy — real vs. symbolic</h3>
     <div class="energy-section">
-      <div class="stat-row"><span class="stat-label">Rest (mc&sup2;, c=64)</span><span class="stat-value">${e.hexagram.toExponential(3)}</span></div>
-      <div class="stat-row"><span class="stat-label">Kinetic (&frac12;mv&sup2;)</span><span class="stat-value">${e.kinetic.toExponential(3)}</span></div>
-      <div class="stat-row"><span class="stat-label">Potential</span><span class="stat-value">${e.potential.toExponential(3)}</span></div>
-      <div class="energy-total">E = ${e.total.toExponential(4)}</div>
+      <div class="stat-row"><span class="stat-label">Kinetic (&frac12;mv&sup2;, real)</span><span class="stat-value">${e.kinetic.toExponential(3)}</span></div>
+      <div class="stat-row"><span class="stat-label">Potential (real G, real)</span><span class="stat-value">${e.potential.toExponential(3)}</span></div>
+      <div class="stat-row"><span class="stat-label">Rest E=mc&sup2; (real c)</span><span class="stat-value">${e.restReal.toExponential(3)}</span></div>
+      <div class="stat-row" style="opacity:0.55"><span class="stat-label">Rest E=mc&sup2; (symbolic, c=64)</span><span class="stat-value">${e.hexagram.toExponential(3)}</span></div>
+      <div class="energy-total">E<sub>orbital</sub> = ${(e.kinetic + e.potential).toExponential(4)}</div>
     </div>
+
+    ${selectedIdx !== 3 ? `
+    <h3>&#9800; Zodiac (real geocentric position)</h3>
+    <div class="energy-section">
+      <div class="stat-row"><span class="stat-label">Ecliptic longitude &lambda;</span><span class="stat-value">${b.zodiac.lambda.toFixed(2)}&deg;</span></div>
+      <div class="stat-row"><span class="stat-label">Sign (traditional)</span><span class="stat-value">${b.zodiac.sign} ${b.zodiac.degInSign.toFixed(1)}&deg;</span></div>
+      <div style="font-size:9px;color:#5a5a4a;margin-top:4px">Real angle, as seen from Earth, on the ecliptic. Sign boundaries are the traditional human overlay on real data.</div>
+    </div>` : ''}
 
     <h3>&#8634; Orbital State</h3>
     <div class="stat-row"><span class="stat-label">r (distance)</span><span class="stat-value">${r.toFixed(4)} AU</span></div>
@@ -777,7 +929,75 @@ const KING_WEN_ORDER = [
   49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64
 ];
 
+function drawZodiacWheel() {
+  const w = 180, h = 180;
+  const cx = w / 2, cy = h / 2;
+  const r = 70;
+
+  wheelCtx.clearRect(0, 0, w, h);
+
+  wheelCtx.strokeStyle = '#1a1a2a';
+  wheelCtx.lineWidth = 1;
+  wheelCtx.beginPath();
+  wheelCtx.arc(cx, cy, r, 0, TAU);
+  wheelCtx.stroke();
+
+  // 12 real zodiac sign divisions (30° each), starting at Aries = real vernal equinox direction
+  const glyphs = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+  for (let s = 0; s < 12; s++) {
+    const angle = (s / 12) * TAU - Math.PI / 2;
+    const inner = r - 4, outer = r + 2;
+    wheelCtx.strokeStyle = '#2a2a3a';
+    wheelCtx.lineWidth = 0.5;
+    wheelCtx.beginPath();
+    wheelCtx.moveTo(cx + inner * Math.cos(angle), cy + inner * Math.sin(angle));
+    wheelCtx.lineTo(cx + outer * Math.cos(angle), cy + outer * Math.sin(angle));
+    wheelCtx.stroke();
+
+    const midAngle = ((s + 0.5) / 12) * TAU - Math.PI / 2;
+    const lr = r + 12;
+    wheelCtx.fillStyle = '#4a4a3a';
+    wheelCtx.font = '10px serif';
+    wheelCtx.textAlign = 'center';
+    wheelCtx.textBaseline = 'middle';
+    wheelCtx.fillText(glyphs[s], cx + lr * Math.cos(midAngle), cy + lr * Math.sin(midAngle));
+  }
+
+  const earth = bodies[3];
+  wheelCtx.fillStyle = earth.color;
+  wheelCtx.beginPath();
+  wheelCtx.arc(cx, cy, 4, 0, TAU);
+  wheelCtx.fill();
+
+  bodies.forEach((b, i) => {
+    if (i === 3) return; // Earth is the observer, at center
+    const angle = (b.zodiac.lambda / 360) * TAU - Math.PI / 2;
+    const px = cx + (r - 14) * Math.cos(angle);
+    const py = cy + (r - 14) * Math.sin(angle);
+
+    wheelCtx.fillStyle = b.color;
+    wheelCtx.beginPath();
+    wheelCtx.arc(px, py, (i === selectedIdx) ? 4 : 2.5, 0, TAU);
+    wheelCtx.fill();
+
+    if (i === selectedIdx) {
+      wheelCtx.strokeStyle = '#c9a96e';
+      wheelCtx.lineWidth = 1;
+      wheelCtx.beginPath();
+      wheelCtx.arc(px, py, 6, 0, TAU);
+      wheelCtx.stroke();
+    }
+  });
+
+  wheelCtx.fillStyle = '#3a3a2a';
+  wheelCtx.font = '7px monospace';
+  wheelCtx.textAlign = 'center';
+  wheelCtx.fillText('REAL ZODIAC', cx, cy + 14);
+}
+
 function drawWheel() {
+  if (showZodiac) { drawZodiacWheel(); return; }
+
   const w = 180; // CSS size (DPR handled by setTransform)
   const h = 180;
   const cx = w / 2, cy = h / 2;
@@ -917,6 +1137,31 @@ document.getElementById('btn-res').addEventListener('click', function() {
   this.classList.toggle('active', showResonance);
 });
 
+document.getElementById('btn-symbolic').addEventListener('click', function() {
+  symbolicResonance = !symbolicResonance;
+  this.classList.toggle('active', symbolicResonance);
+  this.textContent = symbolicResonance ? 'Symbolic Gravity (ON)' : 'Symbolic Gravity';
+  computeAccelerations();
+});
+
+document.getElementById('btn-zodiac-wheel').addEventListener('click', function() {
+  showZodiac = !showZodiac;
+  this.classList.toggle('active', showZodiac);
+  this.textContent = showZodiac ? 'Zodiac Wheel (ON)' : 'Zodiac Wheel';
+});
+
+const epochInput = document.getElementById('epoch-date');
+epochInput.valueAsDate = new Date();
+epochInput.addEventListener('change', function() {
+  if (this.valueAsDate) setEpoch(this.valueAsDate);
+});
+
+document.getElementById('btn-now').addEventListener('click', function() {
+  const now = new Date();
+  epochInput.valueAsDate = now;
+  setEpoch(now);
+});
+
 // Mouse wheel zoom
 cosmos.addEventListener('wheel', (evt) => {
   evt.preventDefault();
@@ -944,6 +1189,7 @@ function animate() {
 
   updateFourier();
   updateEnergy();
+  updateZodiac();
 
   // Draw layers
   drawField();

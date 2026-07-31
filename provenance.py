@@ -25,11 +25,12 @@ REGISTRY_PATH = os.path.join(L7_DIR, ".provenance", "registry.json")
 
 MARKER_START_HTML = "<!-- L7:PROVENANCE"
 MARKER_START_JS = "// L7:PROVENANCE"
+MARKER_START_HASH = "# L7:PROVENANCE"
 
 
 def body_of(content):
     """Get everything before the provenance seal. The seal is at the end."""
-    for marker in [MARKER_START_HTML, MARKER_START_JS]:
+    for marker in [MARKER_START_HTML, MARKER_START_JS, MARKER_START_HASH]:
         # Find the LAST occurrence (the seal at the bottom)
         idx = content.rfind(marker)
         if idx >= 0:
@@ -76,7 +77,7 @@ def sign_file(filepath):
         content = f.read()
 
     # Already has provenance? Update the hash in the registry, don't touch the file.
-    if MARKER_START_HTML in content or MARKER_START_JS in content:
+    if any(marker in content for marker in [MARKER_START_HTML, MARKER_START_JS, MARKER_START_HASH]):
         b_hash = hashlib.sha256(body_of(content).encode()).hexdigest()
         prev = registry["chain"][-1]["chain_hash"] if registry["chain"] else hashlib.sha256(CREATOR.encode()).hexdigest()
         c_hash = chain_hash(prev, b_hash)
@@ -96,13 +97,15 @@ def sign_file(filepath):
         return {"file": filename, "hash": b_hash, "chain": c_hash, "action": "updated"}
 
     # First time — hash the content, then APPEND provenance at the end
-    b_hash = hashlib.sha256(content.encode()).hexdigest()
+    sealable_body = content[:-1] if content.endswith('\n') else content
+    b_hash = hashlib.sha256(sealable_body.encode()).hexdigest()
     prev = registry["chain"][-1]["chain_hash"] if registry["chain"] else hashlib.sha256(CREATOR.encode()).hexdigest()
     c_hash = chain_hash(prev, b_hash)
     now = datetime.now(timezone.utc).isoformat()
 
     # Determine comment style
     is_html = filepath.endswith('.html')
+    is_hash_comment = filepath.endswith(('.py', '.sh'))
     if is_html:
         provenance = f"""
 <!-- L7:PROVENANCE
@@ -112,6 +115,14 @@ def sign_file(filepath):
   This work is the intellectual property of {CREATOR}.
   Chain: {len(registry['chain']) + 1} works linked. Verify: python3 provenance.py verify {filename}
 L7:PROVENANCE -->"""
+    elif is_hash_comment:
+        provenance = f"""
+# L7:PROVENANCE
+# Creator: {CREATOR} | System: {SYSTEM} | License: {LICENSE}
+# File: {filename} | Body-Hash: SHA-256:{b_hash}
+# Chain-Hash: SHA-256:{c_hash} | Signed: {now}
+# This work is the intellectual property of {CREATOR}.
+# Chain: {len(registry['chain']) + 1} works. Verify: python3 provenance.py verify {filename}"""
     else:
         provenance = f"""
 // L7:PROVENANCE
@@ -119,12 +130,11 @@ L7:PROVENANCE -->"""
 // File: {filename} | Body-Hash: SHA-256:{b_hash}
 // Chain-Hash: SHA-256:{c_hash} | Signed: {now}
 // This work is the intellectual property of {CREATOR}.
-// Chain: {len(registry['chain']) + 1} works. Verify: python3 provenance.py verify {filename}
-// L7:PROVENANCE"""
+// Chain: {len(registry['chain']) + 1} works. Verify: python3 provenance.py verify {filename}"""
 
     # Append at the end — the seal on the back, not the face
     with open(filepath, 'w', encoding='utf-8') as f:
-        f.write(content + provenance)
+        f.write(sealable_body + provenance)
 
     registry["chain"].append({
         "file": filename, "body_hash": b_hash, "chain_hash": c_hash,

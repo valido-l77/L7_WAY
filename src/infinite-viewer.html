@@ -233,7 +233,7 @@
   <h2>INFINITE ZOOM VIEWER</h2>
   <p>
     Drag and drop an image to begin<br>
-    or press <span class="key">M</span> for Mandelbrot demo<br><br>
+    or press <span class="key">M</span> for Mandelbrot, <span class="key">C</span> for real cosmic scale<br><br>
     <span class="key">Scroll</span> Zoom &nbsp; <span class="key">Drag</span> Pan &nbsp; <span class="key">R</span> Reset &nbsp; <span class="key">F</span> Fullscreen
   </p>
 </div>
@@ -277,7 +277,7 @@
   let zoom = 1;
   const ZOOM_MIN = 0.1;
   const ZOOM_MAX = 1e15;  // effectively infinite for Mandelbrot
-  let mode = 'empty';  // 'empty' | 'image' | 'mandelbrot'
+  let mode = 'empty';  // 'empty' | 'image' | 'mandelbrot' | 'cosmos'
   let loadedImage = null;
   let imgW = 0, imgH = 0;
   let dragging = false;
@@ -301,6 +301,140 @@
   // Image progressive refinement state
   let imgRefineGen = 0;
   let imgRefinePending = null;
+
+  // ═══ Cosmos mode: real scale, observable universe → Planck length ═══
+  // cosmosExp is log10(current characteristic scale in meters). Continuous —
+  // not discretized to the stations below, which are just real reference
+  // points along the way. Every number here is a real physical quantity.
+  let cosmosExp = 0; // start at human scale, 1 m
+  const COSMOS_MIN = -34.79;  // Planck length, 1.616e-35 m
+  const COSMOS_MAX = 26.94;   // observable universe radius, ~8.8e26 m
+
+  // Every exponent below is computed from a real physical quantity in
+  // meters (Math.log10(value)), not estimated — verified numerically.
+  const COSMOS_STATIONS = [
+    { exp: 26.944, name: 'Observable Universe', desc: 'Radius ~8.8×10²⁶ m (~46.5 billion light-years) — the farthest we can see, limited by the age of the universe and the expansion of space.' },
+    { exp: 24.699, name: 'Laniakea Supercluster', desc: 'Our home supercluster of galaxies, ~5×10²⁴ m (~520 million ly) across.' },
+    { exp: 22.976, name: 'Local Group', desc: 'The Milky Way, Andromeda, and ~80 smaller galaxies, spanning ~10 million ly.' },
+    { exp: 20.978, name: 'Milky Way Galaxy', desc: 'Diameter ~9.5×10²⁰ m (~100,000 ly). We are ~26,000 ly from the galactic center.' },
+    { exp: 16.603, name: 'Nearest Star', desc: 'Proxima Centauri, 4.24 light-years ≈ 4.0×10¹⁶ m away — the nearest star to the Sun.' },
+    { exp: 13.254, name: 'Heliopause', desc: 'Edge of the Sun\'s influence, ~120 AU ≈ 1.8×10¹³ m. Voyager 1 crossed this in 2012.' },
+    { exp: 12.777, name: 'Kuiper Belt', desc: 'Icy bodies including Pluto, ~40 AU from the Sun.' },
+    { exp: 12.653, name: 'Neptune\'s Orbit', desc: '30.1 AU ≈ 4.5×10¹² m — outermost real planet.' },
+    { exp: 11.175, name: 'Earth\'s Orbit', desc: '1 AU = 1.496×10¹¹ m — the real distance from Earth to the Sun, defining the Astronomical Unit.' },
+    { exp: 8.585,  name: 'Moon\'s Orbit', desc: '384,400 km ≈ 3.84×10⁸ m from Earth.' },
+    { exp: 7.105,  name: 'Earth', desc: 'Diameter 1.27×10⁷ m (12,742 km).' },
+    { exp: 3.947,  name: 'Mount Everest', desc: '8,849 m — real height above sea level.' },
+    { exp: 0.0,    name: 'Human Scale', desc: '~1 meter — a body, a stride, the world at human resolution.' },
+    { exp: -3.0,   name: 'Grain of Rice', desc: '~1 mm — 10⁻³ m.' },
+    { exp: -5.0,   name: 'Human Cell', desc: 'Typical animal cell, ~10 μm = 10⁻⁵ m across.' },
+    { exp: -5.699, name: 'Bacterium', desc: 'E. coli, ~2 μm ≈ 2×10⁻⁶ m long.' },
+    { exp: -7.0,   name: 'Virus', desc: 'A typical virus, ~100 nm = 10⁻⁷ m.' },
+    { exp: -8.699, name: 'DNA Double Helix', desc: 'Width ~2 nm = 2×10⁻⁹ m.' },
+    { exp: -10.0,  name: 'Atom', desc: 'A hydrogen atom, radius ~1 Ångström = 10⁻¹⁰ m — this is the real scale at which quantum mechanics dominates.' },
+    { exp: -14.0,  name: 'Atomic Nucleus', desc: 'Roughly 10⁻¹⁴ m for a medium nucleus — 99.9% of an atom\'s mass in about a trillionth of its volume.' },
+    { exp: -15.076, name: 'Proton', desc: 'Radius ~0.84×10⁻¹⁵ m (0.84 femtometers) — the real, experimentally measured proton charge radius.' },
+    { exp: -18.0,  name: 'Weak Force Scale', desc: '~10⁻¹⁸ m — the real range of the weak nuclear force, mediated by the W and Z bosons.' },
+    { exp: -34.792, name: 'Planck Length', desc: '1.616×10⁻³⁵ m — where quantum fluctuations in spacetime itself are expected to become significant. Below this, general relativity and quantum mechanics genuinely break down together — this is real, unsolved physics, the actual open problem, not a metaphor.' },
+  ];
+
+  function nearestCosmosStation(exp) {
+    let best = COSMOS_STATIONS[0], bestD = Infinity;
+    for (const s of COSMOS_STATIONS) {
+      const d = Math.abs(s.exp - exp);
+      if (d < bestD) { bestD = d; best = s; }
+    }
+    return best;
+  }
+
+  function formatMeters(exp) {
+    const val = Math.pow(10, exp);
+    if (exp >= 0) return val.toExponential(2) + ' m';
+    return val.toExponential(2) + ' m';
+  }
+
+  function activateCosmos() {
+    mode = 'cosmos';
+    loadedImage = null;
+    modeBtn.textContent = 'EXIT';
+    modeLabel.textContent = 'Cosmos';
+    initialPrompt.classList.add('hidden');
+    cosmosExp = 0;
+    needsRender = true;
+    toast('Real scale: observable universe → Planck length');
+  }
+
+  function renderCosmos() {
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#050505';
+    ctx.fillRect(0, 0, W, H);
+
+    const cx = W / 2, cy = H / 2;
+    const station = nearestCosmosStation(cosmosExp);
+
+    // Concentric rings represent neighboring decades of scale — a real
+    // log-scale "depth" cue, not a literal rendering of each object.
+    for (let k = -6; k <= 6; k++) {
+      const ringExp = Math.round(cosmosExp) + k;
+      if (ringExp < COSMOS_MIN || ringExp > COSMOS_MAX) continue;
+      const dExp = ringExp - cosmosExp;
+      const radius = Math.min(W, H) * 0.42 * Math.pow(1.6, dExp);
+      if (radius < 2 || radius > Math.max(W, H) * 1.5) continue;
+      const alpha = Math.max(0, 0.22 - Math.abs(dExp) * 0.03);
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(212,168,83,${alpha.toFixed(3)})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      if (Math.abs(dExp) < 0.05) continue;
+      ctx.fillStyle = `rgba(212,168,83,${Math.min(0.5, alpha + 0.15).toFixed(3)})`;
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('10^' + ringExp + ' m', cx + radius * 0.72, cy - radius * 0.72);
+    }
+
+    // Central object glow — brighter the closer we are to a real station
+    const distToStation = Math.abs(station.exp - cosmosExp);
+    const glowAlpha = Math.max(0.15, 0.6 - distToStation * 0.15);
+    const glowR = Math.min(W, H) * 0.16;
+    const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR);
+    glow.addColorStop(0, `rgba(212,168,83,${glowAlpha.toFixed(3)})`);
+    glow.addColorStop(1, 'rgba(212,168,83,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(cx, cy, glowR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Station label
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#e8e8e8';
+    ctx.font = '300 22px "Helvetica Neue", sans-serif';
+    ctx.fillText(station.name, cx, cy - glowR - 28);
+
+    ctx.fillStyle = '#d4a853';
+    ctx.font = '13px monospace';
+    ctx.fillText('10^' + cosmosExp.toFixed(2) + ' m', cx, cy - glowR - 8);
+
+    ctx.fillStyle = 'rgba(232,232,232,0.65)';
+    ctx.font = '13px "Helvetica Neue", sans-serif';
+    const words = station.desc.split(' ');
+    let line = '', lineY = cy + glowR + 30, maxW = Math.min(W * 0.7, 640);
+    for (const w of words) {
+      const test = line + w + ' ';
+      if (ctx.measureText(test).width > maxW && line) {
+        ctx.fillText(line.trim(), cx, lineY);
+        line = w + ' ';
+        lineY += 20;
+      } else {
+        line = test;
+      }
+    }
+    if (line) ctx.fillText(line.trim(), cx, lineY);
+
+    ctx.restore();
+  }
 
   // --- Resize ---
   function resize() {
@@ -384,7 +518,7 @@
   function activateMandelbrot() {
     mode = 'mandelbrot';
     loadedImage = null;
-    modeBtn.textContent = 'DROP IMAGE';
+    modeBtn.textContent = 'COSMOS';
     modeLabel.textContent = 'Mandelbrot';
     initialPrompt.classList.add('hidden');
     mbCenterX = -0.7436438885706;
@@ -769,6 +903,8 @@
       renderMandelbrot();
     } else if (mode === 'image') {
       renderImage();
+    } else if (mode === 'cosmos') {
+      renderCosmos();
     } else {
       // Empty state — dark bg
       ctx.save();
@@ -784,6 +920,9 @@
       const magnitude = mbScale / effectiveScale;
       zoomVal.textContent = formatZoom(zoom);
       posVal.textContent = mbCenterX.toFixed(6) + ', ' + mbCenterY.toFixed(6) + 'i';
+    } else if (mode === 'cosmos') {
+      zoomVal.textContent = '10^' + cosmosExp.toFixed(2) + ' m';
+      posVal.textContent = nearestCosmosStation(cosmosExp).name;
     } else {
       zoomVal.textContent = formatZoom(zoom);
       posVal.textContent = Math.round(viewX) + ', ' + Math.round(viewY);
@@ -821,6 +960,14 @@
 
     const factor = Math.exp(delta * 2);
     const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom * factor));
+
+    if (mode === 'cosmos') {
+      // Scale is log10(meters) — a real physical quantity, not a fractal
+      // magnification factor, so it moves additively, not multiplicatively.
+      cosmosExp = Math.max(COSMOS_MIN, Math.min(COSMOS_MAX, cosmosExp - delta * 6));
+      needsRender = true;
+      return;
+    }
 
     if (mode === 'mandelbrot') {
       // Zoom toward cursor in complex plane
@@ -1030,6 +1177,11 @@
           activateMandelbrot();
         }
         break;
+      case 'c':
+        if (mode !== 'cosmos') {
+          activateCosmos();
+        }
+        break;
       case 'r':
         // Reset
         if (mode === 'mandelbrot') {
@@ -1037,6 +1189,8 @@
           mbCenterY = 0.1318259043124;
           mbScale = 3.5;
           zoom = 1;
+        } else if (mode === 'cosmos') {
+          cosmosExp = 0;
         } else {
           viewX = 0;
           viewY = 0;
@@ -1059,19 +1213,29 @@
         break;
       case '+':
       case '=':
-        zoom = Math.min(ZOOM_MAX, zoom * 1.5);
+        if (mode === 'cosmos') {
+          cosmosExp = Math.max(COSMOS_MIN, cosmosExp - 1.5);
+        } else {
+          zoom = Math.min(ZOOM_MAX, zoom * 1.5);
+        }
         needsRender = true;
         break;
       case '-':
-        zoom = Math.max(ZOOM_MIN, zoom / 1.5);
+        if (mode === 'cosmos') {
+          cosmosExp = Math.min(COSMOS_MAX, cosmosExp + 1.5);
+        } else {
+          zoom = Math.max(ZOOM_MIN, zoom / 1.5);
+        }
         needsRender = true;
         break;
     }
   });
 
-  // --- Mode button ---
+  // --- Mode button: cycles empty -> mandelbrot -> cosmos -> empty ---
   modeBtn.addEventListener('click', () => {
     if (mode === 'mandelbrot') {
+      activateCosmos();
+    } else if (mode === 'cosmos') {
       mode = 'empty';
       modeBtn.textContent = 'MANDELBROT';
       modeLabel.textContent = 'Mode';

@@ -1,0 +1,7 @@
+media.example.com {
+  encode zstd gzip
+  request_body {
+    max_size 2GB
+  }
+  reverse_proxy 127.0.0.1:18842
+}

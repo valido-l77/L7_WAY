@@ -11,6 +11,28 @@ Tool ecosystems grow fast and fracture faster. L7_WAY stops divergence by requir
 - **Swappable by design**: replace tools without rewriting UI.
 - **Gateway-first**: a universal entry point for all tools.
 
+## Run the Gateway
+
+```bash
+npm start
+```
+
+`serve.js` is the canonical server. The historical `serve-gateway.js` name is
+retained as a compatibility launcher and delegates to the same implementation.
+
+## Morphic video
+
+AVLI Cloud Studio is available at `http://127.0.0.1:18789/studio`. The default
+video path is local and deterministic: SSD-1B creates and selects the grounded
+BELOW frame, then the native Flux-style renderer creates a chained H.264 MP4.
+
+Set `AVLI_VIDEO_ENGINE=cluster` to keep synthesis on the Apple MPS node and
+send `video.finish` through the configured Tailscale SSH worker
+(`AVLI_CLUSTER_SSH_HOST`, default `avli`). The cluster worker must expose
+`ffmpeg` and `ffprobe`; its hostname, CPU count, toolchain, role, and connection
+state appear in Studio and `/api/media/resources`. Paid Comfy partner execution
+is separate and remains opt-in through `AVLI_VIDEO_ENGINE=comfy-cloud`.
+
 ## Required Reading (for every new project)
 - `ARCHITECTURE.md`
 - `BOOK_OF_LAW.md`

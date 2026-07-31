@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://avli.cloud/l7/schema/v1/result.schema.json",
+  "title": "L7 Canonical Result v1",
+  "type": "object",
+  "required": ["success", "result", "error", "meta"],
+  "properties": {
+    "success": { "type": "boolean" },
+    "result": {},
+    "error": { "type": ["string", "null"] },
+    "meta": {
+      "type": "object",
+      "required": ["contract_version", "timestamp"],
+      "properties": {
+        "contract_version": { "const": "l7.result/1.0" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "execution_time_ms": { "type": "number", "minimum": 0 },
+        "entity_id": { "type": "string", "minLength": 1 },
+        "tool": { "type": "string", "minLength": 1 },
+        "error_code": {
+          "enum": [
+            "VALIDATION_ERROR",
+            "AUTHENTICATION_REQUIRED",
+            "AUTHORIZATION_DENIED",
+            "POLICY_DENIED",
+            "NOT_FOUND",
+            "CONFLICT",
+            "DEPENDENCY_FAILURE",
+            "PROVIDER_FAILURE",
+            "INTEGRITY_VIOLATION",
+            "TIMEOUT",
+            "CANCELLED",
+            "INTERNAL_ERROR"
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "ok": {
+      "type": "boolean",
+      "description": "Deprecated compatibility alias for success."
+    }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "properties": { "success": { "const": true } },
+        "required": ["success"]
+      },
+      "then": {
+        "properties": {
+          "error": { "type": "null" },
+          "ok": { "const": true }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "success": { "const": false } },
+        "required": ["success"]
+      },
+      "then": {
+        "properties": {
+          "error": { "type": "string", "minLength": 1 },
+          "ok": { "const": false }
+        }
+      }
+    }
+  ]
+}
