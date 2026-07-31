@@ -17,14 +17,24 @@ function harness(t, runner) {
 
 test('queued coordinator persists progress and completes idempotently', async t => {
   let calls = 0;
+  let incremental;
   const runner = {
     async run(plan, options) {
       calls += 1;
-      await options.onProgress({ phase: 'job_completed', completed_jobs: 1, total_jobs: 1 });
+      await options.onProgress({
+        phase: 'job_completed',
+        layer: 'ABOVE',
+        artifact: { job_id: 'above.image.1', media_type: 'image/png' },
+        completed_jobs: 1,
+        total_jobs: 1,
+      });
       return { id: `run-${plan.id}`, state: 'ready_to_crystallize', canonical_state: 'staged' };
     },
   };
   const { coordinator, journal } = harness(t, runner);
+  coordinator.on('update', record => {
+    if (record.preview?.layers?.[0]?.artifacts?.length) incremental = structuredClone(record);
+  });
   const first = coordinator.submit({ brief: 'durable queue', mode: 'image' });
   const duplicate = coordinator.submit({ brief: 'durable queue', mode: 'image' });
   assert.equal(first.id, duplicate.id);
@@ -34,6 +44,7 @@ test('queued coordinator persists progress and completes idempotently', async t 
   assert.equal(completed.result.canonical_state, 'staged');
   assert.equal(journal.read(first.id).state, 'staged');
   assert.equal(calls, 1);
+  assert.equal(incremental.preview.layers[0].artifacts[0].job_id, 'above.image.1');
 });
 
 test('running coordinator propagates cancellation through AbortSignal', async t => {

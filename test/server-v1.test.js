@@ -117,6 +117,31 @@ test('studio route serves the morphic media workspace', async () => {
   assert.match(response.body, /--ds-canvas:/);
   assert.match(response.body, /prefers-reduced-motion/);
   assert.match(response.body, /Content addressed/);
+  assert.match(response.body, /Generate fast preview/);
+  assert.match(response.body, /record\.preview/);
+  assert.match(response.body, /Approve new cycle/);
+  assert.match(response.body, /\/api\/media\/dream-cycle\/approve/);
+});
+
+test('dream-cycle API requires explicit approval before unlocking generation', async () => {
+  const domains = require('../lib/domains');
+  const initial = await request('GET', '/api/media/dream-cycle');
+  assert.equal(initial.status, 200);
+  assert.equal(initial.body.approval_required, false);
+
+  const rejected = await request('POST', '/api/media/dream-cycle/approve', {});
+  assert.equal(rejected.status, 400);
+
+  domains.write('morph', 'server-above.json', { layer: 1 });
+  domains.write('morph', 'server-mirror.json', { layer: 2 });
+  domains.write('morph', 'server-below.json', { layer: 3 });
+  const locked = await request('GET', '/api/media/dream-cycle');
+  assert.equal(locked.body.approval_required, true);
+
+  const approved = await request('POST', '/api/media/dream-cycle/approve', { approved: true });
+  assert.equal(approved.status, 200);
+  assert.equal(approved.body.approved, true);
+  assert.equal(approved.body.approval_required, false);
 });
 
 test('SSD-1B readiness endpoint is non-generative and reports the full preflight contract', async () => {

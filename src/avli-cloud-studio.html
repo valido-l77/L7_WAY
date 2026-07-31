@@ -363,7 +363,22 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
   place-items: center;
   color: color-mix(in srgb, var(--accent) 65%, transparent);
   font-size: 24px;
+  position: relative;
+  overflow: hidden;
 }
+.candidate-visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 34%, rgba(255, 255, 255, .065) 48%, transparent 62%);
+  transform: translateX(-110%);
+  animation: preview-scan 2.1s var(--ds-ease) infinite;
+  pointer-events: none;
+}
+.candidate-visual:has(img)::after,
+.candidate-visual:has(video)::after,
+.candidate-visual.media-error::after { display: none; }
+.candidate-visual.media-error { color: var(--red); font-size: 11px; letter-spacing: .04em; }
 .candidate-visual img,
 .candidate-visual video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .candidate-visual:has(video) { aspect-ratio: 16 / 9; }
@@ -454,6 +469,7 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
 }
 
 @keyframes pulse { 50% { opacity: .35; } }
+@keyframes preview-scan { to { transform: translateX(110%); } }
 
 :focus-visible { outline: 2px solid var(--cyan, var(--ds-cyan)); outline-offset: 3px; }
 ::selection { color: #090b12; background: var(--gold); }
@@ -557,8 +573,8 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
           <div class="field">
             <label for="candidates">Candidates / layer</label>
             <select id="candidates">
-              <option>1</option>
-              <option selected>3</option>
+              <option selected value="1">1 · Fast preview</option>
+              <option value="3">3 · Balanced</option>
               <option>4</option>
               <option>6</option>
               <option>8</option>
@@ -594,8 +610,17 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
           <div class="readiness-grid" id="ssdReadinessGrid"></div>
         </section>
 
+        <section class="readiness cycle-gate" id="cycleGate" aria-live="polite" aria-label="Dream cycle approval" hidden>
+          <div class="readiness-head">
+            <span class="readiness-title">Dream cycle sealed</span>
+            <span class="state-pill">approval</span>
+          </div>
+          <div class="readiness-detail">The previous three layers are preserved in SALT. Approve deliberately before beginning a new cycle.</div>
+          <button class="btn secondary" id="approveCycleBtn" type="button">Approve new cycle</button>
+        </section>
+
         <div class="actions">
-          <button class="btn primary" id="runBtn" type="button" disabled>Begin three-layer run</button>
+          <button class="btn primary" id="runBtn" type="button" disabled>Generate fast preview</button>
           <div class="btn-row">
             <button class="btn secondary" id="planBtn" type="button">Preview plan</button>
             <button class="btn" id="exportBtn" type="button" disabled>Export plan</button>
@@ -681,6 +706,12 @@ let eventSource = null;
 let eventHistory = [];
 let readinessReady = false;
 let studioBusy = false;
+let renderedPreviewRevision = -1;
+let dreamCycleLocked = true;
+
+function syncGenerateAvailability() {
+  $('runBtn').disabled = studioBusy || !readinessReady || dreamCycleLocked;
+}
 
 function node(tag, className, text) {
   const element = document.createElement(tag);
@@ -721,7 +752,7 @@ function setGateway(state, text) {
 
 function setBusy(busy) {
   studioBusy = busy;
-  $('runBtn').disabled = busy || !readinessReady;
+  syncGenerateAvailability();
   $('planBtn').disabled = busy;
   if (busy) setGateway('busy', 'Gateway is rendering');
 }
@@ -746,13 +777,49 @@ function renderSsdReadiness(payload) {
     readinessItem('Device / precision', `${payload.device?.type || '—'} / ${payload.device?.precision || '—'}`),
     readinessItem('Supported ratios', ratios),
   );
-  $('runBtn').disabled = studioBusy || !readinessReady;
+  syncGenerateAvailability();
 }
 
 async function probeSsdReadiness() {
   const payload = await api('/api/media/readiness/ssd-1b');
   renderSsdReadiness(payload);
   return payload;
+}
+
+function renderDreamCycle(payload) {
+  dreamCycleLocked = Boolean(payload.approval_required ?? payload.morphLocked);
+  $('cycleGate').hidden = !dreamCycleLocked;
+  const recoverable = activeRun?.state === 'failed' && /MORPH LOCKED/.test(activeRun.error?.message || '');
+  $('approveCycleBtn').textContent = recoverable ? 'Approve & resume run' : 'Approve new cycle';
+  syncGenerateAvailability();
+}
+
+async function probeDreamCycle() {
+  const payload = await api('/api/media/dream-cycle');
+  renderDreamCycle(payload);
+  return payload;
+}
+
+async function approveDreamCycle() {
+  try {
+    setBusy(true);
+    const recoverable = activeRun?.state === 'failed' && /MORPH LOCKED/.test(activeRun.error?.message || '');
+    const payload = await api('/api/media/dream-cycle/approve', {
+      method: 'POST',
+      body: JSON.stringify({ approved: true }),
+    });
+    renderDreamCycle(payload);
+    logEvent('New dream cycle approved');
+    if (recoverable) await runAction('resume');
+    else {
+      setBusy(false);
+      setGateway('online', 'Gateway ready');
+    }
+  } catch (error) {
+    setBusy(false);
+    $('runMessage').textContent = error.message;
+    logEvent(error.message);
+  }
 }
 
 function logEvent(label) {
@@ -792,7 +859,13 @@ function createCandidate(candidate, layer, scorecard, selected) {
     const image = node('img');
     image.src = assetUrl;
     image.alt = `${layer.name} candidate`;
-    image.loading = 'lazy';
+    image.loading = 'eager';
+    image.decoding = 'async';
+    image.fetchPriority = selected ? 'high' : 'auto';
+    image.addEventListener('error', () => {
+      visual.classList.add('media-error');
+      visual.replaceChildren(node('span', '', 'Preview unavailable'));
+    }, { once: true });
     visual.replaceChildren(image);
   } else if (assetUrl && candidate.media_type?.startsWith('video/')) {
     const video = node('video');
@@ -801,6 +874,10 @@ function createCandidate(candidate, layer, scorecard, selected) {
     video.preload = 'metadata';
     video.playsInline = true;
     video.setAttribute('aria-label', `${layer.name} ${candidate.job_id || 'video'} artifact`);
+    video.addEventListener('error', () => {
+      visual.classList.add('media-error');
+      visual.replaceChildren(node('span', '', 'Video preview unavailable'));
+    }, { once: true });
     visual.replaceChildren(video);
   }
   const body = node('div', 'candidate-body');
@@ -827,9 +904,10 @@ function renderLayers(plan = activePlan, result) {
   for (const layerMeta of LAYERS) {
     const planLayer = plan?.layers?.find(item => item.name === layerMeta.name);
     const resultLayer = result?.layers?.find(item => item.name === layerMeta.name);
-    const candidates = resultLayer
-      ? resultLayer.artifacts
-      : (planLayer?.jobs || []);
+    const completed = new Map((resultLayer?.artifacts || []).map(item => [item.job_id, item]));
+    const candidates = planLayer
+      ? planLayer.jobs.map(job => completed.get(job.id) || job)
+      : (resultLayer?.artifacts || []);
     const imageCount = candidates.filter(item => /^image\./.test(item.capability)).length;
     candidateTotal += imageCount;
 
@@ -940,13 +1018,20 @@ function updateRun(record) {
   $('cancelBtn').disabled = terminalStates.has(record.state);
   $('resumeBtn').disabled = !['failed', 'cancelled'].includes(record.state);
 
+  if (record.preview && record.preview.revision !== renderedPreviewRevision) {
+    renderedPreviewRevision = record.preview.revision;
+    renderLayers(activePlan, record.preview);
+  }
+
   if (record.result) {
     renderLayers(activePlan, record.result);
     setBusy(false);
     setGateway('online', record.state === 'crystallized' ? 'Cycle crystallized' : 'Gateway ready');
+    if (record.result.lifecycle?.cycle_locked) renderDreamCycle({ approval_required: true });
   } else if (record.state === 'failed') {
     setBusy(false);
     setGateway('error', 'Run needs attention');
+    if (/MORPH LOCKED/.test(record.error?.message || '')) renderDreamCycle({ approval_required: true });
   } else if (record.state === 'cancelled') {
     setBusy(false);
     setGateway('online', 'Gateway ready');
@@ -986,8 +1071,9 @@ function watchRun(id) {
 
 async function beginRun() {
   try {
-    const readiness = await probeSsdReadiness();
+    const [readiness, cycle] = await Promise.all([probeSsdReadiness(), probeDreamCycle()]);
     if (!readiness.ready) throw new Error(`SSD-1B is not ready: ${readiness.missing.join(', ')}`);
+    if (cycle.approval_required) throw new Error('Approve a new dream cycle before rendering.');
     setBusy(true);
     const plan = await composePlan();
     const record = await api('/api/media/runs', { method: 'POST', body: JSON.stringify({ plan }) });
@@ -1051,12 +1137,18 @@ document.querySelectorAll('[data-mode]').forEach(button => {
     $('durationField').hidden = mode !== 'video';
   });
 });
+$('candidates').addEventListener('change', event => {
+  $('runBtn').textContent = Number(event.target.value) === 1
+    ? 'Generate fast preview'
+    : 'Begin three-layer run';
+});
 $('astrocyte').addEventListener('input', event => { $('astroValue').textContent = Number(event.target.value).toFixed(2); });
 $('runBtn').addEventListener('click', beginRun);
 $('planBtn').addEventListener('click', previewPlan);
 $('exportBtn').addEventListener('click', exportPlan);
 $('cancelBtn').addEventListener('click', () => runAction('cancel'));
 $('resumeBtn').addEventListener('click', () => runAction('resume'));
+$('approveCycleBtn').addEventListener('click', approveDreamCycle);
 
 async function boot() {
   renderLayers();
@@ -1066,6 +1158,7 @@ async function boot() {
       api('/api/media/resources'),
       api('/api/media/runs'),
       probeSsdReadiness(),
+      probeDreamCycle(),
     ]);
     renderCapabilities(capabilities);
     renderResources(resources);

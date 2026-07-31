@@ -49,6 +49,20 @@ test('local storage preserves distinct append-only receipts for identical bytes'
   assert.equal(fs.readdirSync(receiptDirectory).length, 2);
 });
 
+test('local streaming caches verification but invalidates it when an object changes', async t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'avli-media-verify-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const store = new LocalContentStore({ root });
+  const stored = await store.put(Buffer.from('original'), { extension: 'bin' });
+  const verified = await store.open(stored.content_hash);
+  for await (const _chunk of verified.stream) { /* consume */ }
+  fs.chmodSync(stored.object_path, 0o644);
+  fs.writeFileSync(stored.object_path, Buffer.from('tampered'));
+  const future = new Date(Date.now() + 2000);
+  fs.utimesSync(stored.object_path, future, future);
+  await assert.rejects(() => store.open(stored.content_hash), /hash mismatch/);
+});
+
 test('VPS storage requires HTTPS outside loopback', () => {
   assert.throws(() => new VpsContentStore({ baseUrl: 'http://example.com', token: 'x', fetch: async () => {} }), /HTTPS/);
 });

@@ -70,6 +70,24 @@ test('mock hybrid run executes dependencies and commits a locked SALT lifecycle'
   assert.ok(run.layers.every(layer => layer.selection.selected_candidate_ids.length === 1));
 });
 
+test('runner publishes each stored artifact through progress immediately', async t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'avli-progress-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const completed = [];
+  const runner = new MediaRunner({
+    store: new LocalContentStore({ root }),
+    executionMode: 'mock',
+    lifecycle: false,
+  });
+  await runner.run(
+    { brief: 'stream previews', mode: 'image', candidates: 1 },
+    { onProgress: progress => { if (progress.phase === 'job_completed') completed.push(progress); } },
+  );
+  assert.equal(completed.length, 3);
+  assert.match(completed[0].artifact.asset_uri, /^avli:\/\/sha256\//);
+  assert.equal(completed[0].artifact.job_id, completed[0].job_id);
+});
+
 test('runner refuses a plan that was modified after planning', async () => {
   const records = [];
   const runner = new MediaRunner({

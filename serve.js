@@ -612,6 +612,30 @@ async function requestHandler(req, res) {
       return;
     }
 
+    if (parsed.pathname === '/api/media/dream-cycle' && req.method === 'GET') {
+      const domains = require('./lib/domains');
+      sendJson(res, 200, {
+        ...domains.morphState,
+        approval_required: Boolean(domains.morphLocked),
+      });
+      return;
+    }
+
+    if (parsed.pathname === '/api/media/dream-cycle/approve' && req.method === 'POST') {
+      const body = requireRecord(await parseBody(req), 'request body');
+      if (body.approved !== true) {
+        throw new HttpRequestError(400, 'APPROVAL_REQUIRED', 'Explicit dream-cycle approval is required');
+      }
+      const domains = require('./lib/domains');
+      const approved = domains.morphLocked ? domains.approveDreamCycle() : false;
+      sendJson(res, 200, {
+        approved,
+        ...domains.morphState,
+        approval_required: Boolean(domains.morphLocked),
+      });
+      return;
+    }
+
     if (parsed.pathname === '/api/media/plan' && req.method === 'POST') {
       const body = await parseBody(req);
       sendJson(res, 200, createMorphicPlan(body.request || body));
