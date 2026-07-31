@@ -12,6 +12,7 @@ const Ajv = require('ajv');
 const FIXTURE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'l7-server-v1-test-'));
 process.env.L7_DIR = FIXTURE_DIR;
 process.env.L7_MODE = 'mock';
+process.env.AVLI_MEDIA_EXECUTION = 'mock';
 process.env.L7_LOCAL_TENANT_ID = 'tenant:test';
 
 const toolsDir = path.join(FIXTURE_DIR, 'tools');
@@ -29,7 +30,7 @@ fs.writeFileSync(
 
 const { CONTRACT_VERSIONS } = require('../lib/contracts');
 const gateway = require('../lib/gateway');
-const { server, jobCoordinator } = require('../serve');
+const { server, jobCoordinator, mediaCoordinator } = require('../serve');
 const workerDefinitions = require('../schema/v1/worker-definitions.schema.json');
 const workerAjv = new Ajv({ strict: true, validateFormats: false });
 const validateCapabilities = workerAjv.compile({
@@ -95,6 +96,7 @@ function assertCanonical(body, success = true) {
 
 test.before(async () => {
   jobCoordinator.start();
+  mediaCoordinator.start();
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   port = server.address().port;
 });
@@ -121,6 +123,7 @@ test('studio route serves the morphic media workspace', async () => {
   assert.match(response.body, /record\.preview/);
   assert.match(response.body, /Approve new cycle/);
   assert.match(response.body, /\/api\/media\/dream-cycle\/approve/);
+  assert.match(response.body, /lowRiskAutoApprovalAvailable/);
 });
 
 test('dream-cycle API requires explicit approval before unlocking generation', async () => {
@@ -142,6 +145,32 @@ test('dream-cycle API requires explicit approval before unlocking generation', a
   assert.equal(approved.status, 200);
   assert.equal(approved.body.approved, true);
   assert.equal(approved.body.approval_required, false);
+});
+
+test('low-risk local images auto-approve while motion remains gated', async () => {
+  const domains = require('../lib/domains');
+  domains.write('morph', 'auto-above.json', { layer: 1 });
+  domains.write('morph', 'auto-mirror.json', { layer: 2 });
+  domains.write('morph', 'auto-below.json', { layer: 3 });
+  assert.equal(domains.morphLocked, true);
+
+  const { createMorphicPlan } = require('../lib/morphic-media');
+  const imagePlan = createMorphicPlan({ brief: 'automatic local preview', mode: 'image', candidates: 1 });
+  const submitted = await request('POST', '/api/media/runs', { plan: imagePlan });
+  assert.equal(submitted.status, 202);
+  assert.equal(submitted.body.policy.risk, 'low');
+  assert.equal(submitted.body.policy.decision, 'automatic');
+  const completed = await mediaCoordinator.wait(submitted.body.id);
+  assert.equal(completed.state, 'crystallized');
+  assert.equal(domains.morphLocked, true);
+
+  const videoPlan = createMorphicPlan({ brief: 'gated motion preview', mode: 'video', candidates: 1 });
+  const gated = await request('POST', '/api/media/runs', { plan: videoPlan });
+  assert.equal(gated.status, 409);
+  assert.match(gated.body.error, /Explicit approval/);
+
+  const reset = await request('POST', '/api/media/dream-cycle/approve', { approved: true });
+  assert.equal(reset.body.approval_required, false);
 });
 
 test('SSD-1B readiness endpoint is non-generative and reports the full preflight contract', async () => {

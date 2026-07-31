@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#0a0a0c">
 <title>AVLI Cloud Studio — Morphic Media</title>
 <style>
+[hidden] { display: none !important; }
+
 :root {
   color-scheme: dark;
   /* L7 Prism Design System — semantic color */
@@ -708,9 +710,18 @@ let readinessReady = false;
 let studioBusy = false;
 let renderedPreviewRevision = -1;
 let dreamCycleLocked = true;
+let executionMode = null;
+
+function lowRiskAutoApprovalAvailable() {
+  return mode === 'image'
+    && Number($('candidates').value) <= 3
+    && ['mock', 'field', 'ssd1b'].includes(executionMode);
+}
 
 function syncGenerateAvailability() {
-  $('runBtn').disabled = studioBusy || !readinessReady || dreamCycleLocked;
+  $('runBtn').disabled = studioBusy
+    || !readinessReady
+    || (dreamCycleLocked && !lowRiskAutoApprovalAvailable());
 }
 
 function node(tag, className, text) {
@@ -788,7 +799,7 @@ async function probeSsdReadiness() {
 
 function renderDreamCycle(payload) {
   dreamCycleLocked = Boolean(payload.approval_required ?? payload.morphLocked);
-  $('cycleGate').hidden = !dreamCycleLocked;
+  $('cycleGate').hidden = !dreamCycleLocked || lowRiskAutoApprovalAvailable();
   const recoverable = activeRun?.state === 'failed' && /MORPH LOCKED/.test(activeRun.error?.message || '');
   $('approveCycleBtn').textContent = recoverable ? 'Approve & resume run' : 'Approve new cycle';
   syncGenerateAvailability();
@@ -954,7 +965,9 @@ function renderCapabilities(payload) {
     );
     return row;
   }));
-  $('runMode').textContent = payload.execution_mode || 'unknown';
+  executionMode = payload.execution_mode || 'unknown';
+  $('runMode').textContent = executionMode;
+  renderDreamCycle({ approval_required: dreamCycleLocked });
 }
 
 function renderResources(payload) {
@@ -1073,7 +1086,9 @@ async function beginRun() {
   try {
     const [readiness, cycle] = await Promise.all([probeSsdReadiness(), probeDreamCycle()]);
     if (!readiness.ready) throw new Error(`SSD-1B is not ready: ${readiness.missing.join(', ')}`);
-    if (cycle.approval_required) throw new Error('Approve a new dream cycle before rendering.');
+    if (cycle.approval_required && !lowRiskAutoApprovalAvailable()) {
+      throw new Error('Approve a new dream cycle before this elevated-risk operation.');
+    }
     setBusy(true);
     const plan = await composePlan();
     const record = await api('/api/media/runs', { method: 'POST', body: JSON.stringify({ plan }) });
@@ -1135,12 +1150,14 @@ document.querySelectorAll('[data-mode]').forEach(button => {
     mode = button.dataset.mode;
     document.querySelectorAll('[data-mode]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
     $('durationField').hidden = mode !== 'video';
+    renderDreamCycle({ approval_required: dreamCycleLocked });
   });
 });
 $('candidates').addEventListener('change', event => {
   $('runBtn').textContent = Number(event.target.value) === 1
     ? 'Generate fast preview'
     : 'Begin three-layer run';
+  renderDreamCycle({ approval_required: dreamCycleLocked });
 });
 $('astrocyte').addEventListener('input', event => { $('astroValue').textContent = Number(event.target.value).toFixed(2); });
 $('runBtn').addEventListener('click', beginRun);

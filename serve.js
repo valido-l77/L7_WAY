@@ -20,6 +20,7 @@ const stateManager = require('./lib/state');
 const { createHttpSecurity } = require('./lib/http-security');
 const { createMorphicPlan } = require('./lib/morphic-media');
 const { MediaRunner } = require('./lib/media-runner');
+const { classifyMediaRisk } = require('./lib/media-risk-policy');
 const { MediaRunCoordinator } = require('./lib/media-run-coordinator');
 const { JobCoordinator, publicJob } = require('./lib/job-coordinator');
 const { ssd1bReadiness } = require('./lib/ssd-image-adapter');
@@ -649,7 +650,43 @@ async function requestHandler(req, res) {
 
     if (parsed.pathname === '/api/media/runs' && req.method === 'POST') {
       const body = await parseBody(req);
-      const run = mediaCoordinator.submit(body.plan || body.request || body);
+      const plan = body.plan || createMorphicPlan(body.request || body);
+      const risk = classifyMediaRisk(plan, mediaRunner.executionMode);
+      const runId = `run-${plan.id.slice(6)}`;
+      const existing = mediaCoordinator.get(runId);
+      if (existing && ['crystallized', 'staged', 'released'].includes(existing.state)) {
+        sendJson(res, 202, existing);
+        return;
+      }
+      if (risk.risk === 'unknown') {
+        throw new HttpRequestError(400, 'INVALID_MEDIA_PLAN', risk.reason);
+      }
+      const domains = require('./lib/domains');
+      let automaticallyApproved = false;
+      if (
+        domains.morphLocked
+        && risk.automatic_cycle_approval
+        && existing?.state !== 'crystallized'
+      ) {
+        domains.approveDreamCycle();
+        automaticallyApproved = true;
+      }
+      if (domains.morphLocked && !risk.automatic_cycle_approval) {
+        throw new HttpRequestError(409, 'APPROVAL_REQUIRED', 'Explicit approval is required for this media operation');
+      }
+      const policy = {
+        ...risk,
+        decision: automaticallyApproved ? 'automatic' : domains.morphLocked ? 'explicit-required' : 'not-required',
+        decided_at: new Date().toISOString(),
+      };
+      let run = mediaCoordinator.submit(plan, { policy });
+      if (
+        automaticallyApproved
+        && run.state === 'failed'
+        && /MORPH LOCKED/.test(run.error?.message || '')
+      ) {
+        run = mediaCoordinator.resume(run.id, { policy });
+      }
       sendJson(res, 202, run);
       return;
     }
@@ -806,7 +843,7 @@ async function start() {
 
 if (require.main === module) start();
 
-module.exports = { requestHandler, server, start, jobCoordinator };
+module.exports = { requestHandler, server, start, jobCoordinator, mediaCoordinator };
 
 // L7:PROVENANCE
 // Creator: Alberto Valido Delgado | System: L7 WAY | License: Proprietary — Framework free, products licensed (Law XXII)

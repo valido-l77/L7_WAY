@@ -35,7 +35,8 @@ test('queued coordinator persists progress and completes idempotently', async t 
   coordinator.on('update', record => {
     if (record.preview?.layers?.[0]?.artifacts?.length) incremental = structuredClone(record);
   });
-  const first = coordinator.submit({ brief: 'durable queue', mode: 'image' });
+  const policy = { risk: 'low', decision: 'automatic' };
+  const first = coordinator.submit({ brief: 'durable queue', mode: 'image' }, { policy });
   const duplicate = coordinator.submit({ brief: 'durable queue', mode: 'image' });
   assert.equal(first.id, duplicate.id);
 
@@ -44,6 +45,7 @@ test('queued coordinator persists progress and completes idempotently', async t 
   assert.equal(completed.result.canonical_state, 'staged');
   assert.equal(journal.read(first.id).state, 'staged');
   assert.equal(calls, 1);
+  assert.deepEqual(completed.policy, policy);
   assert.equal(incremental.preview.layers[0].artifacts[0].job_id, 'above.image.1');
 });
 
