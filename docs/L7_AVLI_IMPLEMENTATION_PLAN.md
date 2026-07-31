@@ -68,7 +68,7 @@ duplicate work; approval-required work cannot bypass the L7 state machine.
 
 ## 3. Create the AVLI worker SDK and conformance suite
 
-- [ ] Create a small Python worker SDK for auth, health, capabilities, job
+- [x] Create a small Python worker SDK for auth, health, capabilities, job
   lifecycle, cancellation, timeouts, result envelopes, and telemetry.
 - [x] Create an equivalent TypeScript client for L7 and assistant-ui.
 - [x] Publish one JSON Schema/OpenAPI bundle generated from canonical types.
