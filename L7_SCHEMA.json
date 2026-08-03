@@ -13,7 +13,7 @@
   "properties": {
     "capability": {
       "type": "string",
-      "enum": ["communicate", "data", "analyze", "automate", "render", "search"]
+      "enum": ["communicate", "data", "analyze", "automate", "render", "search", "spatial.3d.world", "spatial.3d.asset", "spatial.xr"]
     },
     "data": {
       "type": "object",
@@ -76,7 +76,36 @@
         "audit": { "type": "string", "enum": ["on", "off"] }
       },
       "additionalProperties": false
+    },
+    "spatial": {
+      "type": "object",
+      "required": ["category", "operations"],
+      "properties": {
+        "category": { "type": "string", "enum": ["spatial.3d.world", "spatial.3d.asset", "spatial.xr", "spatial.simulation"] },
+        "operations": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "backends": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "xr_ready": { "type": "boolean" }
+      },
+      "additionalProperties": false
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "capability": { "enum": ["spatial.3d.world", "spatial.3d.asset", "spatial.xr"] }
+        }
+      },
+      "then": {
+        "required": ["spatial"]
+      }
+    }
+  ],
   "additionalProperties": false
 }
