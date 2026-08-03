@@ -1,0 +1,59 @@
+{
+  "group": "spatial-world-tools",
+  "version": "1.0.0",
+  "owner": "l7.spatial",
+  "seals": {
+    "capability": {
+      "category": "spatial.3d.world",
+      "operations": ["create", "edit", "simulate", "exportXR", "raycast", "validate"]
+    },
+    "data": {
+      "formats": ["natural_language", "scene_graph_patch", "usd", "gltf", "xr_package"],
+      "scene_graph": "L7_Spatial_v1"
+    },
+    "orchestration": {
+      "multi_agent": true,
+      "validation_required": ["physics", "xr_comfort", "semantic"]
+    }
+  },
+  "tools": [
+    {
+      "name": "world.create",
+      "description": "Create a new 3D world from natural language description",
+      "input": ["description", "style", "engine", "xr_ready"],
+      "output": ["scene_id", "scene_graph"]
+    },
+    {
+      "name": "world.edit",
+      "description": "Edit an existing scene using natural language or patch",
+      "input": ["scene_id", "changes"],
+      "output": ["scene_graph", "diff"]
+    },
+    {
+      "name": "world.simulate",
+      "description": "Run physics + agent simulation on a scene",
+      "input": ["scene_id", "duration_seconds", "agents"],
+      "output": ["simulation_log", "updated_scene"]
+    },
+    {
+      "name": "world.exportXR",
+      "description": "Export scene as XR-ready package",
+      "input": ["scene_id", "platforms"],
+      "output": ["xr_package_url"]
+    },
+    {
+      "name": "scene.raycast",
+      "description": "Perform raycast queries on live scene",
+      "input": ["scene_id", "origin", "direction"],
+      "output": ["hit", "distance", "object_id"]
+    },
+    {
+      "name": "scene.validate",
+      "description": "Validate scene for physics, comfort, and semantics",
+      "input": ["scene_id"],
+      "output": ["valid", "issues"]
+    }
+  ],
+  "backends": ["unreal-5.8", "babylonjs", "blender"],
+  "status": "declared"
+}

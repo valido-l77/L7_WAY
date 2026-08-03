@@ -1,0 +1,16 @@
+{
+  "unreal_mcp": {
+    "endpoint": "http://127.0.0.1:8000/mcp",
+    "timeout_seconds": 30,
+    "max_retries": 2,
+    "project_path": "/path/to/your/ue5.8/project"
+  },
+  "policy": {
+    "require_approval_for_long_simulations": true,
+    "max_simulation_seconds_without_approval": 60
+  },
+  "provenance": {
+    "store": "l7.provenance.v1",
+    "include_full_prompt": true
+  }
+}

@@ -9,6 +9,8 @@ All tool access flows through the gateway. No exceptions.
 ## Law II — The Lingua
 Every entity declares L7 as types. If it cannot be translated, it cannot enter.
 
+**8th Seal (Spatial)**: The Lingua now includes the Spatial dimension for 3D/XR world generation, scene graphs, PCG, physics simulation, and XR export. Tools in the `spatial.3d.*` capability family must declare the full 8D structure (capability + data + policyIntent + presentation + orchestration + timeVersioning + identitySecurity + spatial).
+
 ## Law III — The Registry
 Every entity is registered with birth date, owner, lineage, status, and L7 declaration.
 

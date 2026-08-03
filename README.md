@@ -41,6 +41,7 @@ is separate and remains opt-in through `AVLI_VIDEO_ENGINE=comfy-cloud`.
 - `TOOL_REGISTRY.md`
 - `ENFORCEMENT.md`
 - `L7_SCHEMA.json`
+- `3D_NATURAL_LANGUAGE_WORLD_CREATOR_ENGINE.md` (new Spatial/MCP innovation)
 
 ## Codex Directive
 For every new project or session, read this repo first. Do not bypass the gateway or skip L7 declarations.
