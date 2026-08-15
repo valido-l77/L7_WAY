@@ -13,6 +13,18 @@ Tool ecosystems grow fast and fracture faster. L7_WAY stops divergence by requir
 
 ## Run the Gateway
 
+Founder Loop (Mac-local Gateway + forge + echo worker):
+
+```bash
+./start.sh
+```
+
+Studio is `http://127.0.0.1:18789/studio`. Pair with `./stop.sh`. Optional
+`--vps-check` SSHes host `vps` for docker/n8n health; it does not start
+`~/avli_cloud/start.sh` (that file is the Hostinger docker advisor stack).
+
+Gateway only:
+
 ```bash
 npm start
 ```

@@ -14,6 +14,7 @@ process.env.L7_DIR = FIXTURE_DIR;
 process.env.L7_MODE = 'mock';
 process.env.AVLI_MEDIA_EXECUTION = 'mock';
 process.env.L7_LOCAL_TENANT_ID = 'tenant:test';
+process.env.L7_CALLBACK_HMAC_SECRET = 'test-callback-secret';
 
 const toolsDir = path.join(FIXTURE_DIR, 'tools');
 const flowsDir = path.join(FIXTURE_DIR, 'flows');
@@ -23,6 +24,12 @@ fs.writeFileSync(
   path.join(toolsDir, 'echo.tool'),
   'name: echo\ndoes: data\nserver: fixture\nversion: v1\nneeds:\n  value: string\ngives:\n  value: string\n',
 );
+for (const name of ['financial_ratios', 'dcf_valuation', 'rag_pipeline']) {
+  fs.writeFileSync(
+    path.join(toolsDir, `${name}.tool`),
+    `name: ${name}\ndoes: analyze\nserver: skill-runtime\nversion: v1\nneeds:\n  query: string\ngives:\n  result: object\n`,
+  );
+}
 fs.writeFileSync(
   path.join(flowsDir, 'echo-flow.flow'),
   'name: echo-flow\nsteps:\n  - do: echo\n    as: echoed\n    with:\n      value: $value\n',
@@ -44,7 +51,7 @@ const validateWorkerJob = new Ajv({ strict: true, validateFormats: false }).comp
 
 let port;
 
-function request(method, pathname, body) {
+function request(method, pathname, body, headers = {}) {
   const payload = body === undefined ? null : JSON.stringify(body);
   return new Promise((resolve, reject) => {
     const req = http.request({
@@ -55,7 +62,8 @@ function request(method, pathname, body) {
       headers: payload ? {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(payload),
-      } : {},
+        ...headers,
+      } : { ...headers },
     }, (res) => {
       const chunks = [];
       res.on('data', chunk => chunks.push(chunk));
@@ -114,6 +122,9 @@ test('studio route serves the morphic media workspace', async () => {
   assert.match(response.body, /AVLI Cloud · LTX-2/);
   assert.match(response.body, /SSD-1B readiness/);
   assert.match(response.body, /\/api\/media\/readiness\/ssd-1b/);
+  assert.match(response.body, /\/v1\/capabilities/);
+  assert.match(response.body, /\/v1\/jobs/);
+  assert.match(response.body, /Doctrine \/ Law XV/);
   assert.match(response.body, /No generation (?:is|was) started/);
   assert.match(response.body, /L7 Prism Design System/);
   assert.match(response.body, /--ds-canvas:/);
@@ -220,8 +231,8 @@ test('versioned discovery separates tools and flows under canonical envelopes', 
   const tools = await request('GET', '/v1/tools');
   assert.equal(tools.status, 200);
   assertCanonical(tools.body);
-  const tool = tools.body.result.tools[0];
-  assert.equal(tool.tool, 'echo');
+  const tool = tools.body.result.tools.find(item => item.tool === 'echo');
+  assert.ok(tool, 'expected tool:echo in /v1/tools');
   assert.equal(tool.contract_version, 'l7.tool/1.0');
   assert.equal(tool.entity_id, 'tool:echo');
   assert.equal(tool.l7.capability, 'data');
@@ -240,9 +251,49 @@ test('versioned capability discovery publishes tool and media operations', async
   assertCanonical(response.body);
   assert.equal(response.body.result.contract_version, CONTRACT_VERSIONS.workerCapabilities);
   assert.equal(response.body.result.worker_id, 'l7-gateway');
-  assert.ok(response.body.result.capabilities.some(item => item.id === 'tool.echo'));
-  assert.ok(response.body.result.capabilities.some(item => item.id === 'image.generate'));
+  const ids = response.body.result.capabilities.map(item => item.id);
+  assert.ok(ids.includes('tool.echo'));
+  assert.ok(ids.includes('image.generate'));
+  assert.ok(ids.includes('tool.financial-ratios'));
+  assert.ok(ids.includes('tool.dcf-valuation'));
+  assert.ok(ids.includes('tool.rag-pipeline'));
+  assert.ok(ids.includes('text.echo'));
   assert.equal(validateCapabilities(response.body.result), true, JSON.stringify(validateCapabilities.errors));
+});
+
+test('duplicate X-L7-Request-Id does not double-run ratios', async () => {
+  let executions = 0;
+  const originalExecute = gateway.execute;
+  gateway.execute = async (name, args) => {
+    executions += 1;
+    return { success: true, result: { tool: name, args, ratios: { profitability: { roe: 0.2 } } } };
+  };
+  try {
+    const jobRequest = {
+      contract_version: CONTRACT_VERSIONS.workerJobRequest,
+      request_id: 'request:ratios-once',
+      tenant_id: 'tenant:test',
+      capability: 'tool.financial-ratios',
+      input: { period: 'Q4_2024' },
+      privacy_class: 'internal',
+      deadline: new Date(Date.now() + 60_000).toISOString(),
+    };
+    const first = await request('POST', '/v1/jobs', jobRequest, { 'X-L7-Request-Id': 'request:ratios-once' });
+    const second = await request('POST', '/v1/jobs', jobRequest, { 'X-L7-Request-Id': 'request:ratios-once' });
+    assert.equal(first.status, 202);
+    assert.equal(second.status, 202);
+    assert.equal(first.body.result.job.job_id, second.body.result.job.job_id);
+    let current;
+    for (let attempt = 0; attempt < 50; attempt += 1) {
+      current = await request('GET', `/v1/jobs/${encodeURIComponent(first.body.result.job.job_id)}`);
+      if (current.body.result.job.state === 'succeeded') break;
+      await new Promise(resolve => setTimeout(resolve, 5));
+    }
+    assert.equal(current.body.result.job.state, 'succeeded');
+    assert.equal(executions, 1);
+  } finally {
+    gateway.execute = originalExecute;
+  }
 });
 
 test('versioned jobs execute durably and duplicate request IDs are idempotent', async () => {
@@ -327,6 +378,29 @@ test('versioned jobs propagate cancellation to active tool execution', async () 
   }
 });
 
+test('unsigned worker callbacks are rejected and signed callbacks are accepted', async () => {
+  const { signCallback } = require('../lib/callback-hmac');
+  const submitted = await request('POST', '/v1/jobs', {
+    contract_version: CONTRACT_VERSIONS.workerJobRequest,
+    request_id: 'request:callback-hmac',
+    capability: 'tool.echo',
+    input: { value: 'callback' },
+    privacy_class: 'internal',
+    deadline: new Date(Date.now() + 60_000).toISOString(),
+  });
+  const jobId = submitted.body.result.job.job_id;
+  const payload = { job_id: jobId, state: 'succeeded' };
+  const denied = await request('POST', '/v1/callbacks/jobs', payload);
+  assert.equal(denied.status, 401);
+
+  const accepted = await request('POST', '/v1/callbacks/jobs', payload, {
+    'X-L7-Callback-Signature': signCallback(payload, process.env.L7_CALLBACK_HMAC_SECRET),
+  });
+  assert.equal(accepted.status, 200);
+  assert.equal(accepted.body.result.accepted, true);
+  assert.equal(accepted.body.result.job.job_id, jobId);
+});
+
 test('versioned jobs reject malformed worker requests', async () => {
   const response = await request('POST', '/v1/jobs', {
     request_id: 'missing-contract-and-fields',
@@ -400,7 +474,8 @@ test('versioned flow execution cannot be confused with tool execution', async ()
 test('legacy routes remain available during the v1 migration', async () => {
   const tools = await request('GET', '/api/tools');
   assert.equal(tools.status, 200);
-  assert.equal(tools.body.tools[0].name, 'echo');
+  const echo = tools.body.tools.find(item => item.name === 'echo');
+  assert.ok(echo, 'expected echo in legacy /api/tools');
 
   const call = await request('POST', '/api/call', {
     tool: 'echo',

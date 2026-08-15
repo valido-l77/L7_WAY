@@ -19,9 +19,11 @@ gate passes; installing software alone is not completion.
 - [x] Add targeted security regression tests.
 - [ ] Rotate every credential listed in AVLI's secret-rotation checklist.
 - [ ] Remove secret-bearing tracked artifacts from future history and builds.
-- [ ] Snapshot and test restore of current Postgres, n8n, and artifact data.
+- [x] Snapshot current Postgres, n8n, Redis, and Neo4j volumes
+  (`/root/avli-backups/2026-08-15-founder-loop/` on the VPS). Restore drill of
+  those tarballs onto a non-production host is still open.
 - [ ] Resolve the NCLS data-loss/restore decision before importing participant
-  data.
+  data. Parked for the Founder Loop freeze.
 
 Gate: doctrine integrity passes, full L7 tests pass, secret scan is clean, and a
 restore drill succeeds without touching production data.
@@ -32,11 +34,19 @@ restore drill succeeds without touching production data.
 - [x] Pin PostgreSQL 18.4, Valkey 8.1.9, Qdrant 1.18.2, and n8n 2.30.5.
 - [x] Keep database, cache, and vector ports off the host.
 - [x] Bind n8n to loopback only and define health/resource limits.
-- [ ] Validate the manifest with populated ephemeral test secrets.
-- [ ] Back up existing volumes before any VPS deployment.
-- [ ] Deploy under a new Dokploy project; do not reuse ambiguous old stacks.
-- [ ] Verify memory remains below 70% and swap remains inactive under load.
-- [ ] Publish n8n only through the authenticated private edge.
+- [x] Validate the manifest with populated ephemeral test secrets
+  (`docker compose ... config` against gitignored `deploy/secrets/control-plane.env`).
+- [x] Back up existing volumes before any VPS change.
+- [x] Memory-safe VPS path: reuse live `avli-postgres`, `avli-redis`, and
+  `nclsai-n8n-35iomz-n8n-1`. Do **not** apply the 5 GB compose on this 8 GB
+  host (no swap; ~1.5–2.2 GiB available). Full Dokploy project deploy remains
+  parked until RAM or a second node exists.
+- [x] Verify swap remains inactive; after stopping `avli-neo4j`, available RAM
+  rose from ~1.5 GiB to ~2.2 GiB. Still above 70% used because Authentik,
+  Baserow, and Dokploy stay up.
+- [ ] Publish n8n only through the authenticated private edge. Traefik still
+  serves `n8n.avli.cloud`; host publish remains `0.0.0.0:5678` (rebind parked
+  so NCLS webhooks on `ai.nclifestudy.com` are not broken).
 - [ ] Mark the three legacy compose definitions as non-authoritative; do not
   delete them until migration evidence is archived.
 - [ ] Repair or retire the GitHub Actions deploy workflow after rotating its
@@ -53,7 +63,8 @@ networks, and recover from a controlled restart.
 - [x] Add request ID/idempotency, server-derived tenant context, enforced
   deadlines, and terminal cancellation semantics
   to the L7 executor.
-- [ ] Implement service-token and callback-HMAC verification.
+- [x] Implement service-token and callback-HMAC verification
+  (`lib/callback-hmac.js`, `lib/avli-worker-client.js`, `/v1/callbacks/jobs`).
 - [ ] Replace the placeholder Council loop with real bounded parallel
   deliberation, structured votes, dissent, timeout, and audit records.
 - [ ] Add a capability registry with health, privacy class, cost, modality,
@@ -187,3 +198,12 @@ Gate: disabling n8n cannot bypass governance or corrupt an in-flight L7 job.
 Final gate: all capabilities enter through L7, all workers are private and
 replaceable, data can be restored, licenses are recorded, and the old public
 gateway/monolithic deployment paths are disabled.
+
+## Founder Loop freeze (2026-08-15)
+
+Working model in production use: Mac L7 Gateway (`127.0.0.1:18793`) + echo
+worker (`127.0.0.1:18792`) + existing Hostinger n8n. Smoke:
+`L7_GATEWAY_URL=http://127.0.0.1:18793 L7_API_TOKEN=... bash scripts/founder-loop-smoke.sh`.
+Parked until a later cycle: NCLS restore, assistant-ui, remaining modalities,
+applying `compose.control-plane.yml` as a second stack, and GitHub Actions
+`deploy-to-vps.yml`.

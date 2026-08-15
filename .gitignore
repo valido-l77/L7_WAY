@@ -37,3 +37,6 @@ vm/prima
 
 # Generated media run output — regenerate via the adapters, don't track binaries.
 artifacts/
+
+# Founder Loop machine-local secrets (tokens live in ~/.l7/state/founder-loop/)
+.env.local

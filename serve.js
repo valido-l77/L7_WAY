@@ -32,6 +32,9 @@ const {
 } = require('./lib/http-body');
 const { resolveContainedFile } = require('./lib/safe-path');
 const { CONTRACT_VERSIONS, ERROR_CODES, normalizeExecutionResult } = require('./lib/contracts');
+const { forgeCapabilityDocuments, readForgeHealth } = require('./lib/forge-health');
+const { executeOnWorker, workerConfigured, workerHealth } = require('./lib/avli-worker-client');
+const { SIGNATURE_HEADER, verifyCallback } = require('./lib/callback-hmac');
 
 const PORT = parseInt(process.env.L7_PORT || '18789', 10);
 const BIND = process.env.L7_BIND || '127.0.0.1';
@@ -39,6 +42,7 @@ const L7_DIR = process.env.L7_DIR || path.join(process.env.HOME || '', '.l7');
 const TOOLS_DIR = path.join(L7_DIR, 'tools');
 const FLOWS_DIR = path.join(L7_DIR, 'flows');
 const STUDIO_PATH = path.join(__dirname, 'src', 'avli-cloud-studio.html');
+const LANDING_PATH = path.join(__dirname, 'src', 'l7-way-landing.html');
 const MAX_BODY_BYTES = configuredBodyLimit(process.env.L7_MAX_BODY_BYTES);
 const httpSecurity = createHttpSecurity({ port: PORT });
 const mediaRunner = new MediaRunner();
@@ -85,6 +89,10 @@ async function executeJob(request, context) {
     });
   }
 
+  if (request.capability === 'text.echo') {
+    return executeOnWorker(request, context);
+  }
+
   if (['image.generate', 'video.generate'].includes(request.capability)) {
     const mode = request.capability.startsWith('video.') ? 'video' : 'image';
     const plan = createMorphicPlan({ ...request.input, mode });
@@ -110,7 +118,8 @@ const jobCoordinator = new JobCoordinator({
   autoStart: false,
 });
 
-function capabilityDocument() {
+async function capabilityDocument() {
+  const timeoutSeconds = Math.max(1, Math.floor((gateway.config?.timeout || 30000) / 1000));
   const tools = gateway.listPublicTools().map(tool => ({
     id: capabilityIdForTool(tool.tool),
     modality: tool.l7.capability === 'render' ? 'image' : 'automation',
@@ -123,7 +132,7 @@ function capabilityDocument() {
     limits: {
       max_concurrency: 2,
       max_input_bytes: MAX_BODY_BYTES,
-      timeout_seconds: Math.max(1, Math.floor((gateway.config?.timeout || 30000) / 1000)),
+      timeout_seconds: timeoutSeconds,
     },
   }));
   const media = ['image.generate', 'video.generate'].map(id => {
@@ -144,12 +153,43 @@ function capabilityDocument() {
       },
     };
   });
+  const [forge, worker] = await Promise.all([
+    readForgeHealth(),
+    workerHealth(),
+  ]);
+  const seen = new Set(tools.map(item => item.id));
+  const forgeCaps = forgeCapabilityDocuments(forge, {
+    maxInputBytes: MAX_BODY_BYTES,
+    timeoutSeconds,
+  }).filter(item => {
+    if (seen.has(item.id)) {
+      const existing = tools.find(tool => tool.id === item.id);
+      if (existing) existing.available = existing.available && item.available;
+      if (existing && item.available) existing.models = ['skill-runtime-forge'];
+      return false;
+    }
+    seen.add(item.id);
+    return true;
+  });
+  const echo = {
+    id: 'text.echo',
+    modality: 'text',
+    operations: ['execute', 'cancel'],
+    privacy_classes: ['public', 'internal', 'restricted'],
+    available: Boolean(worker.available && workerConfigured()),
+    models: ['reference/echo'],
+    limits: {
+      max_concurrency: 2,
+      max_input_bytes: MAX_BODY_BYTES,
+      timeout_seconds: 30,
+    },
+  };
   return {
     contract_version: CONTRACT_VERSIONS.workerCapabilities,
     worker_id: 'l7-gateway',
     worker_version: '0.1.0',
     generated_at: new Date().toISOString(),
-    capabilities: [...tools, ...media],
+    capabilities: [...tools, ...forgeCaps, ...media, echo],
   };
 }
 
@@ -351,6 +391,11 @@ async function requestHandler(req, res) {
       return;
     }
 
+    if ((parsed.pathname === '/offers' || parsed.pathname === '/offers/') && req.method === 'GET') {
+      sendHtml(res, LANDING_PATH);
+      return;
+    }
+
     // ── Health & Status ──
     if (parsed.pathname === '/' || parsed.pathname === '/health') {
       const health = await gateway.checkHealth();
@@ -419,7 +464,7 @@ async function requestHandler(req, res) {
     }
 
     if (parsed.pathname === '/v1/capabilities' && req.method === 'GET') {
-      sendJson(res, 200, normalizeExecutionResult(capabilityDocument()));
+      sendJson(res, 200, normalizeExecutionResult(await capabilityDocument()));
       return;
     }
 
@@ -439,10 +484,41 @@ async function requestHandler(req, res) {
       if (request.tenant_id !== undefined && request.tenant_id !== tenantId) {
         throw new HttpRequestError(403, 'AUTHORIZATION_DENIED', 'tenant_id does not match the authenticated service identity');
       }
+      const headerRequestId = req.headers['x-l7-request-id'];
+      if (headerRequestId) {
+        if (request.request_id && request.request_id !== headerRequestId) {
+          throw new HttpRequestError(409, 'CONFLICT', 'X-L7-Request-Id does not match request_id');
+        }
+        request.request_id = headerRequestId;
+      }
       const job = jobCoordinator.submit({ ...request, tenant_id: tenantId });
       sendJson(res, 202, normalizeExecutionResult({ job: publicJob(job) }, {
         meta: { job_id: job.job_id },
       }));
+      return;
+    }
+
+    if (parsed.pathname === '/v1/callbacks/jobs' && req.method === 'POST') {
+      const raw = await parseBody(req);
+      const signature = req.headers[SIGNATURE_HEADER];
+      let verified = false;
+      try {
+        verified = verifyCallback(raw, signature);
+      } catch (error) {
+        throw new HttpRequestError(401, 'AUTHENTICATION_REQUIRED', error.message);
+      }
+      if (!verified) {
+        throw new HttpRequestError(401, 'AUTHENTICATION_REQUIRED', 'Invalid callback HMAC');
+      }
+      const jobId = raw.job_id;
+      const existing = jobId ? jobCoordinator.get(jobId) : null;
+      if (!existing) {
+        throw new HttpRequestError(404, 'NOT_FOUND', 'Callback job not found');
+      }
+      sendJson(res, 200, normalizeExecutionResult({
+        job: publicJob(existing),
+        accepted: true,
+      }, { meta: { job_id: existing.job_id } }));
       return;
     }
 

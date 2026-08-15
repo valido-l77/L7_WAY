@@ -3,31 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0a0a0c">
-<title>AVLI Cloud Studio — Morphic Media</title>
+<meta name="theme-color" content="#0C0A08">
+<title>AVLI Cloud Studio — L7 WAY</title>
 <style>
 [hidden] { display: none !important; }
 
 :root {
   color-scheme: dark;
-  /* L7 Prism Design System — semantic color */
-  --ds-canvas: #060810;
-  --ds-canvas-raised: #090d18;
-  --ds-surface-1: rgba(14, 19, 33, .82);
-  --ds-surface-2: rgba(22, 28, 45, .92);
-  --ds-surface-3: rgba(32, 40, 62, .94);
-  --ds-ink: #f7f4ec;
-  --ds-ink-muted: #a9adba;
-  --ds-ink-dim: #6f7585;
-  --ds-line: rgba(221, 227, 255, .11);
-  --ds-line-strong: rgba(221, 227, 255, .22);
-  --ds-gold: #f2c76f;
-  --ds-silver: #dfe7f6;
-  --ds-copper: #ed845f;
-  --ds-cyan: #69dce8;
-  --ds-violet: #9d8cff;
-  --ds-positive: #76d5a0;
-  --ds-danger: #f07676;
+  /* L7 founder surface — ABOVE gold, MIRROR silver, BELOW copper, SALT green */
+  --ds-canvas: #0C0A08;
+  --ds-canvas-raised: #16120E;
+  --ds-surface-1: rgba(22, 18, 14, .82);
+  --ds-surface-2: rgba(32, 26, 20, .92);
+  --ds-surface-3: rgba(46, 36, 28, .94);
+  --ds-ink: #E4D6B8;
+  --ds-ink-muted: #B7A88A;
+  --ds-ink-dim: #8A8274;
+  --ds-line: rgba(196, 163, 90, .18);
+  --ds-line-strong: rgba(196, 163, 90, .34);
+  --ds-gold: #C4A35A;
+  --ds-silver: #C8C2B4;
+  --ds-copper: #B5683C;
+  --ds-cyan: #C4A35A;
+  --ds-violet: #B5683C;
+  --ds-positive: #6A8464;
+  --ds-danger: #C45C4A;
 
   /* L7 Prism Design System — shape, space, elevation, motion */
   --ds-radius-sm: 10px;
@@ -72,7 +72,7 @@ body {
   min-height: 100vh;
   color: var(--ink);
   background: var(--bg);
-  font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font: 400 14px/1.45 Charter, "Bitstream Charter", "Iowan Old Style", Georgia, serif;
 }
 
 body::before,
@@ -85,9 +85,9 @@ body::after {
 }
 body::before {
   background:
-    radial-gradient(circle at 18% 4%, rgba(157, 140, 255, .16), transparent 31rem),
-    radial-gradient(circle at 79% 0%, rgba(105, 220, 232, .12), transparent 34rem),
-    radial-gradient(circle at 55% 72%, rgba(242, 199, 111, .07), transparent 38rem);
+    radial-gradient(circle at 18% 4%, rgba(196, 163, 90, .12), transparent 31rem),
+    radial-gradient(circle at 79% 0%, rgba(181, 104, 60, .08), transparent 34rem),
+    radial-gradient(circle at 55% 72%, rgba(106, 132, 100, .07), transparent 38rem);
 }
 body::after {
   opacity: .22;
@@ -135,8 +135,9 @@ button { color: inherit; }
   background: radial-gradient(circle, rgba(242, 199, 111, .13), transparent 68%);
   box-shadow: inset 0 0 18px rgba(242, 199, 111, .08), 0 0 28px rgba(242, 199, 111, .1);
 }
-.brand-name { font-size: 13px; font-weight: 720; letter-spacing: .16em; text-transform: uppercase; }
+.brand-name { font-family: "SF Mono", Menlo, ui-monospace, monospace; font-size: 12px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; }
 .brand-sub { color: var(--muted); font-size: 11px; letter-spacing: .04em; }
+.brand a { color: inherit; text-decoration: none; }
 
 .top-context {
   display: flex;
@@ -302,7 +303,7 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
   overflow: hidden;
 }
 .stage-head::after { content: "△  ◇  ▽"; position: absolute; right: 24px; bottom: -16px; color: rgba(255, 255, 255, .035); font: 76px/1 Georgia, serif; letter-spacing: -.2em; pointer-events: none; }
-.stage-head h1 { margin: 0; max-width: 760px; font-family: Iowan Old Style, Baskerville, Georgia, serif; font-size: clamp(29px, 3.2vw, 48px); line-height: 1.01; letter-spacing: -.045em; font-weight: 500; text-wrap: balance; }
+.stage-head h1 { margin: 0; max-width: 760px; font-family: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif; font-size: clamp(29px, 3.2vw, 48px); line-height: 1.01; letter-spacing: -.045em; font-weight: 500; text-wrap: balance; }
 .stage-head p { margin: 7px 0 0; color: var(--muted); max-width: 650px; }
 .stage-head .stage-copy { position: relative; z-index: 1; }
 .stage-badges { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px; }
@@ -470,6 +471,87 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
   white-space: nowrap; border: 0;
 }
 
+.offers-link {
+  border: 1px solid var(--line);
+  background: transparent;
+  padding: 7px 12px;
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  cursor: pointer;
+  border-radius: var(--ds-radius-pill);
+}
+.offers-link:hover { border-color: var(--line-strong); background: rgba(196, 163, 90, .08); }
+.offers-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(12, 10, 8, .72);
+  backdrop-filter: blur(16px);
+  overflow: auto;
+  padding: 28px 20px 48px;
+}
+.offers-panel {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+.offers-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.offers-panel-head h2 {
+  margin: 6px 0 0;
+  font-family: "Iowan Old Style", Palatino, Georgia, serif;
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 500;
+  letter-spacing: -.03em;
+}
+.offers-panel-head p { margin: 8px 0 0; color: var(--muted); max-width: 36em; }
+.offers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.08fr 1fr;
+  gap: 16px;
+}
+.offer-card {
+  border: 1px solid var(--line);
+  background: linear-gradient(160deg, rgba(32, 26, 20, .9), rgba(12, 10, 8, .92));
+  padding: 22px 20px 20px;
+  min-width: 0;
+}
+.offer-card.sovereign { border-color: rgba(196, 163, 90, .45); box-shadow: 0 18px 48px rgba(0, 0, 0, .28); }
+.offer-card .seal { color: var(--gold); font-family: "Iowan Old Style", Palatino, Georgia, serif; font-size: 22px; }
+.offer-card.initiate .seal { color: var(--copper); }
+.offer-card.empire .seal { color: var(--silver); }
+.offer-card h3 { margin: 8px 0 0; font-family: "Iowan Old Style", Palatino, Georgia, serif; font-size: 28px; font-weight: 500; }
+.offer-price {
+  margin: 8px 0 0;
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: .08em;
+  color: var(--gold);
+}
+.offer-card p { margin: 12px 0 0; color: var(--muted); font-size: 13px; }
+.offer-card ul { margin: 16px 0 0; padding: 0; list-style: none; }
+.offer-card li {
+  padding: 7px 0;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+.offer-card a {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--gold);
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
 @keyframes pulse { 50% { opacity: .35; } }
 @keyframes preview-scan { to { transform: translateX(110%); } }
 
@@ -497,6 +579,9 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
   .candidate-list { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); min-height: 0; }
   .empty { min-height: 180px; }
 }
+@media (max-width: 880px) {
+  .offers-grid { grid-template-columns: 1fr; }
+}
 @media (max-width: 520px) {
   .topbar { padding: 0 14px; }
   .brand-sub, .top-status span:last-child { display: none; }
@@ -513,8 +598,8 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
     <div class="brand">
       <div class="brand-mark" aria-hidden="true">△</div>
       <div>
-        <div class="brand-name">AVLI Cloud Studio</div>
-        <div class="brand-sub">Morphic media workspace</div>
+        <div class="brand-name">L7 WAY / AVLI Studio</div>
+        <div class="brand-sub">Initiate · local fold</div>
       </div>
     </div>
     <div class="top-context" aria-label="Studio context">
@@ -523,6 +608,8 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
       <span class="context-chip">Local-first</span>
     </div>
     <div class="top-status" role="status" aria-live="polite">
+      <a class="offers-link" href="/offers">All offers</a>
+      <button class="offers-link" type="button" id="offersBtn" aria-expanded="false" aria-controls="offersOverlay">Seals · $42</button>
       <span class="status-dot" id="gatewayDot"></span>
       <span id="gatewayStatus">Connecting to Gateway</span>
     </div>
@@ -674,6 +761,16 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
       </section>
 
       <section class="section">
+        <p class="eyebrow">Doctrine / Law XV</p>
+        <div class="field">
+          <label for="doctrineQuery">Ask the forge</label>
+          <textarea id="doctrineQuery">What is Law XV about founder access?</textarea>
+        </div>
+        <button class="btn secondary" id="doctrineBtn" type="button">Query via /v1/jobs</button>
+        <div class="run-message" id="doctrineResult">RAG citations appear here after a governed job.</div>
+      </section>
+
+      <section class="section">
         <p class="eyebrow">Capabilities</p>
         <div class="cap-list" id="capList">
           <div class="capability"><span class="status-dot"></span><span>Discovering adapters</span><span class="state-pill">wait</span></div>
@@ -687,6 +784,57 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
         </div>
       </section>
     </aside>
+  </div>
+</div>
+
+<div class="offers-overlay" id="offersOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="offersPanelTitle">
+  <div class="offers-panel">
+    <div class="offers-panel-head">
+      <div>
+        <p class="eyebrow">Founder offers</p>
+        <h2 id="offersPanelTitle">Three seals. One horizon.</h2>
+        <p>You are in Initiate — Studio on the Gateway, echo and tools on this Mac. Sovereign adds the VPS control plane. Empire is private workers, by the founder’s word.</p>
+      </div>
+      <button class="btn" type="button" id="offersClose">Close</button>
+    </div>
+    <div class="offers-grid">
+      <article class="offer-card initiate">
+        <div class="seal" aria-hidden="true">△</div>
+        <h3>Initiate</h3>
+        <p class="offer-price">$42 / month</p>
+        <p>Studio, local echo, and the tool loop. The desk you already sit at.</p>
+        <ul>
+          <li>AVLI Cloud Studio</li>
+          <li>Local echo and tool loop</li>
+          <li>On-device inference readiness</li>
+        </ul>
+        <a href="/studio">You are here</a>
+      </article>
+      <article class="offer-card sovereign">
+        <div class="seal" aria-hidden="true">◇</div>
+        <h3>Sovereign</h3>
+        <p class="offer-price">$420 / month</p>
+        <p>Gateway plus the VPS CPU plane and n8n. The public door, the house behind it.</p>
+        <ul>
+          <li>L7 Gateway control plane</li>
+          <li>VPS CPU plane and n8n</li>
+          <li>Identity at the door — no passwords</li>
+        </ul>
+        <a href="/offers">Enter the Gateway</a>
+      </article>
+      <article class="offer-card empire">
+        <div class="seal" aria-hidden="true">▽</div>
+        <h3>Empire</h3>
+        <p class="offer-price">By invitation</p>
+        <p>Private workers, morphic media, governed RAG. Nothing here faces the street.</p>
+        <ul>
+          <li>Private AVLI workers</li>
+          <li>Morphic media and RAG</li>
+          <li>Custom forge work</li>
+        </ul>
+        <a href="mailto:hello@avli.cloud?subject=Empire%20seal">Request the seal</a>
+      </article>
+    </div>
   </div>
 </div>
 
@@ -752,8 +900,34 @@ async function api(path, options = {}) {
     headers: options.body ? { 'Content-Type': 'application/json', ...(options.headers || {}) } : options.headers,
   });
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.error || body.message || `Request failed (${response.status})`);
+  if (!response.ok || body.success === false) {
+    throw new Error(body.error || body.message || `Request failed (${response.status})`);
+  }
   return body;
+}
+
+async function submitV1Job(capability, input) {
+  const requestId = `request:${crypto.randomUUID()}`;
+  const submitted = await api('/v1/jobs', {
+    method: 'POST',
+    headers: { 'X-L7-Request-Id': requestId },
+    body: JSON.stringify({
+      contract_version: 'l7.worker.job-request/1.0',
+      request_id: requestId,
+      capability,
+      input,
+      privacy_class: 'internal',
+      deadline: new Date(Date.now() + 60_000).toISOString(),
+    }),
+  });
+  const jobId = submitted.result?.job?.job_id;
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const current = await api(`/v1/jobs/${encodeURIComponent(jobId)}`);
+    const job = current.result?.job;
+    if (job && ['succeeded', 'failed', 'cancelled'].includes(job.state)) return job;
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
+  throw new Error('Job did not complete');
 }
 
 function setGateway(state, text) {
@@ -855,7 +1029,7 @@ function visualSeed(value) {
 function displayAssetUrl(candidate) {
   if (/^(https?:|data:)/.test(candidate.asset_uri || '')) return candidate.asset_uri;
   const match = String(candidate.asset_uri || '').match(/^avli:\/\/sha256\/([a-f0-9]{64})$/);
-  return match ? `/api/media/assets/${match[1]}` : null;
+  return match ? `/v1/artifacts/${match[1]}` : null;
 }
 
 function createCandidate(candidate, layer, scorecard, selected) {
@@ -952,22 +1126,56 @@ function renderLayers(plan = activePlan, result) {
 }
 
 function renderCapabilities(payload) {
+  const capabilities = payload.result?.capabilities || payload.capabilities || [];
   const adapters = payload.adapters || [];
-  $('capList').replaceChildren(...adapters.map(adapter => {
+  const rows = [];
+  for (const capability of capabilities) {
+    const row = node('div', 'capability');
+    const state = capability.available ? 'online' : 'error';
+    row.append(
+      node('span', `status-dot ${state}`),
+      node('span', '', capability.id),
+      node('span', 'state-pill', capability.available ? capability.modality : 'offline'),
+    );
+    rows.push(row);
+  }
+  for (const adapter of adapters) {
     const row = node('div', 'capability');
     const adapterState = adapter.health || adapter.state || 'unknown';
-    const capabilities = adapter.capabilities || [adapter.capability].filter(Boolean);
+    const names = adapter.capabilities || [adapter.capability].filter(Boolean);
     const state = adapterState === 'healthy' || adapterState === 'configured' ? 'online' : adapterState === 'offline' ? 'error' : '';
     row.append(
       node('span', `status-dot ${state}`),
-      node('span', '', capabilities.join(', ') || adapter.name),
+      node('span', '', names.join(', ') || adapter.name),
       node('span', 'state-pill', adapterState),
     );
-    return row;
-  }));
-  executionMode = payload.execution_mode || 'unknown';
+    rows.push(row);
+  }
+  $('capList').replaceChildren(...(rows.length ? rows : [node('div', 'capability', 'No capabilities discovered')]));
+  executionMode = payload.execution_mode || payload.result?.execution_mode || executionMode || 'unknown';
   $('runMode').textContent = executionMode;
   renderDreamCycle({ approval_required: dreamCycleLocked });
+}
+
+async function queryDoctrine() {
+  const query = $('doctrineQuery').value.trim() || 'What is Law XV?';
+  $('doctrineBtn').disabled = true;
+  $('doctrineResult').textContent = 'Submitting governed RAG job…';
+  try {
+    const job = await submitV1Job('tool.rag-pipeline', { action: 'query', query, profile: 'real-corpus', k: 5 });
+    if (job.state !== 'succeeded') throw new Error(job.error?.message || 'RAG job failed');
+    const hits = job.result?.hits || job.result?.result?.hits || [];
+    const citations = hits.slice(0, 3).map(hit => hit.heading || hit.path || hit.source || JSON.stringify(hit));
+    $('doctrineResult').textContent = citations.length
+      ? citations.join('\n')
+      : JSON.stringify(job.result, null, 2).slice(0, 800);
+    logEvent('Doctrine job succeeded');
+  } catch (error) {
+    $('doctrineResult').textContent = error.message;
+    logEvent(error.message);
+  } finally {
+    $('doctrineBtn').disabled = false;
+  }
 }
 
 function renderResources(payload) {
@@ -1166,18 +1374,36 @@ $('exportBtn').addEventListener('click', exportPlan);
 $('cancelBtn').addEventListener('click', () => runAction('cancel'));
 $('resumeBtn').addEventListener('click', () => runAction('resume'));
 $('approveCycleBtn').addEventListener('click', approveDreamCycle);
+$('doctrineBtn').addEventListener('click', queryDoctrine);
+
+function setOffersOpen(open) {
+  $('offersOverlay').hidden = !open;
+  $('offersBtn').setAttribute('aria-expanded', String(open));
+}
+$('offersBtn').addEventListener('click', () => setOffersOpen($('offersOverlay').hidden));
+$('offersClose').addEventListener('click', () => setOffersOpen(false));
+$('offersOverlay').addEventListener('click', event => {
+  if (event.target === $('offersOverlay')) setOffersOpen(false);
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !$('offersOverlay').hidden) setOffersOpen(false);
+});
 
 async function boot() {
   renderLayers();
   try {
-    const [capabilities, resources, history] = await Promise.all([
+    const [capabilities, mediaCapabilities, resources, history] = await Promise.all([
+      api('/v1/capabilities'),
       api('/api/media/capabilities'),
       api('/api/media/resources'),
       api('/api/media/runs'),
       probeSsdReadiness(),
       probeDreamCycle(),
     ]);
-    renderCapabilities(capabilities);
+    renderCapabilities({
+      ...mediaCapabilities,
+      result: capabilities.result,
+    });
     renderResources(resources);
     logEvent('Gateway capabilities discovered');
     const latest = (history.runs || []).at(-1);
