@@ -2,9 +2,9 @@
 # L7 Vault — Touch ID Protected Access
 # Usage: ./vault open | ./vault close | ./vault status
 
-VAULT_DIR="/Users/rnir_hrc_avd/Backup/L7_WAY/.vault"
-VAULT_DMG="/Users/rnir_hrc_avd/Backup/L7_WAY/.vault_encrypted.dmg"
-VAULT_SPARSE="/Users/rnir_hrc_avd/Backup/L7_WAY/.vault_encrypted.dmg.sparseimage"
+VAULT_DIR="/Users/rnir_hrc_avd/L7_WAY/.vault"
+VAULT_DMG="/Users/rnir_hrc_avd/L7_WAY/.vault_encrypted.dmg"
+VAULT_SPARSE="/Users/rnir_hrc_avd/L7_WAY/.vault_encrypted.dmg.sparseimage"
 VAULT_MOUNT="/Volumes/L7_VAULT"
 VAULT_SIZE="100m"
 
