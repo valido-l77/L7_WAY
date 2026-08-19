@@ -1,0 +1,364 @@
+{
+  "contract_version": "l7.worker.job/1.0",
+  "job_id": "job:8af40a9d04742c0f8450c1e1",
+  "request_id": "request:shango-still-16x9",
+  "tenant_id": "tenant:service",
+  "capability": "image.generate",
+  "state": "succeeded",
+  "created_at": "2026-08-18T02:07:05.419Z",
+  "updated_at": "2026-08-18T02:07:05.453Z",
+  "progress": 1,
+  "result": {
+    "id": "run-0594d062907ca2db",
+    "plan_id": "morph-0594d062907ca2db",
+    "state": "crystallized",
+    "canonical_state": "crystallized",
+    "execution_mode": "mock",
+    "storage_backend": "LocalContentStore",
+    "layers": [
+      {
+        "depth": 1,
+        "name": "ABOVE",
+        "artifacts": [
+          {
+            "job_id": "above.keyframes.c01",
+            "capability": "image.generate",
+            "contract_version": "l7.media.asset/1.0",
+            "backend": "local",
+            "asset_uri": "avli://sha256/efeb93f7dcf525f51ad13dd1b9c9c28e029f0f2a7a4639af7a48ffdebbfbdff9",
+            "content_hash": "efeb93f7dcf525f51ad13dd1b9c9c28e029f0f2a7a4639af7a48ffdebbfbdff9",
+            "bytes": 843,
+            "media_type": "image/svg+xml",
+            "receipt_id": "54cfc192a8eb467e342baf3f62993374f89adab3f1008535f39dec4fd25a9ff3",
+            "receipt_uri": "avli-receipt://sha256/efeb93f7dcf525f51ad13dd1b9c9c28e029f0f2a7a4639af7a48ffdebbfbdff9/54cfc192a8eb467e342baf3f62993374f89adab3f1008535f39dec4fd25a9ff3",
+            "model_receipt": {
+              "contract_version": "l7.media.receipt/1.0",
+              "provider": "avli-mock",
+              "adapter": "mock.image.generate",
+              "adapter_version": "1.0.0",
+              "model": "deterministic-contract-v1",
+              "model_version": null,
+              "provider_request_id": null,
+              "requested_seed": 6,
+              "confirmed_seed": null,
+              "normalized_parameters": {
+                "prompt": "Shango, the thunder king: a powerful Yoruba-Lucumi warrior-king crowned in fire and lightning, gripping a double-headed oshe axe, red and white royal garments, rumba and bata drum energy in the storm, cinematic, photoreal, no text, no logos. Visual language: cinematic. Preserve this identity kernel: one Shango: fire, thunder, double-headed oshe axe, red and white, king and warrior.",
+                "negative_prompt": "text, logos, watermarks, extra limbs, duplicate faces, extra axes, coastal city, ocean, arches",
+                "aspect_ratio": "16:9",
+                "seed": 6,
+                "candidates": 1,
+                "candidate_index": 1,
+                "candidate_count": 1
+              },
+              "attempt": 1,
+              "plan_id": "morph-0594d062907ca2db",
+              "job_id": "above.keyframes.c01",
+              "started_at": "2026-08-18T02:07:05.423Z",
+              "completed_at": "2026-08-18T02:07:05.423Z",
+              "latency_ms": 0,
+              "cost": null,
+              "safety": null
+            }
+          }
+        ],
+        "scorecards": [
+          {
+            "contract_version": "l7.media.scorecard/1.0",
+            "candidate_id": "above.keyframes.c01",
+            "evaluator": {
+              "name": "l7-horizon-baseline",
+              "version": "1.0.0"
+            },
+            "components": {
+              "identity_fidelity": 0.256578,
+              "prompt_fidelity": 0.309231,
+              "counterfactual_value": 0.515924,
+              "technical_quality": 0.9913
+            },
+            "weighted_total": 0.489357,
+            "eligible": true,
+            "evidence": {
+              "asset_hash": "efeb93f7dcf525f51ad13dd1b9c9c28e029f0f2a7a4639af7a48ffdebbfbdff9",
+              "method": "deterministic content-addressed baseline"
+            },
+            "created_at": "2026-08-18T02:07:05.424Z"
+          }
+        ],
+        "selection": {
+          "contract_version": "l7.media.selection/1.0",
+          "plan_id": "morph-0594d062907ca2db",
+          "layer": "ABOVE",
+          "selected_candidate_ids": [
+            "above.keyframes.c01"
+          ],
+          "authority": "horizon",
+          "reason": "highest eligible weighted score",
+          "overrides_ranking": false,
+          "created_at": "2026-08-18T02:07:05.424Z"
+        }
+      },
+      {
+        "depth": 2,
+        "name": "MIRROR",
+        "artifacts": [
+          {
+            "job_id": "mirror.counterfactuals.c01",
+            "capability": "image.generate",
+            "contract_version": "l7.media.asset/1.0",
+            "backend": "local",
+            "asset_uri": "avli://sha256/c4fe517d6dafab223e282fcb8ee1874d51bcee5efd46783b07d38516494aaccb",
+            "content_hash": "c4fe517d6dafab223e282fcb8ee1874d51bcee5efd46783b07d38516494aaccb",
+            "bytes": 850,
+            "media_type": "image/svg+xml",
+            "receipt_id": "856e69258e3dad300c53262a6612095dde343681bcc4515bedcb24db8e27244c",
+            "receipt_uri": "avli-receipt://sha256/c4fe517d6dafab223e282fcb8ee1874d51bcee5efd46783b07d38516494aaccb/856e69258e3dad300c53262a6612095dde343681bcc4515bedcb24db8e27244c",
+            "model_receipt": {
+              "contract_version": "l7.media.receipt/1.0",
+              "provider": "avli-mock",
+              "adapter": "mock.image.generate",
+              "adapter_version": "1.0.0",
+              "model": "deterministic-contract-v1",
+              "model_version": null,
+              "provider_request_id": null,
+              "requested_seed": 57,
+              "confirmed_seed": null,
+              "normalized_parameters": {
+                "prompt": "Shango, the thunder king: a powerful Yoruba-Lucumi warrior-king crowned in fire and lightning, gripping a double-headed oshe axe, red and white royal garments, rumba and bata drum energy in the storm, cinematic, photoreal, no text, no logos. Keep the subject identity invariant, but generate a counterfactual view: reverse viewpoint, light direction, figure/ground hierarchy, and emotional polarity. Avoid a literal negative image. Style: cinematic.",
+                "negative_prompt": "text, logos, watermarks, extra limbs, duplicate faces, extra axes, coastal city, ocean, arches",
+                "aspect_ratio": "16:9",
+                "seed": 57,
+                "candidates": 1,
+                "candidate_index": 1,
+                "candidate_count": 1
+              },
+              "attempt": 1,
+              "plan_id": "morph-0594d062907ca2db",
+              "job_id": "mirror.counterfactuals.c01",
+              "started_at": "2026-08-18T02:07:05.425Z",
+              "completed_at": "2026-08-18T02:07:05.425Z",
+              "latency_ms": 0,
+              "cost": null,
+              "safety": null
+            }
+          }
+        ],
+        "scorecards": [
+          {
+            "contract_version": "l7.media.scorecard/1.0",
+            "candidate_id": "mirror.counterfactuals.c01",
+            "evaluator": {
+              "name": "l7-horizon-baseline",
+              "version": "1.0.0"
+            },
+            "components": {
+              "identity_fidelity": 0.577579,
+              "prompt_fidelity": 0.16502,
+              "counterfactual_value": 0.321319,
+              "technical_quality": 0.496774
+            },
+            "weighted_total": 0.407345,
+            "eligible": true,
+            "evidence": {
+              "asset_hash": "c4fe517d6dafab223e282fcb8ee1874d51bcee5efd46783b07d38516494aaccb",
+              "method": "deterministic content-addressed baseline"
+            },
+            "created_at": "2026-08-18T02:07:05.425Z"
+          }
+        ],
+        "selection": {
+          "contract_version": "l7.media.selection/1.0",
+          "plan_id": "morph-0594d062907ca2db",
+          "layer": "MIRROR",
+          "selected_candidate_ids": [
+            "mirror.counterfactuals.c01"
+          ],
+          "authority": "horizon",
+          "reason": "highest eligible weighted score",
+          "overrides_ranking": false,
+          "created_at": "2026-08-18T02:07:05.425Z"
+        }
+      },
+      {
+        "depth": 3,
+        "name": "BELOW",
+        "artifacts": [
+          {
+            "job_id": "below.canonical.c01",
+            "capability": "image.generate",
+            "contract_version": "l7.media.asset/1.0",
+            "backend": "local",
+            "asset_uri": "avli://sha256/ed92c4b58c051e7b489053accbce7fcb62e54b043a324d43fa4f83178af2787c",
+            "content_hash": "ed92c4b58c051e7b489053accbce7fcb62e54b043a324d43fa4f83178af2787c",
+            "bytes": 843,
+            "media_type": "image/svg+xml",
+            "receipt_id": "399261bf86a97ae33683c5cb4f961b7b45d0a768ea8f4c0efc1bf0fe6b2b053d",
+            "receipt_uri": "avli-receipt://sha256/ed92c4b58c051e7b489053accbce7fcb62e54b043a324d43fa4f83178af2787c/399261bf86a97ae33683c5cb4f961b7b45d0a768ea8f4c0efc1bf0fe6b2b053d",
+            "model_receipt": {
+              "contract_version": "l7.media.receipt/1.0",
+              "provider": "avli-mock",
+              "adapter": "mock.image.generate",
+              "adapter_version": "1.0.0",
+              "model": "deterministic-contract-v1",
+              "model_version": null,
+              "provider_request_id": null,
+              "requested_seed": 44,
+              "confirmed_seed": null,
+              "normalized_parameters": {
+                "prompt": "Shango, the thunder king: a powerful Yoruba-Lucumi warrior-king crowned in fire and lightning, gripping a double-headed oshe axe, red and white royal garments, rumba and bata drum energy in the storm, cinematic, photoreal, no text, no logos. Reconcile the strongest ABOVE proposal with the strongest MIRROR counterfactual. Preserve identity, geometry, palette logic, and material continuity. Remove accidental novelty. Style: cinematic.",
+                "negative_prompt": "text, logos, watermarks, extra limbs, duplicate faces, extra axes, coastal city, ocean, arches",
+                "aspect_ratio": "16:9",
+                "seed": 44,
+                "candidates": 1,
+                "candidate_index": 1,
+                "candidate_count": 1
+              },
+              "attempt": 1,
+              "plan_id": "morph-0594d062907ca2db",
+              "job_id": "below.canonical.c01",
+              "started_at": "2026-08-18T02:07:05.426Z",
+              "completed_at": "2026-08-18T02:07:05.426Z",
+              "latency_ms": 0,
+              "cost": null,
+              "safety": null
+            }
+          }
+        ],
+        "scorecards": [
+          {
+            "contract_version": "l7.media.scorecard/1.0",
+            "candidate_id": "below.canonical.c01",
+            "evaluator": {
+              "name": "l7-horizon-baseline",
+              "version": "1.0.0"
+            },
+            "components": {
+              "identity_fidelity": 0.382193,
+              "prompt_fidelity": 0.406619,
+              "counterfactual_value": 0.476226,
+              "technical_quality": 0.693969
+            },
+            "weighted_total": 0.477244,
+            "eligible": true,
+            "evidence": {
+              "asset_hash": "ed92c4b58c051e7b489053accbce7fcb62e54b043a324d43fa4f83178af2787c",
+              "method": "deterministic content-addressed baseline"
+            },
+            "created_at": "2026-08-18T02:07:05.427Z"
+          }
+        ],
+        "selection": {
+          "contract_version": "l7.media.selection/1.0",
+          "plan_id": "morph-0594d062907ca2db",
+          "layer": "BELOW",
+          "selected_candidate_ids": [
+            "below.canonical.c01"
+          ],
+          "authority": "horizon",
+          "reason": "highest eligible weighted score",
+          "overrides_ranking": false,
+          "created_at": "2026-08-18T02:07:05.427Z"
+        }
+      }
+    ],
+    "crystallization": {
+      "automatic_after_completed_layers": 3,
+      "target_domain": ".salt",
+      "scope": "all layer artifacts and model receipts",
+      "requires": [
+        "content_hashes",
+        "model_receipts"
+      ],
+      "locks_cycle": true
+    },
+    "lifecycle": {
+      "contract_version": "l7.media.crystallization/1.0",
+      "plan_id": "morph-0594d062907ca2db",
+      "state": "crystallized",
+      "target_domain": ".salt",
+      "cycle_locked": true,
+      "layer_receipts": [
+        {
+          "depth": 1,
+          "name": "ABOVE",
+          "artifact": "morph-0594d062907ca2db.1-above.json",
+          "checksum": "d5ed3da73eb1fc5d26f493ef15cbdca8304072e26ef2a3af4a4b95bca51a5e35"
+        },
+        {
+          "depth": 2,
+          "name": "MIRROR",
+          "artifact": "morph-0594d062907ca2db.2-mirror.json",
+          "checksum": "de922829087677a90d0eaf9ec91e3408273f6521074adf50eefa2f23c31b4da0"
+        },
+        {
+          "depth": 3,
+          "name": "BELOW",
+          "artifact": "morph-0594d062907ca2db.3-below.json",
+          "checksum": "c0351f6f20d54f4f64c2b92513a19fb8947fa3f68c3029cd16bff4a6f2497b70"
+        }
+      ],
+      "salt_artifacts": [
+        "morph-0594d062907ca2db.1-above.json",
+        "morph-0594d062907ca2db.2-mirror.json",
+        "morph-0594d062907ca2db.3-below.json"
+      ],
+      "created_at": "2026-08-18T02:07:05.452Z"
+    },
+    "release": {
+      "requires": [
+        "selected_asset",
+        "human_approval"
+      ],
+      "unlocks_new_cycle": false
+    },
+    "manifest": {
+      "contract_version": "l7.media.asset/1.0",
+      "backend": "local",
+      "asset_uri": "avli://sha256/b808923c7d5d54697e14c194d168dc305049a1d8040c5df6e576fa1a5e0cdbc4",
+      "content_hash": "b808923c7d5d54697e14c194d168dc305049a1d8040c5df6e576fa1a5e0cdbc4",
+      "bytes": 12293,
+      "media_type": "application/json",
+      "object_path": "/Users/rnir_hrc_avd/.l7/media/objects/b8/b808923c7d5d54697e14c194d168dc305049a1d8040c5df6e576fa1a5e0cdbc4.json",
+      "receipt_id": "a66f488bbd2b009200828012871544e0a8ad2c2c8beb7467c53a78b4614126a3",
+      "receipt_uri": "avli-receipt://sha256/b808923c7d5d54697e14c194d168dc305049a1d8040c5df6e576fa1a5e0cdbc4/a66f488bbd2b009200828012871544e0a8ad2c2c8beb7467c53a78b4614126a3"
+    }
+  },
+  "artifacts": [
+    {
+      "sha256": "efeb93f7dcf525f51ad13dd1b9c9c28e029f0f2a7a4639af7a48ffdebbfbdff9",
+      "bytes": 843,
+      "media_type": "image/svg+xml",
+      "producer": "avli-mock",
+      "model": "deterministic-contract-v1",
+      "model_version": null,
+      "license_id": "NOASSERTION",
+      "prompt_hash": null,
+      "created_at": "2026-08-18T02:07:05.453Z",
+      "delivery_url": "/v1/artifacts/efeb93f7dcf525f51ad13dd1b9c9c28e029f0f2a7a4639af7a48ffdebbfbdff9"
+    },
+    {
+      "sha256": "c4fe517d6dafab223e282fcb8ee1874d51bcee5efd46783b07d38516494aaccb",
+      "bytes": 850,
+      "media_type": "image/svg+xml",
+      "producer": "avli-mock",
+      "model": "deterministic-contract-v1",
+      "model_version": null,
+      "license_id": "NOASSERTION",
+      "prompt_hash": null,
+      "created_at": "2026-08-18T02:07:05.453Z",
+      "delivery_url": "/v1/artifacts/c4fe517d6dafab223e282fcb8ee1874d51bcee5efd46783b07d38516494aaccb"
+    },
+    {
+      "sha256": "ed92c4b58c051e7b489053accbce7fcb62e54b043a324d43fa4f83178af2787c",
+      "bytes": 843,
+      "media_type": "image/svg+xml",
+      "producer": "avli-mock",
+      "model": "deterministic-contract-v1",
+      "model_version": null,
+      "license_id": "NOASSERTION",
+      "prompt_hash": null,
+      "created_at": "2026-08-18T02:07:05.453Z",
+      "delivery_url": "/v1/artifacts/ed92c4b58c051e7b489053accbce7fcb62e54b043a324d43fa4f83178af2787c"
+    }
+  ],
+  "error": null
+}

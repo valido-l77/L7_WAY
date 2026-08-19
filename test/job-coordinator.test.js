@@ -48,6 +48,62 @@ test('deadline aborts execution and persists a timeout failure', async t => {
   assert.equal(settled.error.code, 'L7_TIMEOUT');
 });
 
+function sampleJournalJob(id, state, createdAt) {
+  return {
+    contract_version: CONTRACT_VERSIONS.workerJob,
+    job_id: `job:${id}`,
+    request_id: `request:${id}`,
+    tenant_id: 'tenant:test',
+    capability: 'tool.echo',
+    state,
+    created_at: createdAt,
+    updated_at: createdAt,
+    progress: state === 'running' ? 0.5 : 1,
+    result: null,
+    artifacts: [],
+    error: null,
+    request: request(id),
+    request_hash: 'test',
+  };
+}
+
+test('job journal write surfaces ENOSPC instead of corrupting the record', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'l7-job-enospc-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const journal = new JobJournal({
+    root,
+    writeFile() {
+      const error = new Error('ENOSPC: no space left on device');
+      error.code = 'ENOSPC';
+      throw error;
+    },
+  });
+  const record = sampleJournalJob('full-disk', 'queued', new Date().toISOString());
+  assert.throws(() => journal.write(record), /ENOSPC|no space|L7_STORAGE_FULL/i);
+  assert.equal(fs.readdirSync(root).filter(name => name.endsWith('.json')).length, 0);
+});
+
+test('job journal prunes terminal jobs older than retention while keeping in-flight jobs', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'l7-job-prune-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const journal = new JobJournal({ root });
+  const old = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
+  const recent = new Date().toISOString();
+  journal.write(sampleJournalJob('old-success', 'succeeded', old));
+  journal.write(sampleJournalJob('old-failed', 'failed', old));
+  journal.write(sampleJournalJob('in-flight', 'running', old));
+  journal.write(sampleJournalJob('queued', 'queued', old));
+  journal.write(sampleJournalJob('fresh-success', 'succeeded', recent));
+  const kept = journal.prune({ maxAgeMs: 24 * 3600 * 1000, keepInFlight: true });
+  assert.equal(kept.inFlight, 2);
+  assert.ok(kept.removed >= 1);
+  assert.equal(journal.read('job:in-flight').state, 'running');
+  assert.equal(journal.read('job:queued').state, 'queued');
+  assert.equal(journal.read('job:fresh-success').state, 'succeeded');
+  assert.equal(journal.read('job:old-success'), null);
+  assert.equal(journal.read('job:old-failed'), null);
+});
+
 test('recovery finalizes cancelling jobs instead of resurrecting them', t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'l7-job-recovery-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

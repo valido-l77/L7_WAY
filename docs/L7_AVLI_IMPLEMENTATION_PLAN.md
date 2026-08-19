@@ -94,13 +94,19 @@ Gate: a reference echo worker passes all contract and fault tests.
 
 ## 4. Replace the model gateway with a private model worker
 
-- [ ] Remove wildcard CORS and all public host binding.
+- [x] Mac Founder Loop: private Ollama worker (`text.generate`) through L7
+  `/v1/jobs` via the AVLI worker SDK. Loopback only; skipped when Ollama is
+  down (`available: false`). Image/video stay on local media adapters.
+  Do not use `services/model-gateway` (wildcard CORS) on this loop.
+- [ ] Remove wildcard CORS and all public host binding from the old
+  model-gateway process (not used by Founder Loop).
 - [ ] Remove the stale hard-coded provider/model list.
 - [ ] Discover Ollama/SGLang/vLLM capabilities dynamically.
 - [ ] Store provider secrets outside the process environment where supported.
 - [ ] Normalize streaming, tool calls, token usage, errors, and cancellation.
-- [ ] Install Ollama on the Mac inference node.
+- [x] Install Ollama on the Mac inference node (existing local runtime).
 - [ ] Benchmark Qwen3.5 9B as default and gpt-oss-20b as optional reasoning.
+      Do not pull new weights onto a full disk; use models already present.
 - [ ] Benchmark SGLang first on a GPU node; retain vLLM if it wins on reliability
   or required model support.
 - [ ] Add cloud providers only as policy-controlled fallbacks.
@@ -199,11 +205,24 @@ Final gate: all capabilities enter through L7, all workers are private and
 replaceable, data can be restored, licenses are recorded, and the old public
 gateway/monolithic deployment paths are disabled.
 
-## Founder Loop freeze (2026-08-15)
+## Founder Loop freeze (2026-08-15) and post-loop slices (2026-08-17)
 
-Working model in production use: Mac L7 Gateway (`127.0.0.1:18793`) + echo
-worker (`127.0.0.1:18792`) + existing Hostinger n8n. Smoke:
-`L7_GATEWAY_URL=http://127.0.0.1:18793 L7_API_TOKEN=... bash scripts/founder-loop-smoke.sh`.
-Parked until a later cycle: NCLS restore, assistant-ui, remaining modalities,
-applying `compose.control-plane.yml` as a second stack, and GitHub Actions
-`deploy-to-vps.yml`.
+Working model: Mac L7 Gateway (`127.0.0.1:18793`) + AVLI echo worker
+(`127.0.0.1:18792`, `text.echo`) + optional Mac Ollama worker
+(`127.0.0.1:18798`, `text.generate`) + existing Hostinger n8n
+(`L7_API_TENANT_ID=tenant:service`). OpenClaw coexistence: L7 does not bind
+`:18789`. `./start.sh` is the only boot; it does not call
+`~/avli_cloud/start.sh`. Smoke:
+`L7_GATEWAY_URL=http://127.0.0.1:18793 bash scripts/founder-loop-smoke.sh`
+(6/6 when live).
+
+Shipped after the freeze:
+
+- Slice 1: durable `start.sh` (Tailscale HTTP serve of Gateway loopback,
+  SSH `-R` + docker-bridge fallback, job-journal retention / `L7_STORAGE_FULL`).
+- Slice 2: `GET /v1/workspace` operator/admin + shared assets (no fake roster).
+- Slice 3: private Mac model worker through `/v1/jobs` when Ollama is healthy.
+
+Parked: NCLS restore, assistant-ui, remaining modalities, applying
+`compose.control-plane.yml`, GitHub Actions `deploy-to-vps.yml`, 40-service
+compose, secret rotation, Qdrant-or-reuse (slice 4).

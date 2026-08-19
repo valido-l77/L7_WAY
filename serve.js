@@ -23,6 +23,8 @@ const { MediaRunner } = require('./lib/media-runner');
 const { classifyMediaRisk } = require('./lib/media-risk-policy');
 const { MediaRunCoordinator } = require('./lib/media-run-coordinator');
 const { JobCoordinator, publicJob } = require('./lib/job-coordinator');
+const { createWorkspaceStore, publicView, syntheticCampaign } = require('./lib/workspace-store');
+const { buildStoreZip, packFilename, workspaceShortId } = require('./lib/workspace-pack');
 const { ssd1bReadiness } = require('./lib/ssd-image-adapter');
 const {
   HttpRequestError,
@@ -34,6 +36,17 @@ const { resolveContainedFile } = require('./lib/safe-path');
 const { CONTRACT_VERSIONS, ERROR_CODES, normalizeExecutionResult } = require('./lib/contracts');
 const { forgeCapabilityDocuments, readForgeHealth } = require('./lib/forge-health');
 const { executeOnWorker, workerConfigured, workerHealth } = require('./lib/avli-worker-client');
+
+function modelWorkerOptions() {
+  return {
+    baseUrl: process.env.AVLI_MODEL_WORKER_URL || '',
+    token: process.env.AVLI_MODEL_WORKER_SERVICE_TOKEN || process.env.AVLI_WORKER_SERVICE_TOKEN || '',
+  };
+}
+
+function modelWorkerConfigured() {
+  return workerConfigured(modelWorkerOptions());
+}
 const { SIGNATURE_HEADER, verifyCallback } = require('./lib/callback-hmac');
 
 const PORT = parseInt(process.env.L7_PORT || '18789', 10);
@@ -91,6 +104,26 @@ async function executeJob(request, context) {
 
   if (request.capability === 'text.echo') {
     return executeOnWorker(request, context);
+  }
+
+  if (request.capability === 'text.generate') {
+    const output = await executeOnWorker(request, context, modelWorkerOptions());
+    const artifacts = Array.isArray(output?.artifacts) ? [...output.artifacts] : [];
+    const text = output?.result?.text;
+    if (typeof text === 'string' && text && artifacts.length === 0 && typeof mediaRunner.store?.put === 'function') {
+      const stored = await mediaRunner.store.put(Buffer.from(text, 'utf8'), {
+        extension: 'txt',
+        mediaType: 'text/plain',
+      });
+      artifacts.push({
+        sha256: stored.content_hash,
+        bytes: stored.bytes,
+        media_type: stored.media_type,
+        created_at: new Date().toISOString(),
+        delivery_url: `/v1/artifacts/${stored.content_hash}`,
+      });
+    }
+    return { result: output?.result ?? output, artifacts };
   }
 
   if (['image.generate', 'video.generate'].includes(request.capability)) {
@@ -153,9 +186,10 @@ async function capabilityDocument() {
       },
     };
   });
-  const [forge, worker] = await Promise.all([
+  const [forge, worker, model] = await Promise.all([
     readForgeHealth(),
     workerHealth(),
+    workerHealth(modelWorkerOptions()),
   ]);
   const seen = new Set(tools.map(item => item.id));
   const forgeCaps = forgeCapabilityDocuments(forge, {
@@ -184,12 +218,27 @@ async function capabilityDocument() {
       timeout_seconds: 30,
     },
   };
+  const generateModels = (model.capabilities || [])
+    .find(item => item.id === 'text.generate')?.models || ['local/ollama'];
+  const generate = {
+    id: 'text.generate',
+    modality: 'text',
+    operations: ['execute', 'cancel'],
+    privacy_classes: ['public', 'internal', 'restricted'],
+    available: Boolean(model.available && modelWorkerConfigured()),
+    models: generateModels,
+    limits: {
+      max_concurrency: 1,
+      max_input_bytes: MAX_BODY_BYTES,
+      timeout_seconds: Number(process.env.OLLAMA_TIMEOUT_SECONDS) || 120,
+    },
+  };
   return {
     contract_version: CONTRACT_VERSIONS.workerCapabilities,
     worker_id: 'l7-gateway',
     worker_version: '0.1.0',
     generated_at: new Date().toISOString(),
-    capabilities: [...tools, ...forgeCaps, ...media, echo],
+    capabilities: [...tools, ...forgeCaps, ...media, echo, generate],
   };
 }
 
@@ -329,10 +378,125 @@ function tenantPrincipal(req) {
   return tenantId;
 }
 
-function tenantJob(req, jobId) {
+function jobVisibleTo(job, principal) {
+  if (!job || !principal) return false;
+  if (job.workspace_id && principal.workspaceId) {
+    return job.workspace_id === principal.workspaceId;
+  }
+  return job.tenant_id === principal.tenantId;
+}
+
+function visibleJob(req, jobId) {
   const job = jobCoordinator.get(jobId);
-  if (!job || job.tenant_id !== tenantPrincipal(req)) return null;
-  return job;
+  return jobVisibleTo(job, req.l7Principal) ? job : null;
+}
+
+function requireWorkspace(req) {
+  const principal = req.l7Principal;
+  if (!principal?.workspaceId) {
+    throw new HttpRequestError(
+      403,
+      'AUTHORIZATION_DENIED',
+      'This identity is not assigned to a workspace',
+    );
+  }
+  const store = createWorkspaceStore();
+  const record = store.load(principal.workspaceId) || syntheticCampaign(principal.kind, principal.tenantId);
+  return { principal, store, record };
+}
+
+function readMediaArtifact(sha256) {
+  if (typeof mediaRunner.store?.get !== 'function') return null;
+  try {
+    return mediaRunner.store.get(sha256);
+  } catch {
+    return null;
+  }
+}
+
+function describeArtifact(item) {
+  const sha256 = item.sha256 || item.content_hash;
+  const loaded = /^[a-f0-9]{64}$/.test(sha256 || '') ? readMediaArtifact(sha256) : null;
+  return {
+    sha256,
+    media_type: item.media_type || loaded?.metadata?.media_type || 'application/octet-stream',
+    created_at: item.created_at || loaded?.metadata?.created_at || null,
+  };
+}
+
+function requestedHashes(query, fallback) {
+  const raw = query.hashes || query.sha256;
+  const list = Array.isArray(raw) ? raw : String(raw || '').split(',');
+  const hashes = list
+    .map(item => String(item).trim().toLowerCase())
+    .filter(item => /^[a-f0-9]{64}$/.test(item));
+  return hashes.length ? hashes : fallback;
+}
+
+function sendZip(res, bytes, filename) {
+  const name = String(filename || 'campaign-pack.zip').replace(/[^\w.-]+/g, '-');
+  res.writeHead(200, {
+    'Content-Type': 'application/zip',
+    'Content-Length': bytes.length,
+    'Content-Disposition': `attachment; filename="${name}"`,
+    'Cache-Control': 'no-store',
+  });
+  res.end(bytes);
+}
+
+function postPublishWebhook(targetUrl, payload, timeoutMs = 8000) {
+  return new Promise((resolve, reject) => {
+    let parsed;
+    try {
+      parsed = new URL(targetUrl);
+    } catch (error) {
+      reject(error);
+      return;
+    }
+    const body = JSON.stringify(payload);
+    const transport = parsed.protocol === 'https:' ? require('https') : http;
+    const req = transport.request({
+      protocol: parsed.protocol,
+      hostname: parsed.hostname,
+      port: parsed.port,
+      path: `${parsed.pathname}${parsed.search}`,
+      method: 'POST',
+      timeout: timeoutMs,
+      headers: {
+        'content-type': 'application/json',
+        'content-length': Buffer.byteLength(body),
+      },
+    }, res => {
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
+      res.on('end', () => resolve({
+        status: res.statusCode,
+        body: Buffer.concat(chunks).toString('utf8'),
+      }));
+    });
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error('n8n did not accept this send'));
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+function visibleArtifactHashes(store, record, principal) {
+  const attached = store.listArtifacts(record.workspace_id, sha256 => describeArtifact({ sha256 }));
+  const fromJobs = jobCoordinator.list()
+    .filter(job => jobVisibleTo(job, principal))
+    .flatMap(job => job.artifacts || [])
+    .filter(artifact => /^[a-f0-9]{64}$/.test(artifact.sha256 || ''))
+    .map(artifact => describeArtifact(artifact));
+  const seen = new Set();
+  return [...attached, ...fromJobs].filter(item => {
+    if (seen.has(item.sha256)) return false;
+    seen.add(item.sha256);
+    return true;
+  });
 }
 
 function publicExecutionOptions(value) {
@@ -468,11 +632,139 @@ async function requestHandler(req, res) {
       return;
     }
 
+    if (parsed.pathname === '/v1/workspace' && req.method === 'GET') {
+      const { principal, record } = requireWorkspace(req);
+      sendJson(res, 200, normalizeExecutionResult(publicView(record, principal)));
+      return;
+    }
+
+    if (parsed.pathname === '/v1/workspace/artifacts' && req.method === 'GET') {
+      const { principal, store, record } = requireWorkspace(req);
+      sendJson(res, 200, normalizeExecutionResult({
+        artifacts: visibleArtifactHashes(store, record, principal),
+      }));
+      return;
+    }
+
+    if (parsed.pathname === '/v1/workspace/artifacts' && req.method === 'POST') {
+      const { principal, store, record } = requireWorkspace(req);
+      if (principal.role !== 'admin') {
+        throw new HttpRequestError(
+          403,
+          'AUTHORIZATION_DENIED',
+          'Only workspace admins can attach shared assets',
+        );
+      }
+      const body = requireRecord(await parseBody(req), 'request body');
+      if (!store.load(record.workspace_id)) {
+        store.save(record);
+      }
+      store.attachArtifact(record.workspace_id, body.sha256);
+      sendJson(res, 200, normalizeExecutionResult({
+        artifacts: store.listArtifacts(record.workspace_id, sha256 => describeArtifact({ sha256 })),
+      }));
+      return;
+    }
+
+    if (parsed.pathname === '/v1/workspace/pack' && req.method === 'GET') {
+      const { principal, store, record } = requireWorkspace(req);
+      if (!store.load(record.workspace_id)) {
+        store.save(record);
+      }
+      const visible = visibleArtifactHashes(store, record, principal);
+      const allowed = new Set(visible.map(item => item.sha256));
+      const selected = requestedHashes(parsed.query, [...allowed]).filter(hash => allowed.has(hash));
+      const files = [];
+      const listed = [];
+      selected.forEach((sha256, index) => {
+        const loaded = readMediaArtifact(sha256);
+        const extension = loaded?.metadata?.extension || 'bin';
+        const name = packFilename(record.workspace_id, index + 1, extension);
+        if (loaded?.bytes) {
+          files.push({ name, bytes: loaded.bytes });
+        }
+        listed.push(`${name}  ${sha256}${loaded?.bytes ? '' : '  (missing)'}`);
+      });
+      const brief = typeof parsed.query.brief === 'string' ? parsed.query.brief.trim() : '';
+      const campaignTxt = [
+        'AVLI Cloud campaign pack',
+        `workspace_id: ${record.workspace_id}`,
+        `plan: ${record.plan}`,
+        `created_at: ${new Date().toISOString()}`,
+        brief ? `brief: ${brief}` : '',
+        '',
+        'artifacts:',
+        listed.length ? listed.join('\n') : '(none selected)',
+        '',
+      ].filter(line => line !== '').join('\n');
+      files.unshift({ name: 'campaign.txt', bytes: Buffer.from(`${campaignTxt}\n`, 'utf8') });
+      sendZip(res, buildStoreZip(files), `campaign-${workspaceShortId(record.workspace_id)}-pack.zip`);
+      return;
+    }
+
+    if (parsed.pathname === '/v1/workspace/publish' && req.method === 'POST') {
+      const { principal, store, record } = requireWorkspace(req);
+      if (record.plan === 'campaign') {
+        throw new HttpRequestError(
+          403,
+          'AUTHORIZATION_DENIED',
+          'Campaign workspaces download a pack instead of sending to an audience',
+        );
+      }
+      if (principal.role !== 'admin') {
+        throw new HttpRequestError(
+          403,
+          'AUTHORIZATION_DENIED',
+          'Only workspace admins can send to an audience',
+        );
+      }
+      const body = requireRecord(await parseBody(req), 'request body');
+      const hashes = requestedHashes(body, store.listArtifacts(record.workspace_id).map(item => item.sha256));
+      const requestId = `request:publish-${crypto.randomUUID()}`;
+      const artifacts = hashes.map(sha256 => ({
+        sha256,
+        delivery_url: `/v1/artifacts/${sha256}`,
+      }));
+      const payload = {
+        request_id: requestId,
+        workspace_id: record.workspace_id,
+        plan: record.plan,
+        artifacts,
+        brief: typeof body.brief === 'string' ? body.brief : undefined,
+      };
+      const webhook = process.env.AVLI_PUBLISH_WEBHOOK_URL || '';
+      let delivered = false;
+      let executionId = null;
+      if (webhook) {
+        try {
+          const posted = await postPublishWebhook(webhook, payload);
+          delivered = posted.status >= 200 && posted.status < 300;
+          try {
+            const parsedBody = JSON.parse(posted.body);
+            executionId = parsedBody.execution_id || parsedBody.id || null;
+          } catch {
+            executionId = null;
+          }
+        } catch {
+          delivered = false;
+        }
+      }
+      sendJson(res, 202, normalizeExecutionResult({
+        accepted: true,
+        delivered,
+        request_id: requestId,
+        execution_id: executionId,
+        artifacts,
+      }, { meta: { request_id: requestId } }));
+      return;
+    }
+
     if (parsed.pathname === '/v1/jobs' && req.method === 'GET') {
-      const tenantId = tenantPrincipal(req);
+      const principal = req.l7Principal;
+      tenantPrincipal(req);
       sendJson(res, 200, normalizeExecutionResult({
         jobs: jobCoordinator.list()
-          .filter(job => job.tenant_id === tenantId)
+          .filter(job => jobVisibleTo(job, principal))
           .map(publicJob),
       }));
       return;
@@ -491,7 +783,9 @@ async function requestHandler(req, res) {
         }
         request.request_id = headerRequestId;
       }
-      const job = jobCoordinator.submit({ ...request, tenant_id: tenantId });
+      const job = jobCoordinator.submit({ ...request, tenant_id: tenantId }, {
+        workspaceId: req.l7Principal.workspaceId,
+      });
       sendJson(res, 202, normalizeExecutionResult({ job: publicJob(job) }, {
         meta: { job_id: job.job_id },
       }));
@@ -527,7 +821,7 @@ async function requestHandler(req, res) {
       const jobId = decodeURIComponent(jobRoute[1]);
       const action = jobRoute[2];
       if (!action && req.method === 'GET') {
-        const job = tenantJob(req, jobId);
+        const job = visibleJob(req, jobId);
         if (!job) {
           canonicalFailure(res, 404, 'Job not found', 'NOT_FOUND', { job_id: jobId });
           return;
@@ -538,8 +832,8 @@ async function requestHandler(req, res) {
         return;
       }
       if (action === 'cancel' && req.method === 'POST') {
-        const visibleJob = tenantJob(req, jobId);
-        const job = visibleJob ? jobCoordinator.cancel(jobId) : null;
+        const visible = visibleJob(req, jobId);
+        const job = visible ? jobCoordinator.cancel(jobId) : null;
         if (!job) {
           canonicalFailure(res, 404, 'Job not found', 'NOT_FOUND', { job_id: jobId });
           return;

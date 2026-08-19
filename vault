@@ -7,10 +7,12 @@ VAULT_DMG="/Users/rnir_hrc_avd/L7_WAY/.vault_encrypted.dmg"
 VAULT_SPARSE="/Users/rnir_hrc_avd/L7_WAY/.vault_encrypted.dmg.sparseimage"
 VAULT_MOUNT="/Volumes/L7_VAULT"
 VAULT_SIZE="100m"
+# Law XXX: never search System.keychain (admin password). Pin to login.
+LOGIN_KEYCHAIN="${HOME}/Library/Keychains/login.keychain-db"
 
 get_key() {
     # This triggers Touch ID — no password prompt
-    security find-generic-password -a "l7vault" -s "L7 Vault Encryption" -w 2>/dev/null
+    security find-generic-password -a "l7vault" -s "L7 Vault Encryption" -w "${LOGIN_KEYCHAIN}" 2>/dev/null
     if [ $? -ne 0 ]; then
         echo "DENIED: Touch ID authentication failed." >&2
         exit 1

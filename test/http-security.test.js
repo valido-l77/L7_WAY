@@ -111,6 +111,12 @@ test('configured bearer token authorizes remote API requests', () => {
 
 test('tenant token maps authentication to a server-controlled tenant identity', () => {
   const previous = process.env.L7_TENANT_TOKENS;
+  const previousDir = process.env.L7_DIR;
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'l7-http-tenant-'));
+  process.env.L7_DIR = root;
   process.env.L7_TENANT_TOKENS = JSON.stringify({ 'tenant:alpha': 'alpha-token' });
   try {
     const security = createHttpSecurity({ port: 7377 });
@@ -119,9 +125,97 @@ test('tenant token maps authentication to a server-controlled tenant identity', 
       authorization: 'Bearer alpha-token',
     });
     assert.equal(security.authorize(req, makeRes()), true);
-    assert.deepEqual(req.l7Principal, { kind: 'tenant-service', tenantId: 'tenant:alpha' });
+    assert.equal(req.l7Principal.kind, 'tenant-service');
+    assert.equal(req.l7Principal.tenantId, 'tenant:alpha');
+    assert.equal(req.l7Principal.accountId, 'account:tenant:alpha');
+    assert.equal(req.l7Principal.role, 'admin');
+    assert.equal(req.l7Principal.workspaceId, 'workspace:tenant:alpha');
   } finally {
     restoreEnv('L7_TENANT_TOKENS', previous);
+    restoreEnv('L7_DIR', previousDir);
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('loopback principal is the campaign admin for this workspace', () => {
+  const previousL7 = process.env.L7_API_TOKEN;
+  const previousEmpire = process.env.EMPIRE_API_TOKEN;
+  const previousTenant = process.env.L7_LOCAL_TENANT_ID;
+  const previousDir = process.env.L7_DIR;
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'l7-http-local-'));
+  delete process.env.L7_API_TOKEN;
+  delete process.env.EMPIRE_API_TOKEN;
+  process.env.L7_LOCAL_TENANT_ID = 'tenant:local';
+  process.env.L7_DIR = root;
+  try {
+    const security = createHttpSecurity({ port: 7377 });
+    const req = makeReq({ remoteAddress: '127.0.0.1' });
+    assert.equal(security.authorize(req, makeRes()), true);
+    assert.equal(req.l7Principal.kind, 'local');
+    assert.equal(req.l7Principal.tenantId, 'tenant:local');
+    assert.equal(req.l7Principal.accountId, 'account:local');
+    assert.equal(req.l7Principal.role, 'admin');
+    assert.equal(req.l7Principal.workspaceId, 'workspace:tenant:local');
+  } finally {
+    restoreEnv('L7_API_TOKEN', previousL7);
+    restoreEnv('EMPIRE_API_TOKEN', previousEmpire);
+    restoreEnv('L7_LOCAL_TENANT_ID', previousTenant);
+    restoreEnv('L7_DIR', previousDir);
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('account token maps to a named operator or admin inside a workspace', () => {
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const { createWorkspaceStore } = require('../lib/workspace-store');
+  const previousAccounts = process.env.L7_ACCOUNT_TOKENS;
+  const previousDir = process.env.L7_DIR;
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'l7-http-workspace-'));
+  process.env.L7_DIR = root;
+  process.env.L7_ACCOUNT_TOKENS = JSON.stringify({
+    founder: 'founder-secret',
+    editor: 'editor-secret',
+  });
+  try {
+    createWorkspaceStore({ root: path.join(root, 'state', 'workspaces') }).save({
+      workspace_id: 'workspace:avli-team',
+      plan: 'team',
+      tenant_id: 'tenant:team',
+      members: [
+        { account_id: 'account:founder', role: 'admin', token_id: 'founder' },
+        { account_id: 'account:editor', role: 'operator', token_id: 'editor' },
+      ],
+      artifact_sha256: [],
+    });
+    const security = createHttpSecurity({ port: 7377 });
+    const adminReq = makeReq({
+      remoteAddress: '192.0.2.10',
+      authorization: 'Bearer founder-secret',
+    });
+    assert.equal(security.authorize(adminReq, makeRes()), true);
+    assert.equal(adminReq.l7Principal.kind, 'account');
+    assert.equal(adminReq.l7Principal.accountId, 'account:founder');
+    assert.equal(adminReq.l7Principal.role, 'admin');
+    assert.equal(adminReq.l7Principal.workspaceId, 'workspace:avli-team');
+    assert.equal(adminReq.l7Principal.tenantId, 'tenant:team');
+
+    const operatorReq = makeReq({
+      remoteAddress: '192.0.2.11',
+      authorization: 'Bearer editor-secret',
+    });
+    assert.equal(security.authorize(operatorReq, makeRes()), true);
+    assert.equal(operatorReq.l7Principal.accountId, 'account:editor');
+    assert.equal(operatorReq.l7Principal.role, 'operator');
+    assert.equal(operatorReq.l7Principal.workspaceId, 'workspace:avli-team');
+  } finally {
+    restoreEnv('L7_ACCOUNT_TOKENS', previousAccounts);
+    restoreEnv('L7_DIR', previousDir);
+    fs.rmSync(root, { recursive: true, force: true });
   }
 });
 

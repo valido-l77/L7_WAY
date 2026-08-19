@@ -1,0 +1,123 @@
+{
+  "mock": true,
+  "capability": "video.finish",
+  "job_id": "below.finish",
+  "plan_id": "morph-aabb7486eb3181b4",
+  "dependencies": {
+    "below.motion": {
+      "job_id": "below.motion",
+      "capability": "video.generate",
+      "contract_version": "l7.media.asset/1.0",
+      "backend": "local",
+      "asset_uri": "avli://sha256/447b1918833d833ee5f7829ed6e7644848e773f3c82f5954914d202f3d31c227",
+      "content_hash": "447b1918833d833ee5f7829ed6e7644848e773f3c82f5954914d202f3d31c227",
+      "bytes": 3962,
+      "media_type": "application/json",
+      "receipt_id": "5be7f13bb7c4fd8a7010272143062c2f995d7abb1fe28de8457b94f9ddc955fa",
+      "receipt_uri": "avli-receipt://sha256/447b1918833d833ee5f7829ed6e7644848e773f3c82f5954914d202f3d31c227/5be7f13bb7c4fd8a7010272143062c2f995d7abb1fe28de8457b94f9ddc955fa",
+      "keyframe_receipts": {
+        "below.canonical.c01": {
+          "job_id": "below.canonical.c01",
+          "capability": "image.generate",
+          "contract_version": "l7.media.asset/1.0",
+          "backend": "local",
+          "asset_uri": "avli://sha256/f0b44f98e6a7a5911bc2aed7d7e118a108b89183a59fe57096dc8465c1267332",
+          "content_hash": "f0b44f98e6a7a5911bc2aed7d7e118a108b89183a59fe57096dc8465c1267332",
+          "bytes": 843,
+          "media_type": "image/svg+xml",
+          "receipt_id": "39b861ed5efdd4f0508b7c98f0af7409d99352d71e4cd7d7445b67c2f9affdcf",
+          "receipt_uri": "avli-receipt://sha256/f0b44f98e6a7a5911bc2aed7d7e118a108b89183a59fe57096dc8465c1267332/39b861ed5efdd4f0508b7c98f0af7409d99352d71e4cd7d7445b67c2f9affdcf",
+          "model_receipt": {
+            "contract_version": "l7.media.receipt/1.0",
+            "provider": "avli-mock",
+            "adapter": "mock.image.generate",
+            "adapter_version": "1.0.0",
+            "model": "deterministic-contract-v1",
+            "model_version": null,
+            "provider_request_id": null,
+            "requested_seed": 44,
+            "confirmed_seed": null,
+            "normalized_parameters": {
+              "prompt": "Shango, the thunder king: a powerful Yoruba-Lucumi warrior-king crowned in fire and lightning, gripping a double-headed oshe axe, red and white royal garments, rumba and bata drum energy in the storm, cinematic, photoreal, no text, no logos. Camera: slow orbit then push-in as lightning strikes the oshe.. Reconcile the strongest ABOVE proposal with the strongest MIRROR counterfactual. Preserve identity, geometry, palette logic, and material continuity. Remove accidental novelty. Style: cinematic.",
+              "negative_prompt": "text, logos, watermarks, extra limbs, duplicate faces, extra axes, coastal city, ocean, arches",
+              "aspect_ratio": "16:9",
+              "seed": 44,
+              "candidates": 1,
+              "candidate_index": 1,
+              "candidate_count": 1
+            },
+            "attempt": 1,
+            "plan_id": "morph-aabb7486eb3181b4",
+            "job_id": "below.canonical.c01",
+            "started_at": "2026-08-18T02:07:17.505Z",
+            "completed_at": "2026-08-18T02:07:17.505Z",
+            "latency_ms": 0,
+            "cost": null,
+            "safety": null
+          }
+        }
+      },
+      "model_receipt": {
+        "contract_version": "l7.media.receipt/1.0",
+        "provider": "avli-mock",
+        "adapter": "mock.video.generate",
+        "adapter_version": "1.0.0",
+        "model": "deterministic-contract-v1",
+        "model_version": null,
+        "provider_request_id": null,
+        "requested_seed": 19,
+        "confirmed_seed": null,
+        "normalized_parameters": {
+          "prompt": "Shango, the thunder king: a powerful Yoruba-Lucumi warrior-king crowned in fire and lightning, gripping a double-headed oshe axe, red and white royal garments, rumba and bata drum energy in the storm, cinematic, photoreal, no text, no logos. Camera: slow orbit then push-in as lightning strikes the oshe.. Reconcile the strongest ABOVE proposal with the strongest MIRROR counterfactual. Preserve identity, geometry, palette logic, and material continuity. Remove accidental novelty. Style: cinematic. Animate by changing state and camera intentionally; do not let the subject identity drift.",
+          "reference_layer": "BELOW",
+          "reference_candidates": [
+            "below.canonical.c01"
+          ],
+          "duration_seconds": 6,
+          "aspect_ratio": "16:9",
+          "seed": 19,
+          "anchors": [
+            {
+              "index": 0,
+              "phase": 0,
+              "second": 0,
+              "spiral_phase": 0
+            },
+            {
+              "index": 1,
+              "phase": 0.333333,
+              "second": 2,
+              "spiral_phase": 0.347222
+            },
+            {
+              "index": 2,
+              "phase": 0.666667,
+              "second": 4,
+              "spiral_phase": 0.694444
+            },
+            {
+              "index": 3,
+              "phase": 1,
+              "second": 6,
+              "spiral_phase": 0.041667
+            }
+          ]
+        },
+        "attempt": 1,
+        "plan_id": "morph-aabb7486eb3181b4",
+        "job_id": "below.motion",
+        "started_at": "2026-08-18T02:07:17.506Z",
+        "completed_at": "2026-08-18T02:07:17.506Z",
+        "latency_ms": 0,
+        "cost": null,
+        "safety": null
+      }
+    }
+  },
+  "selection": null,
+  "input": {
+    "source_job": "below.motion",
+    "temporal_echo": 0.21,
+    "continuity_lock": true
+  }
+}

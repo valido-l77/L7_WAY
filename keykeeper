@@ -16,6 +16,8 @@ KEYCHAIN_PREFIX="l7key"
 KEYCHAIN_RETIRED="l7key.retired"
 AUDIT_DIR="${HOME}/.l7/audit/keykeeper"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+# Law XXX: never search System.keychain (admin password). Pin to login.
+LOGIN_KEYCHAIN="${HOME}/Library/Keychains/login.keychain-db"
 
 # Ensure audit directory exists
 mkdir -p "${AUDIT_DIR}" 2>/dev/null
@@ -30,7 +32,7 @@ generate_delegate() {
 # Authenticate the sovereign — Touch ID biometric
 # The true password: your finger on this machine
 authenticate_sovereign() {
-    security find-generic-password -a "l7vault" -s "L7 Vault Encryption" -w > /dev/null 2>&1
+    security find-generic-password -a "l7vault" -s "L7 Vault Encryption" -w "${LOGIN_KEYCHAIN}" > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         audit "AUTH_DENIED" "Biometric authentication failed"
         echo "DENIED: I don't recognize you." >&2
@@ -72,7 +74,7 @@ rotate_with_window() {
     local SERVICE="$1"
 
     # Step 1: Retrieve current (old) delegate
-    OLD_PASS=$(security find-generic-password -a "${KEYCHAIN_PREFIX}" -s "L7 Delegate: ${SERVICE}" -w 2>/dev/null)
+    OLD_PASS=$(security find-generic-password -a "${KEYCHAIN_PREFIX}" -s "L7 Delegate: ${SERVICE}" -w "${LOGIN_KEYCHAIN}" 2>/dev/null)
     if [ $? -ne 0 ]; then
         echo "No delegate found for: ${SERVICE}. Use 'enroll' first." >&2
         return 1
@@ -82,22 +84,24 @@ rotate_with_window() {
     NEW_PASS=$(generate_delegate)
 
     # Step 3: Store old delegate in retired holding (the window)
-    security delete-generic-password -a "${KEYCHAIN_RETIRED}" -s "L7 Retired: ${SERVICE}" > /dev/null 2>&1
+    security delete-generic-password -a "${KEYCHAIN_RETIRED}" -s "L7 Retired: ${SERVICE}" "${LOGIN_KEYCHAIN}" > /dev/null 2>&1
     security add-generic-password \
         -a "${KEYCHAIN_RETIRED}" \
         -s "L7 Retired: ${SERVICE}" \
         -w "${OLD_PASS}" \
         -T "" \
-        -U 2>/dev/null
+        -U \
+        "${LOGIN_KEYCHAIN}" 2>/dev/null
 
     # Step 4: Store new delegate as active
-    security delete-generic-password -a "${KEYCHAIN_PREFIX}" -s "L7 Delegate: ${SERVICE}" > /dev/null 2>&1
+    security delete-generic-password -a "${KEYCHAIN_PREFIX}" -s "L7 Delegate: ${SERVICE}" "${LOGIN_KEYCHAIN}" > /dev/null 2>&1
     security add-generic-password \
         -a "${KEYCHAIN_PREFIX}" \
         -s "L7 Delegate: ${SERVICE}" \
         -w "${NEW_PASS}" \
         -T "" \
-        -U 2>/dev/null
+        -U \
+        "${LOGIN_KEYCHAIN}" 2>/dev/null
 
     if [ $? -eq 0 ]; then
         audit "ROTATE_WINDOW_OPEN" "${SERVICE} — old delegate preserved, new delegate active"
@@ -125,13 +129,14 @@ case "${1}" in
 
         PASS=$(generate_delegate)
 
-        security delete-generic-password -a "${KEYCHAIN_PREFIX}" -s "L7 Delegate: ${SERVICE}" > /dev/null 2>&1
+        security delete-generic-password -a "${KEYCHAIN_PREFIX}" -s "L7 Delegate: ${SERVICE}" "${LOGIN_KEYCHAIN}" > /dev/null 2>&1
         security add-generic-password \
             -a "${KEYCHAIN_PREFIX}" \
             -s "L7 Delegate: ${SERVICE}" \
             -w "${PASS}" \
             -T "" \
-            -U 2>/dev/null
+            -U \
+            "${LOGIN_KEYCHAIN}" 2>/dev/null
 
         if [ $? -eq 0 ]; then
             audit "ENROLL" "${SERVICE} — delegate created (${#PASS} chars)"
@@ -160,7 +165,7 @@ case "${1}" in
         verify_hardware
         authenticate_sovereign
 
-        PASS=$(security find-generic-password -a "${KEYCHAIN_PREFIX}" -s "L7 Delegate: ${SERVICE}" -w 2>/dev/null)
+        PASS=$(security find-generic-password -a "${KEYCHAIN_PREFIX}" -s "L7 Delegate: ${SERVICE}" -w "${LOGIN_KEYCHAIN}" 2>/dev/null)
         if [ $? -eq 0 ]; then
             echo -n "${PASS}" | pbcopy
             audit "SEND" "${SERVICE} — delegate dispatched to clipboard"
@@ -186,7 +191,7 @@ case "${1}" in
         rotate_with_window "${SERVICE}"
 
         # Copy new delegate to clipboard for updating the service
-        NEW_PASS=$(security find-generic-password -a "${KEYCHAIN_PREFIX}" -s "L7 Delegate: ${SERVICE}" -w 2>/dev/null)
+        NEW_PASS=$(security find-generic-password -a "${KEYCHAIN_PREFIX}" -s "L7 Delegate: ${SERVICE}" -w "${LOGIN_KEYCHAIN}" 2>/dev/null)
         echo -n "${NEW_PASS}" | pbcopy
         echo ""
         echo "New delegate copied to clipboard. Paste into ${SERVICE}."
@@ -203,7 +208,7 @@ case "${1}" in
         verify_hardware
         authenticate_sovereign
 
-        security delete-generic-password -a "${KEYCHAIN_RETIRED}" -s "L7 Retired: ${SERVICE}" > /dev/null 2>&1
+        security delete-generic-password -a "${KEYCHAIN_RETIRED}" -s "L7 Retired: ${SERVICE}" "${LOGIN_KEYCHAIN}" > /dev/null 2>&1
         if [ $? -eq 0 ]; then
             audit "ROTATE_CONFIRMED" "${SERVICE} — old delegate destroyed, window closed"
             echo "Rotation confirmed for: ${SERVICE}"
@@ -222,23 +227,24 @@ case "${1}" in
         verify_hardware
         authenticate_sovereign
 
-        OLD_PASS=$(security find-generic-password -a "${KEYCHAIN_RETIRED}" -s "L7 Retired: ${SERVICE}" -w 2>/dev/null)
+        OLD_PASS=$(security find-generic-password -a "${KEYCHAIN_RETIRED}" -s "L7 Retired: ${SERVICE}" -w "${LOGIN_KEYCHAIN}" 2>/dev/null)
         if [ $? -ne 0 ]; then
             echo "No retired delegate to restore for: ${SERVICE}" >&2
             exit 1
         fi
 
         # Restore old delegate as active
-        security delete-generic-password -a "${KEYCHAIN_PREFIX}" -s "L7 Delegate: ${SERVICE}" > /dev/null 2>&1
+        security delete-generic-password -a "${KEYCHAIN_PREFIX}" -s "L7 Delegate: ${SERVICE}" "${LOGIN_KEYCHAIN}" > /dev/null 2>&1
         security add-generic-password \
             -a "${KEYCHAIN_PREFIX}" \
             -s "L7 Delegate: ${SERVICE}" \
             -w "${OLD_PASS}" \
             -T "" \
-            -U 2>/dev/null
+            -U \
+            "${LOGIN_KEYCHAIN}" 2>/dev/null
 
         # Clean up retired entry
-        security delete-generic-password -a "${KEYCHAIN_RETIRED}" -s "L7 Retired: ${SERVICE}" > /dev/null 2>&1
+        security delete-generic-password -a "${KEYCHAIN_RETIRED}" -s "L7 Retired: ${SERVICE}" "${LOGIN_KEYCHAIN}" > /dev/null 2>&1
 
         audit "ROTATE_ROLLBACK" "${SERVICE} — old delegate restored, new delegate discarded"
         echo "Rolled back: ${SERVICE}"
@@ -253,9 +259,9 @@ case "${1}" in
         echo ""
         echo "L7 Managed Services (delegates only — the sovereign is you):"
         echo "---"
-        security dump-keychain 2>/dev/null | grep "\"svce\"" | grep "L7 Delegate:" | sed 's/.*"L7 Delegate: //' | sed 's/".*//' | while read SERVICE; do
+        security dump-keychain "${LOGIN_KEYCHAIN}" 2>/dev/null | grep "\"svce\"" | grep "L7 Delegate:" | sed 's/.*"L7 Delegate: //' | sed 's/".*//' | while read SERVICE; do
             # Check if rotation is pending
-            security find-generic-password -a "${KEYCHAIN_RETIRED}" -s "L7 Retired: ${SERVICE}" > /dev/null 2>&1
+            security find-generic-password -a "${KEYCHAIN_RETIRED}" -s "L7 Retired: ${SERVICE}" "${LOGIN_KEYCHAIN}" > /dev/null 2>&1
             if [ $? -eq 0 ]; then
                 echo "  ${SERVICE}  [rotation pending — confirm or rollback]"
             else

@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0C0A08">
-<title>AVLI Cloud Studio — L7 WAY</title>
+<title>AVLI Cloud Studio</title>
 <style>
 [hidden] { display: none !important; }
 
 :root {
   color-scheme: dark;
-  /* L7 founder surface — ABOVE gold, MIRROR silver, BELOW copper, SALT green */
+  /* AVLI Cloud Studio — production metal: gold, silver, copper, archive green */
   --ds-canvas: #0C0A08;
   --ds-canvas-raised: #16120E;
   --ds-surface-1: rgba(22, 18, 14, .82);
@@ -201,7 +201,7 @@ button { color: inherit; }
 
 .segmented {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   padding: 3px;
   background: #08080a;
   border: 1px solid var(--line);
@@ -280,6 +280,39 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
 .btn.primary:hover:not(:disabled) { background: linear-gradient(110deg, #ffe2a5, #f5ca74 50%, #e4a85b); box-shadow: 0 14px 36px rgba(242, 199, 111, .23); }
 .btn.secondary { color: var(--gold); border-color: rgba(216, 173, 88, .26); }
 .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.library-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.asset-library { display: grid; gap: 7px; }
+.asset-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--ds-radius-sm);
+  background: rgba(10, 14, 25, .66);
+  font-size: 10px;
+}
+.asset-row code { overflow-wrap: anywhere; color: var(--muted); }
+.asset-library .empty { min-height: 120px; }
+.advanced {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #0c0c0e;
+  padding: 8px 10px 10px;
+}
+.advanced > summary {
+  cursor: pointer;
+  color: var(--dim);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  list-style: none;
+}
+.advanced > summary::-webkit-details-marker { display: none; }
+.advanced-copy { margin: 10px 0 0; color: var(--muted); font-size: 11px; }
 
 .main {
   min-width: 0;
@@ -302,7 +335,7 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
   position: relative;
   overflow: hidden;
 }
-.stage-head::after { content: "△  ◇  ▽"; position: absolute; right: 24px; bottom: -16px; color: rgba(255, 255, 255, .035); font: 76px/1 Georgia, serif; letter-spacing: -.2em; pointer-events: none; }
+.stage-head::after { content: "AVLI"; position: absolute; right: 18px; bottom: -10px; color: rgba(255, 255, 255, .04); font: 72px/1 "Iowan Old Style", Palatino, Georgia, serif; letter-spacing: -.06em; pointer-events: none; }
 .stage-head h1 { margin: 0; max-width: 760px; font-family: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif; font-size: clamp(29px, 3.2vw, 48px); line-height: 1.01; letter-spacing: -.045em; font-weight: 500; text-wrap: balance; }
 .stage-head p { margin: 7px 0 0; color: var(--muted); max-width: 650px; }
 .stage-head .stage-copy { position: relative; z-index: 1; }
@@ -344,7 +377,7 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
 .candidate.selected { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
 .candidate.selected { box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent), 0 16px 38px color-mix(in srgb, var(--accent) 10%, transparent); }
 .candidate.selected::after {
-  content: "HORIZON";
+  content: "Selected";
   position: absolute;
   top: 9px;
   right: 9px;
@@ -523,10 +556,10 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
   padding: 22px 20px 20px;
   min-width: 0;
 }
-.offer-card.sovereign { border-color: rgba(196, 163, 90, .45); box-shadow: 0 18px 48px rgba(0, 0, 0, .28); }
-.offer-card .seal { color: var(--gold); font-family: "Iowan Old Style", Palatino, Georgia, serif; font-size: 22px; }
-.offer-card.initiate .seal { color: var(--copper); }
-.offer-card.empire .seal { color: var(--silver); }
+.offer-card.team { border-color: rgba(196, 163, 90, .45); box-shadow: 0 18px 48px rgba(0, 0, 0, .28); }
+.offer-card .plan-mark { color: var(--gold); font-family: "SF Mono", Menlo, ui-monospace, monospace; font-size: 12px; letter-spacing: .14em; }
+.offer-card.campaign .plan-mark { color: var(--copper); }
+.offer-card.organization .plan-mark { color: var(--silver); }
 .offer-card h3 { margin: 8px 0 0; font-family: "Iowan Old Style", Palatino, Georgia, serif; font-size: 28px; font-weight: 500; }
 .offer-price {
   margin: 8px 0 0;
@@ -548,6 +581,99 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
   color: var(--gold);
   font-family: "SF Mono", Menlo, ui-monospace, monospace;
   font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.share-stack { display: grid; gap: 10px; }
+.share-item {
+  display: grid;
+  grid-template-columns: 3px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 0 2px;
+}
+.share-item .share-swatch {
+  display: block;
+  width: 3px;
+  border-radius: 99px;
+  background: var(--gold);
+}
+.share-item.workspace .share-swatch { background: var(--copper); }
+.share-item.identity .share-swatch { background: var(--gold); }
+.share-item.resources .share-swatch { background: var(--silver); }
+.share-item h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+}
+.share-item p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+.asset-library {
+  display: grid;
+  gap: 7px;
+  max-height: 168px;
+  overflow: auto;
+}
+.asset-row {
+  display: grid;
+  gap: 2px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+}
+.asset-row code {
+  color: var(--ink);
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 10px;
+}
+.share-honest {
+  margin: 12px 0 0;
+  color: var(--dim);
+  font-size: 10px;
+  letter-spacing: .04em;
+}
+
+.offers-share {
+  margin-top: 22px;
+  border: 1px solid var(--line);
+  background: rgba(12, 10, 8, .45);
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.offers-share article {
+  padding: 16px 18px 18px;
+  border-right: 1px solid var(--line);
+  min-width: 0;
+}
+.offers-share article:last-child { border-right: 0; }
+.offers-share .share-swatch {
+  display: block;
+  width: 36px;
+  height: 3px;
+  margin-bottom: 12px;
+}
+.offers-share .workspace .share-swatch { background: var(--copper); }
+.offers-share .identity .share-swatch { background: var(--gold); }
+.offers-share .resources .share-swatch { background: var(--silver); }
+.offers-share h3 {
+  margin: 0;
+  font-family: "Iowan Old Style", Palatino, Georgia, serif;
+  font-size: 20px;
+  font-weight: 500;
+}
+.offers-share p { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
+.offers-share-note {
+  margin: 0;
+  padding: 12px 18px;
+  border-top: 1px solid var(--line);
+  grid-column: 1 / -1;
+  color: var(--dim);
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 9px;
   letter-spacing: .12em;
   text-transform: uppercase;
 }
@@ -581,6 +707,9 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
 }
 @media (max-width: 880px) {
   .offers-grid { grid-template-columns: 1fr; }
+  .offers-share { grid-template-columns: 1fr; }
+  .offers-share article { border-right: 0; border-bottom: 1px solid var(--line); }
+  .offers-share article:last-child { border-bottom: 0; }
 }
 @media (max-width: 520px) {
   .topbar { padding: 0 14px; }
@@ -596,40 +725,42 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
 <div class="app">
   <header class="topbar">
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true">△</div>
+      <div class="brand-mark" aria-hidden="true">A</div>
       <div>
-        <div class="brand-name">L7 WAY / AVLI Studio</div>
-        <div class="brand-sub">Initiate · local fold</div>
+        <div class="brand-name">AVLI Cloud Studio</div>
+        <div class="brand-sub" id="planChip">Campaign plan · this workspace</div>
       </div>
     </div>
     <div class="top-context" aria-label="Studio context">
       <span class="context-chip active"><i aria-hidden="true"></i>Create</span>
-      <span class="context-chip">Three-layer synthesis</span>
-      <span class="context-chip">Local-first</span>
+      <span class="context-chip">Draft · Review · Final</span>
+      <span class="context-chip" id="roleChip">Admin</span>
     </div>
     <div class="top-status" role="status" aria-live="polite">
-      <a class="offers-link" href="/offers">All offers</a>
-      <button class="offers-link" type="button" id="offersBtn" aria-expanded="false" aria-controls="offersOverlay">Seals · $42</button>
+      <a class="offers-link" href="/offers">Plans</a>
+      <button class="offers-link" type="button" id="offersBtn" aria-expanded="false" aria-controls="offersOverlay">Plans · $42</button>
       <span class="status-dot" id="gatewayDot"></span>
-      <span id="gatewayStatus">Connecting to Gateway</span>
+      <span id="gatewayStatus">Connecting</span>
     </div>
   </header>
 
   <div class="workspace">
     <aside class="sidebar left" aria-label="Creative controls">
       <section class="section">
-        <p class="eyebrow">Creative kernel</p>
+        <p class="eyebrow">Campaign brief</p>
         <div class="segmented" role="group" aria-label="Media mode">
-          <button type="button" data-mode="image" aria-pressed="true">Still image</button>
+          <button type="button" data-mode="image" aria-pressed="true">Still</button>
           <button type="button" data-mode="video" aria-pressed="false">Motion</button>
+          <button type="button" data-mode="copy" aria-pressed="false">Copy</button>
         </div>
 
         <div class="field">
-          <label for="brief">Intention</label>
+          <label for="brief">Brief</label>
           <textarea id="brief">a luminous coastal city suspended above the midnight ocean</textarea>
         </div>
+        <div id="mediaFields">
         <div class="field">
-          <label for="identity">Identity invariant</label>
+          <label for="identity">Keep consistent</label>
           <textarea id="identity">one copper city held by three monumental arches</textarea>
         </div>
         <div class="field">
@@ -660,7 +791,7 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
 
         <div class="field-grid">
           <div class="field">
-            <label for="candidates">Candidates / layer</label>
+            <label for="candidates">Candidates / pass</label>
             <select id="candidates">
               <option selected value="1">1 · Fast preview</option>
               <option value="3">3 · Balanced</option>
@@ -686,32 +817,24 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
         </div>
 
         <div class="field">
-          <div class="field-head"><label for="astrocyte">Astrocyte variation</label><span id="astroValue">0.42</span></div>
+          <div class="field-head"><label for="astrocyte">Variation</label><span id="astroValue">0.42</span></div>
           <input id="astrocyte" type="range" min="0" max=".99" step=".01" value=".42">
         </div>
+        </div>
 
-        <section class="readiness" id="ssdReadiness" aria-live="polite" aria-label="SSD-1B readiness">
+        <section class="readiness cycle-gate" id="cycleGate" aria-live="polite" aria-label="New run approval" hidden>
           <div class="readiness-head">
-            <span class="readiness-title">SSD-1B readiness</span>
-            <span class="state-pill" id="ssdReadinessState">checking</span>
-          </div>
-          <div class="readiness-detail" id="ssdReadinessDetail">Inspecting runtime and local model cache. No generation is started.</div>
-          <div class="readiness-grid" id="ssdReadinessGrid"></div>
-        </section>
-
-        <section class="readiness cycle-gate" id="cycleGate" aria-live="polite" aria-label="Dream cycle approval" hidden>
-          <div class="readiness-head">
-            <span class="readiness-title">Dream cycle sealed</span>
+            <span class="readiness-title">New run needs approval</span>
             <span class="state-pill">approval</span>
           </div>
-          <div class="readiness-detail">The previous three layers are preserved in SALT. Approve deliberately before beginning a new cycle.</div>
-          <button class="btn secondary" id="approveCycleBtn" type="button">Approve new cycle</button>
+          <div class="readiness-detail">Your last generation is saved. Approve before starting another run.</div>
+          <button class="btn secondary" id="approveCycleBtn" type="button">Start a new run</button>
         </section>
 
         <div class="actions">
           <button class="btn primary" id="runBtn" type="button" disabled>Generate fast preview</button>
           <div class="btn-row">
-            <button class="btn secondary" id="planBtn" type="button">Preview plan</button>
+            <button class="btn secondary" id="planBtn" type="button">Preview run</button>
             <button class="btn" id="exportBtn" type="button" disabled>Export plan</button>
           </div>
         </div>
@@ -721,13 +844,13 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
     <main class="main">
       <div class="stage-head">
         <div class="stage-copy">
-          <p class="eyebrow">Dreamspace / three layers</p>
-          <h1>One identity, challenged from three directions.</h1>
-          <p>Propose the intention, reverse its assumptions, then ground what survives. Horizon ranks each layer before the cycle crystallizes.</p>
+          <p class="eyebrow">Studio / Draft · Review · Final</p>
+          <h1>One campaign identity, three passes.</h1>
+          <p>Write the brief, challenge the assumptions, then keep what is ready to publish. Each pass ranks assets before you export.</p>
           <div class="stage-badges" aria-label="Workflow qualities">
-            <span class="stage-badge">Content addressed</span>
+            <span class="stage-badge">Assets</span>
             <span class="stage-badge">Deterministic seeds</span>
-            <span class="stage-badge">Governed generation</span>
+            <span class="stage-badge">Tracked jobs</span>
           </div>
         </div>
         <div class="plan-id" id="planId">No plan yet</div>
@@ -739,46 +862,100 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
         <div>
           <div class="horizon-line"><span id="horizonFill"></span></div>
         </div>
-        <span id="horizonLabel">0 / 42 horizon candidates</span>
+        <span id="horizonLabel">0 assets</span>
       </div>
     </main>
 
     <aside class="sidebar right" aria-label="Run inspector">
+      <section class="section" aria-labelledby="shareTitle">
+        <p class="eyebrow">Workspace</p>
+        <h2 class="section-title" id="shareTitle">How this workspace shares</h2>
+        <p class="section-copy">Team plan model — not a live member list.</p>
+        <div class="share-stack">
+          <article class="share-item workspace">
+            <span class="share-swatch" aria-hidden="true"></span>
+            <div>
+              <h3>Workspace</h3>
+              <p>Campaign library and media assets on this machine. Team shares one library.</p>
+            </div>
+          </article>
+          <article class="share-item identity">
+            <span class="share-swatch" aria-hidden="true"></span>
+            <div>
+              <h3>Identity</h3>
+              <p>Signed-in role is on the bar. Accounts are operator or admin — this view does not list people.</p>
+            </div>
+          </article>
+          <article class="share-item resources">
+            <span class="share-swatch" aria-hidden="true"></span>
+            <div>
+              <h3>Resources</h3>
+              <p>Tools, GPU and media jobs, and automations are shared inside the workspace and billed on the plan.</p>
+            </div>
+          </article>
+        </div>
+        <p class="share-honest">Product model. Live members are not connected on this machine.</p>
+      </section>
+
+      <section class="section" aria-labelledby="assetsTitle">
+        <p class="eyebrow">Assets</p>
+        <h2 class="section-title" id="assetsTitle">Shared library</h2>
+        <p class="section-copy">Campaign and media files in this workspace. Team shares this library.</p>
+        <div class="asset-library" id="assetLibrary">
+          <div class="empty">Generate a still, a clip, or a line — it will land here.</div>
+        </div>
+        <div class="library-actions">
+          <button class="btn secondary" id="packBtn" type="button">Download pack</button>
+          <button class="btn" id="publishBtn" type="button" hidden>Send to audience</button>
+        </div>
+      </section>
+
       <section class="section">
         <p class="eyebrow">Active run</p>
         <div class="metric-grid">
           <div class="metric"><div class="metric-label">State</div><div class="metric-value" id="runState">Idle</div></div>
-          <div class="metric"><div class="metric-label">Layer</div><div class="metric-value" id="runLayer">—</div></div>
+          <div class="metric"><div class="metric-label">Pass</div><div class="metric-value" id="runLayer">—</div></div>
           <div class="metric"><div class="metric-label">Jobs</div><div class="metric-value" id="runJobs">0 / 0</div></div>
           <div class="metric"><div class="metric-label">Mode</div><div class="metric-value" id="runMode">—</div></div>
         </div>
         <div class="progress" aria-hidden="true"><span id="progressFill"></span></div>
-        <div class="run-message" id="runMessage">Create a plan to inspect its bounded job graph.</div>
+        <div class="run-message" id="runMessage">Write a brief, then generate.</div>
         <div class="btn-row">
           <button class="btn" id="cancelBtn" type="button" disabled>Cancel</button>
           <button class="btn" id="resumeBtn" type="button" disabled>Resume</button>
         </div>
       </section>
 
-      <section class="section">
-        <p class="eyebrow">Doctrine / Law XV</p>
-        <div class="field">
-          <label for="doctrineQuery">Ask the forge</label>
-          <textarea id="doctrineQuery">What is Law XV about founder access?</textarea>
-        </div>
-        <button class="btn secondary" id="doctrineBtn" type="button">Query via /v1/jobs</button>
-        <div class="run-message" id="doctrineResult">RAG citations appear here after a governed job.</div>
-      </section>
+      <details class="advanced" id="advancedDrawer">
+        <summary>Advanced</summary>
+        <p class="advanced-copy">Each pass is a bounded job set. Open this only if you need adapters, knowledge search, or model cache checks.</p>
+        <section class="readiness" id="ssdReadiness" aria-live="polite" aria-label="SSD-1B readiness">
+          <div class="readiness-head">
+            <span class="readiness-title">SSD-1B readiness</span>
+            <span class="state-pill" id="ssdReadinessState">checking</span>
+          </div>
+          <div class="readiness-detail" id="ssdReadinessDetail">Inspecting runtime and local model cache. No generation is started.</div>
+          <div class="readiness-grid" id="ssdReadinessGrid"></div>
+        </section>
+        <section class="section">
+          <p class="eyebrow">Knowledge search</p>
+          <div class="field">
+            <label for="knowledgeQuery">Ask the knowledge base</label>
+            <textarea id="knowledgeQuery">How do we keep a campaign brief consistent across a team?</textarea>
+          </div>
+          <button class="btn secondary" id="knowledgeBtn" type="button">Query via /v1/jobs</button>
+          <div class="run-message" id="knowledgeResult">Citations appear here after a knowledge-search job.</div>
+        </section>
+        <section class="section">
+          <p class="eyebrow">Capabilities</p>
+          <div class="cap-list" id="capList">
+            <div class="capability"><span class="status-dot"></span><span>Discovering adapters</span><span class="state-pill">wait</span></div>
+          </div>
+        </section>
+      </details>
 
       <section class="section">
-        <p class="eyebrow">Capabilities</p>
-        <div class="cap-list" id="capList">
-          <div class="capability"><span class="status-dot"></span><span>Discovering adapters</span><span class="state-pill">wait</span></div>
-        </div>
-      </section>
-
-      <section class="section">
-        <p class="eyebrow">Run chronicle</p>
+        <p class="eyebrow">Activity</p>
         <div class="event-list" id="eventList">
           <div class="event"><time>—</time><span>No events yet</span></div>
         </div>
@@ -791,49 +968,67 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
   <div class="offers-panel">
     <div class="offers-panel-head">
       <div>
-        <p class="eyebrow">Founder offers</p>
-        <h2 id="offersPanelTitle">Three seals. One horizon.</h2>
-        <p>You are in Initiate — Studio on the Gateway, echo and tools on this Mac. Sovereign adds the VPS control plane. Empire is private workers, by the founder’s word.</p>
+        <p class="eyebrow">Plans</p>
+        <h2 id="offersPanelTitle">Three plans. Clear work.</h2>
+        <p>You are on Campaign — Studio for one operator. Team shares a campaign library, named accounts, and billed resources. Organization is private workers and custom pipelines.</p>
       </div>
       <button class="btn" type="button" id="offersClose">Close</button>
     </div>
     <div class="offers-grid">
-      <article class="offer-card initiate">
-        <div class="seal" aria-hidden="true">△</div>
-        <h3>Initiate</h3>
+      <article class="offer-card campaign">
+        <div class="plan-mark" aria-hidden="true">01</div>
+        <h3>Campaign</h3>
         <p class="offer-price">$42 / month</p>
-        <p>Studio, local echo, and the tool loop. The desk you already sit at.</p>
+        <p>Studio, campaign briefs, and media generation on this machine.</p>
         <ul>
           <li>AVLI Cloud Studio</li>
-          <li>Local echo and tool loop</li>
-          <li>On-device inference readiness</li>
+          <li>Campaign and media generation</li>
+          <li>Local tools and on-device models</li>
         </ul>
         <a href="/studio">You are here</a>
       </article>
-      <article class="offer-card sovereign">
-        <div class="seal" aria-hidden="true">◇</div>
-        <h3>Sovereign</h3>
+      <article class="offer-card team">
+        <div class="plan-mark" aria-hidden="true">02</div>
+        <h3>Team</h3>
         <p class="offer-price">$420 / month</p>
-        <p>Gateway plus the VPS CPU plane and n8n. The public door, the house behind it.</p>
+        <p>Shared workspace: campaign library, operator and admin accounts, tools billed on the plan.</p>
         <ul>
-          <li>L7 Gateway control plane</li>
-          <li>VPS CPU plane and n8n</li>
-          <li>Identity at the door — no passwords</li>
+          <li>Shared campaign library and media assets</li>
+          <li>Operator and admin accounts</li>
+          <li>Shared tools, GPU jobs, n8n, and API</li>
         </ul>
-        <a href="/offers">Enter the Gateway</a>
+        <a href="mailto:hello@avli.cloud?subject=AVLI%20Cloud%20Team">Talk to us</a>
       </article>
-      <article class="offer-card empire">
-        <div class="seal" aria-hidden="true">▽</div>
-        <h3>Empire</h3>
-        <p class="offer-price">By invitation</p>
-        <p>Private workers, morphic media, governed RAG. Nothing here faces the street.</p>
+      <article class="offer-card organization">
+        <div class="plan-mark" aria-hidden="true">03</div>
+        <h3>Organization</h3>
+        <p class="offer-price">Contact us</p>
+        <p>Private workers, knowledge search, and custom media pipelines.</p>
         <ul>
           <li>Private AVLI workers</li>
-          <li>Morphic media and RAG</li>
-          <li>Custom forge work</li>
+          <li>Knowledge search and RAG</li>
+          <li>Custom media pipelines</li>
         </ul>
-        <a href="mailto:hello@avli.cloud?subject=Empire%20seal">Request the seal</a>
+        <a href="mailto:hello@avli.cloud?subject=AVLI%20Cloud%20Organization">Talk to us</a>
       </article>
+    </div>
+    <div class="offers-share" aria-label="How Team shares">
+      <article class="workspace">
+        <span class="share-swatch" aria-hidden="true"></span>
+        <h3>Workspace</h3>
+        <p>One campaign library and shared media assets.</p>
+      </article>
+      <article class="identity">
+        <span class="share-swatch" aria-hidden="true"></span>
+        <h3>Identity</h3>
+        <p>Named operator and admin accounts. Biometric sign-in. This overlay does not list people.</p>
+      </article>
+      <article class="resources">
+        <span class="share-swatch" aria-hidden="true"></span>
+        <h3>Resources</h3>
+        <p>Tools, GPU jobs, and automations billed on the plan.</p>
+      </article>
+      <p class="offers-share-note">Team product model. Live member lists are not shown in this Campaign workspace.</p>
     </div>
   </div>
 </div>
@@ -843,10 +1038,34 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
 
 const $ = id => document.getElementById(id);
 const LAYERS = [
-  { name: 'ABOVE', className: 'above', symbol: '△', title: 'Propose', question: 'What is the strongest direct manifestation?' },
-  { name: 'MIRROR', className: 'mirror', symbol: '◇', title: 'Challenge', question: 'What can change without destroying identity?' },
-  { name: 'BELOW', className: 'below', symbol: '▽', title: 'Ground', question: 'What survives continuity and consequence?' },
+  { name: 'ABOVE', className: 'above', symbol: '1', label: 'Draft', title: 'Propose', question: 'What is the strongest direct take?' },
+  { name: 'MIRROR', className: 'mirror', symbol: '2', label: 'Review', title: 'Challenge', question: 'What can change without losing the brand?' },
+  { name: 'BELOW', className: 'below', symbol: '3', label: 'Final', title: 'Ground', question: 'What is ready to publish?' },
 ];
+const CAPABILITY_LABELS = {
+  'tool.rag-pipeline': 'Knowledge search',
+  'text.generate': 'Generate text',
+  'text.echo': 'Echo',
+  'image.generate': 'Generate image',
+  'image.ssd-1b': 'Generate image',
+  'image.ssd1b': 'Generate image',
+  'video.generate': 'Generate video',
+  'campaign': 'Campaign',
+};
+
+function capabilityLabel(id) {
+  const raw = String(id || '');
+  if (CAPABILITY_LABELS[raw]) return CAPABILITY_LABELS[raw];
+  if (/rag/i.test(raw)) return 'Knowledge search';
+  if (/image/i.test(raw)) return 'Generate image';
+  if (/video/i.test(raw)) return 'Generate video';
+  if (/campaign/i.test(raw)) return 'Campaign';
+  return raw;
+}
+
+function layerDisplayName(name) {
+  return LAYERS.find(item => item.name === name)?.label || name || '—';
+}
 const terminalStates = new Set(['crystallized', 'staged', 'released', 'rejected', 'failed', 'cancelled']);
 
 let mode = 'image';
@@ -859,6 +1078,8 @@ let studioBusy = false;
 let renderedPreviewRevision = -1;
 let dreamCycleLocked = true;
 let executionMode = null;
+let workspacePlan = 'campaign';
+const attachedHashes = new Set();
 
 function lowRiskAutoApprovalAvailable() {
   return mode === 'image'
@@ -867,9 +1088,8 @@ function lowRiskAutoApprovalAvailable() {
 }
 
 function syncGenerateAvailability() {
-  $('runBtn').disabled = studioBusy
-    || !readinessReady
-    || (dreamCycleLocked && !lowRiskAutoApprovalAvailable());
+  const mediaBlocked = !readinessReady || (dreamCycleLocked && !lowRiskAutoApprovalAvailable());
+  $('runBtn').disabled = studioBusy || (mode !== 'copy' && mediaBlocked);
 }
 
 function node(tag, className, text) {
@@ -906,8 +1126,10 @@ async function api(path, options = {}) {
   return body;
 }
 
-async function submitV1Job(capability, input) {
+async function submitV1Job(capability, input, options = {}) {
   const requestId = `request:${crypto.randomUUID()}`;
+  const timeoutMs = Number(options.timeoutMs) || 20_000;
+  const deadlineMs = Number(options.deadlineMs) || 60_000;
   const submitted = await api('/v1/jobs', {
     method: 'POST',
     headers: { 'X-L7-Request-Id': requestId },
@@ -917,11 +1139,12 @@ async function submitV1Job(capability, input) {
       capability,
       input,
       privacy_class: 'internal',
-      deadline: new Date(Date.now() + 60_000).toISOString(),
+      deadline: new Date(Date.now() + deadlineMs).toISOString(),
     }),
   });
   const jobId = submitted.result?.job?.job_id;
-  for (let attempt = 0; attempt < 80; attempt += 1) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
     const current = await api(`/v1/jobs/${encodeURIComponent(jobId)}`);
     const job = current.result?.job;
     if (job && ['succeeded', 'failed', 'cancelled'].includes(job.state)) return job;
@@ -939,7 +1162,7 @@ function setBusy(busy) {
   studioBusy = busy;
   syncGenerateAvailability();
   $('planBtn').disabled = busy;
-  if (busy) setGateway('busy', 'Gateway is rendering');
+  if (busy) setGateway('busy', 'Generating');
 }
 
 function readinessItem(label, value) {
@@ -975,7 +1198,7 @@ function renderDreamCycle(payload) {
   dreamCycleLocked = Boolean(payload.approval_required ?? payload.morphLocked);
   $('cycleGate').hidden = !dreamCycleLocked || lowRiskAutoApprovalAvailable();
   const recoverable = activeRun?.state === 'failed' && /MORPH LOCKED/.test(activeRun.error?.message || '');
-  $('approveCycleBtn').textContent = recoverable ? 'Approve & resume run' : 'Approve new cycle';
+  $('approveCycleBtn').textContent = recoverable ? 'Approve and resume' : 'Start a new run';
   syncGenerateAvailability();
 }
 
@@ -994,11 +1217,11 @@ async function approveDreamCycle() {
       body: JSON.stringify({ approved: true }),
     });
     renderDreamCycle(payload);
-    logEvent('New dream cycle approved');
+    logEvent('New run approved');
     if (recoverable) await runAction('resume');
     else {
       setBusy(false);
-      setGateway('online', 'Gateway ready');
+      setGateway('online', 'Studio ready');
     }
   } catch (error) {
     setBusy(false);
@@ -1043,7 +1266,7 @@ function createCandidate(candidate, layer, scorecard, selected) {
   if (assetUrl && candidate.media_type?.startsWith('image/')) {
     const image = node('img');
     image.src = assetUrl;
-    image.alt = `${layer.name} candidate`;
+    image.alt = `${layer.label} candidate`;
     image.loading = 'eager';
     image.decoding = 'async';
     image.fetchPriority = selected ? 'high' : 'auto';
@@ -1058,7 +1281,7 @@ function createCandidate(candidate, layer, scorecard, selected) {
     video.controls = true;
     video.preload = 'metadata';
     video.playsInline = true;
-    video.setAttribute('aria-label', `${layer.name} ${candidate.job_id || 'video'} artifact`);
+    video.setAttribute('aria-label', `${layer.label} ${candidate.job_id || 'video'} artifact`);
     video.addEventListener('error', () => {
       visual.classList.add('media-error');
       visual.replaceChildren(node('span', '', 'Video preview unavailable'));
@@ -1100,15 +1323,15 @@ function renderLayers(plan = activePlan, result) {
     const header = node('div', 'layer-head');
     const kicker = node('div', 'layer-kicker');
     const artifactCount = Math.max(0, candidates.length - imageCount);
-    const countLabel = artifactCount
-      ? `${imageCount} candidates · ${artifactCount} video artifacts`
-      : `${imageCount} candidates`;
-    kicker.append(node('span', '', `${layerMeta.symbol} ${layerMeta.name}`), node('span', 'candidate-count', countLabel));
+      const countLabel = artifactCount
+        ? `${imageCount} assets · ${artifactCount} video artifacts`
+        : `${imageCount} assets`;
+    kicker.append(node('span', '', layerMeta.label), node('span', 'candidate-count', countLabel));
     header.append(kicker, node('h2', '', layerMeta.title), node('div', 'layer-question', planLayer?.question || layerMeta.question));
     const list = node('div', 'candidate-list');
 
     if (candidates.length === 0) {
-      list.append(node('div', 'empty', 'The layer is empty until a plan is composed.'));
+      list.append(node('div', 'empty', 'No assets yet. Preview a run to see candidates.'));
     } else {
       const scorecards = new Map((resultLayer?.scorecards || []).map(score => [score.candidate_id, score]));
       const selected = new Set(resultLayer?.selection?.selected_candidate_ids || []);
@@ -1121,7 +1344,7 @@ function renderLayers(plan = activePlan, result) {
     layerContainer.append(section);
   }
 
-  $('horizonLabel').textContent = `${candidateTotal} / 42 horizon candidates`;
+  $('horizonLabel').textContent = `${candidateTotal} assets`;
   $('horizonFill').style.width = `${Math.min(100, candidateTotal / 42 * 100)}%`;
 }
 
@@ -1134,7 +1357,7 @@ function renderCapabilities(payload) {
     const state = capability.available ? 'online' : 'error';
     row.append(
       node('span', `status-dot ${state}`),
-      node('span', '', capability.id),
+      node('span', '', capabilityLabel(capability.id)),
       node('span', 'state-pill', capability.available ? capability.modality : 'offline'),
     );
     rows.push(row);
@@ -1146,7 +1369,7 @@ function renderCapabilities(payload) {
     const state = adapterState === 'healthy' || adapterState === 'configured' ? 'online' : adapterState === 'offline' ? 'error' : '';
     row.append(
       node('span', `status-dot ${state}`),
-      node('span', '', names.join(', ') || adapter.name),
+      node('span', '', names.map(capabilityLabel).join(', ') || adapter.name),
       node('span', 'state-pill', adapterState),
     );
     rows.push(row);
@@ -1157,25 +1380,39 @@ function renderCapabilities(payload) {
   renderDreamCycle({ approval_required: dreamCycleLocked });
 }
 
-async function queryDoctrine() {
-  const query = $('doctrineQuery').value.trim() || 'What is Law XV?';
-  $('doctrineBtn').disabled = true;
-  $('doctrineResult').textContent = 'Submitting governed RAG job…';
+async function queryKnowledge() {
+  const query = $('knowledgeQuery').value.trim() || 'How do we keep a campaign brief consistent across a team?';
+  $('knowledgeBtn').disabled = true;
+  $('knowledgeResult').textContent = 'Submitting knowledge-search job…';
   try {
     const job = await submitV1Job('tool.rag-pipeline', { action: 'query', query, profile: 'real-corpus', k: 5 });
     if (job.state !== 'succeeded') throw new Error(job.error?.message || 'RAG job failed');
     const hits = job.result?.hits || job.result?.result?.hits || [];
     const citations = hits.slice(0, 3).map(hit => hit.heading || hit.path || hit.source || JSON.stringify(hit));
-    $('doctrineResult').textContent = citations.length
+    $('knowledgeResult').textContent = citations.length
       ? citations.join('\n')
       : JSON.stringify(job.result, null, 2).slice(0, 800);
-    logEvent('Doctrine job succeeded');
+    logEvent('Knowledge search finished');
   } catch (error) {
-    $('doctrineResult').textContent = error.message;
+    $('knowledgeResult').textContent = error.message;
     logEvent(error.message);
   } finally {
-    $('doctrineBtn').disabled = false;
+    $('knowledgeBtn').disabled = false;
   }
+}
+
+async function generateCopy() {
+  const prompt = $('brief').value.trim();
+  if (!prompt) throw new Error('Brief is required.');
+  $('runState').textContent = 'Running';
+  $('runMessage').textContent = 'Generating copy…';
+  const job = await submitV1Job('text.generate', { prompt }, { timeoutMs: 180_000, deadlineMs: 180_000 });
+  if (job.state !== 'succeeded') throw new Error(job.error?.message || 'Copy job failed');
+  const text = job.result?.text || JSON.stringify(job.result, null, 2).slice(0, 800);
+  $('runState').textContent = 'succeeded';
+  $('runMessage').textContent = text;
+  await attachLibraryHashes((job.artifacts || []).map(item => item.sha256));
+  logEvent('Copy job finished');
 }
 
 function renderResources(payload) {
@@ -1211,13 +1448,13 @@ function progressMessage(progress = {}) {
   const labels = {
     queued: 'Run queued.',
     running: 'Preparing the job graph.',
-    layer_started: `${progress.layer || 'Layer'} opened.`,
+    layer_started: `${layerDisplayName(progress.layer) || 'Pass'} opened.`,
     job_started: `Rendering ${progress.job_id || 'candidate'}.`,
     job_completed: `Completed ${progress.job_id || 'candidate'}.`,
-    layer_selected: `Horizon selected ${progress.selected_candidate_ids?.[0] || 'a candidate'}.`,
-    layer_completed: `${progress.layer || 'Layer'} complete.`,
-    finalizing: 'Crystallizing receipts and artifacts.',
-    completed: 'Three-layer cycle complete.',
+    layer_selected: `Selected ${progress.selected_candidate_ids?.[0] || 'a candidate'}.`,
+    layer_completed: `${layerDisplayName(progress.layer) || 'Pass'} complete.`,
+    finalizing: 'Saving receipts and artifacts.',
+    completed: 'Run complete.',
     failed: 'The run failed. Inspect the error before resuming.',
     cancelled: 'The run was cancelled.',
   };
@@ -1232,7 +1469,7 @@ function updateRun(record) {
     ? total
     : Number(progress.completed_jobs) || 0;
   $('runState').textContent = record.state || 'Idle';
-  $('runLayer').textContent = progress.layer || '—';
+  $('runLayer').textContent = layerDisplayName(progress.layer) || '—';
   $('runJobs').textContent = `${complete} / ${total}`;
   $('progressFill').style.width = `${total ? complete / total * 100 : 0}%`;
   $('runMessage').textContent = record.error?.message || progressMessage(progress);
@@ -1247,15 +1484,18 @@ function updateRun(record) {
   if (record.result) {
     renderLayers(activePlan, record.result);
     setBusy(false);
-    setGateway('online', record.state === 'crystallized' ? 'Cycle crystallized' : 'Gateway ready');
+    setGateway('online', record.state === 'crystallized' ? 'Run complete' : 'Studio ready');
     if (record.result.lifecycle?.cycle_locked) renderDreamCycle({ approval_required: true });
+    const hashes = (record.result.layers || []).flatMap(layer => layer.artifacts || [])
+      .map(item => item.content_hash || item.sha256);
+    void attachLibraryHashes(hashes);
   } else if (record.state === 'failed') {
     setBusy(false);
     setGateway('error', 'Run needs attention');
     if (/MORPH LOCKED/.test(record.error?.message || '')) renderDreamCycle({ approval_required: true });
   } else if (record.state === 'cancelled') {
     setBusy(false);
-    setGateway('online', 'Gateway ready');
+    setGateway('online', 'Studio ready');
   }
 
   const eventLabel = progressMessage(progress);
@@ -1264,8 +1504,8 @@ function updateRun(record) {
 
 async function composePlan() {
   const request = requestBody();
-  if (!request.brief) throw new Error('Intention is required.');
-  if (!request.identity) throw new Error('Identity invariant is required.');
+  if (!request.brief) throw new Error('Brief is required.');
+  if (!request.identity) throw new Error('Keep consistent is required.');
   activePlan = await api('/api/media/plan', { method: 'POST', body: JSON.stringify(request) });
   $('planId').textContent = `${activePlan.id}\n${activePlan.provenance.plan_hash.slice(0, 16)}…`;
   $('exportBtn').disabled = false;
@@ -1290,12 +1530,30 @@ function watchRun(id) {
   };
 }
 
+async function beginCreate() {
+  if (mode === 'copy') {
+    try {
+      setBusy(true);
+      await generateCopy();
+      setBusy(false);
+      setGateway('online', 'Studio ready');
+    } catch (error) {
+      setBusy(false);
+      setGateway('error', 'Request failed');
+      $('runMessage').textContent = error.message;
+      logEvent(error.message);
+    }
+    return;
+  }
+  return beginRun();
+}
+
 async function beginRun() {
   try {
     const [readiness, cycle] = await Promise.all([probeSsdReadiness(), probeDreamCycle()]);
     if (!readiness.ready) throw new Error(`SSD-1B is not ready: ${readiness.missing.join(', ')}`);
     if (cycle.approval_required && !lowRiskAutoApprovalAvailable()) {
-      throw new Error('Approve a new dream cycle before this elevated-risk operation.');
+      throw new Error('Approve a new run before this elevated-risk operation.');
     }
     setBusy(true);
     const plan = await composePlan();
@@ -1314,11 +1572,19 @@ async function beginRun() {
 async function previewPlan() {
   try {
     setBusy(true);
+    if (mode === 'copy') {
+      if (!$('brief').value.trim()) throw new Error('Brief is required.');
+      $('runState').textContent = 'Planned';
+      $('runMessage').textContent = 'Copy run ready. Generate to write the line.';
+      setBusy(false);
+      setGateway('online', 'Run ready');
+      return;
+    }
     await composePlan();
     $('runState').textContent = 'Planned';
-    $('runMessage').textContent = 'Plan validated. No generation has started.';
+    $('runMessage').textContent = 'Run validated. No generation has started.';
     setBusy(false);
-    setGateway('online', 'Plan ready');
+    setGateway('online', 'Run ready');
   } catch (error) {
     setBusy(false);
     setGateway('error', 'Planning failed');
@@ -1358,23 +1624,38 @@ document.querySelectorAll('[data-mode]').forEach(button => {
     mode = button.dataset.mode;
     document.querySelectorAll('[data-mode]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
     $('durationField').hidden = mode !== 'video';
+    $('mediaFields').hidden = mode === 'copy';
+    $('runBtn').textContent = mode === 'copy' || Number($('candidates').value) !== 1
+      ? 'Generate'
+      : 'Generate fast preview';
     renderDreamCycle({ approval_required: dreamCycleLocked });
+    syncGenerateAvailability();
   });
 });
 $('candidates').addEventListener('change', event => {
-  $('runBtn').textContent = Number(event.target.value) === 1
+  $('runBtn').textContent = mode !== 'copy' && Number(event.target.value) === 1
     ? 'Generate fast preview'
-    : 'Begin three-layer run';
+    : 'Generate';
   renderDreamCycle({ approval_required: dreamCycleLocked });
 });
 $('astrocyte').addEventListener('input', event => { $('astroValue').textContent = Number(event.target.value).toFixed(2); });
-$('runBtn').addEventListener('click', beginRun);
+$('runBtn').addEventListener('click', beginCreate);
 $('planBtn').addEventListener('click', previewPlan);
 $('exportBtn').addEventListener('click', exportPlan);
 $('cancelBtn').addEventListener('click', () => runAction('cancel'));
 $('resumeBtn').addEventListener('click', () => runAction('resume'));
 $('approveCycleBtn').addEventListener('click', approveDreamCycle);
-$('doctrineBtn').addEventListener('click', queryDoctrine);
+$('knowledgeBtn').addEventListener('click', queryKnowledge);
+$('packBtn').addEventListener('click', () => downloadPack().catch(error => {
+  $('runMessage').textContent = error.message;
+  logEvent(error.message);
+}));
+$('publishBtn').addEventListener('click', () => sendToAudience().catch(error => {
+  $('runMessage').textContent = /n8n/i.test(error.message)
+    ? error.message
+    : `n8n did not accept this send. ${error.message}`;
+  logEvent(error.message);
+}));
 
 function setOffersOpen(open) {
   $('offersOverlay').hidden = !open;
@@ -1389,6 +1670,103 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && !$('offersOverlay').hidden) setOffersOpen(false);
 });
 
+function renderWorkspace(view) {
+  workspacePlan = String(view.plan || 'campaign');
+  const role = String(view.role || 'admin');
+  const plan = workspacePlan;
+  $('planChip').textContent = `${plan.charAt(0).toUpperCase()}${plan.slice(1)} plan · this workspace`;
+  $('roleChip').textContent = role === 'admin' ? 'Admin' : 'Operator';
+  $('publishBtn').hidden = plan === 'team' ? false : true;
+}
+
+function selectedHashes() {
+  return [...document.querySelectorAll('#assetLibrary input[data-sha]:checked')]
+    .map(input => input.dataset.sha)
+    .filter(hash => /^[a-f0-9]{64}$/.test(hash || ''));
+}
+
+function renderAssets(artifacts) {
+  const items = Array.isArray(artifacts) ? artifacts : [];
+  if (items.length === 0) {
+    $('assetLibrary').replaceChildren(node('div', 'empty', 'Generate a still, a clip, or a line — it will land here.'));
+    return;
+  }
+  $('assetLibrary').replaceChildren(...items.map(item => {
+    const row = node('div', 'asset-row');
+    const hash = String(item.sha256 || '');
+    const check = document.createElement('input');
+    check.type = 'checkbox';
+    check.dataset.sha = hash;
+    check.checked = true;
+    check.setAttribute('aria-label', `Select ${hash.slice(0, 12)}`);
+    const meta = node('div');
+    meta.append(node('code', '', hash ? `${hash.slice(0, 12)}…${hash.slice(-8)}` : 'unknown'));
+    if (item.media_type) meta.append(node('div', 'candidate-meta', item.media_type));
+    row.append(check, meta);
+    return row;
+  }));
+}
+
+async function attachLibraryHashes(hashes) {
+  const next = [...new Set((hashes || []).filter(hash => /^[a-f0-9]{64}$/.test(hash || '') && !attachedHashes.has(hash)))];
+  for (const sha256 of next) {
+    try {
+      await api('/v1/workspace/artifacts', { method: 'POST', body: JSON.stringify({ sha256 }) });
+      attachedHashes.add(sha256);
+    } catch (error) {
+      logEvent(error.message);
+    }
+  }
+  if (next.length) await loadWorkspace();
+}
+
+async function downloadPack() {
+  const params = new URLSearchParams();
+  const hashes = selectedHashes();
+  if (hashes.length) params.set('hashes', hashes.join(','));
+  const brief = $('brief').value.trim();
+  if (brief) params.set('brief', brief);
+  const query = params.toString();
+  const response = await fetch(`/v1/workspace/pack${query ? `?${query}` : ''}`);
+  if (!response.ok) throw new Error('Could not build the download pack.');
+  const blob = await response.blob();
+  const link = node('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'campaign-pack.zip';
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  logEvent('Download pack started');
+}
+
+async function sendToAudience() {
+  if (workspacePlan !== 'team') throw new Error('Send to audience is available on Team.');
+  const hashes = selectedHashes();
+  if (!hashes.length) throw new Error('Select a library asset to send.');
+  const payload = await api('/v1/workspace/publish', {
+    method: 'POST',
+    body: JSON.stringify({
+      sha256: hashes,
+      brief: $('brief').value.trim(),
+    }),
+  });
+  $('runMessage').textContent = payload.result?.delivered
+    ? 'Posted this asset through your workspace automation.'
+    : 'Accepted. Point n8n AUDIENCE_WEBHOOK_URL at the site or channel you own.';
+  logEvent('Send to audience accepted');
+}
+
+async function loadWorkspace() {
+  const payload = await api('/v1/workspace');
+  const view = payload.result || payload;
+  renderWorkspace(view);
+  const library = await api('/v1/workspace/artifacts');
+  const artifacts = library.result?.artifacts || library.artifacts || [];
+  artifacts.forEach(item => {
+    if (item.sha256) attachedHashes.add(item.sha256);
+  });
+  renderAssets(artifacts);
+}
+
 async function boot() {
   renderLayers();
   try {
@@ -1399,13 +1777,14 @@ async function boot() {
       api('/api/media/runs'),
       probeSsdReadiness(),
       probeDreamCycle(),
+      loadWorkspace(),
     ]);
     renderCapabilities({
       ...mediaCapabilities,
       result: capabilities.result,
     });
     renderResources(resources);
-    logEvent('Gateway capabilities discovered');
+    logEvent('Studio capabilities ready');
     const latest = (history.runs || []).at(-1);
     if (latest) {
       activePlan = latest.plan;
@@ -1415,11 +1794,11 @@ async function boot() {
       logEvent(`Restored ${latest.id}`);
       if (!terminalStates.has(latest.state)) watchRun(latest.id);
     } else {
-      setGateway('online', 'Gateway ready');
+      setGateway('online', 'Studio ready');
     }
   } catch (error) {
-    setGateway('error', 'Gateway unavailable');
-    $('runMessage').textContent = 'Open this studio through the L7 Gateway to plan and run media.';
+    setGateway('error', 'Studio unavailable');
+    $('runMessage').textContent = 'Open Studio through AVLI Cloud to plan and run media.';
     logEvent(error.message);
   }
 }

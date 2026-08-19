@@ -59,24 +59,56 @@ detect_gateway() {
     printf '%s\n' "$L7_GATEWAY_URL"
     return
   fi
+  local founder_env="${HOME}/.l7/state/founder-loop.env" line
+  if [ -f "$founder_env" ]; then
+    line="$(grep -E '^L7_GATEWAY_URL=' "$founder_env" | tail -1 || true)"
+    if [ -n "$line" ]; then
+      printf '%s\n' "${line#L7_GATEWAY_URL=}"
+      return
+    fi
+  fi
   local candidate health
-  for candidate in http://127.0.0.1:18791 http://127.0.0.1:18789; do
+  for candidate in http://127.0.0.1:18793 http://127.0.0.1:18790 http://127.0.0.1:18791 http://127.0.0.1:18789; do
     health=$(curl_auth "$candidate/health" 2>/dev/null || true)
     if json_has "$health" "alive" && json_has "$health" "founder"; then
       printf '%s\n' "$candidate"
       return
     fi
   done
-  printf '%s\n' "http://127.0.0.1:18789"
+  printf '%s\n' "http://127.0.0.1:18793"
 }
 
+if [ -z "${L7_API_TOKEN:-}" ] && [ -f "${HOME}/avli_cloud/deploy/secrets/l7-gateway.token" ]; then
+  L7_API_TOKEN="$(tr -d '[:space:]' < "${HOME}/avli_cloud/deploy/secrets/l7-gateway.token")"
+  export L7_API_TOKEN
+fi
+
 GATEWAY="$(detect_gateway)"
+
+openclaw_on_18789=0
+for pid in $(lsof -nP -iTCP:18789 -sTCP:LISTEN -t 2>/dev/null | sort -u); do
+  cmd="$(ps -p "$pid" -o command= 2>/dev/null || true)"
+  case "$cmd" in
+    *openclaw*|*ai.openclaw*) openclaw_on_18789=1 ;;
+  esac
+done
 
 echo "== Founder Loop smoke =="
 
 health=$(curl_auth "$GATEWAY/health" 2>/dev/null || true)
 if json_has "$health" "alive" && json_has "$health" "founder"; then
-  record "gateway-health" 1 "$GATEWAY"
+  if [ "$openclaw_on_18789" -eq 1 ]; then
+    case "$GATEWAY" in
+      *://127.0.0.1:18793|*://localhost:18793)
+        record "gateway-health" 1 "$GATEWAY (OpenClaw left on :18789)"
+        ;;
+      *)
+        record "gateway-health" 0 "OpenClaw on :18789 but Gateway is $GATEWAY (want :18793)"
+        ;;
+    esac
+  else
+    record "gateway-health" 1 "$GATEWAY"
+  fi
 else
   record "gateway-health" 0 "L7 Gateway not listening on $GATEWAY (18789 may be OpenClaw)"
 fi
@@ -138,6 +170,25 @@ if printf '%s' "$posted" | grep -q 'job_id'; then
   record "vps-n8n-l7-job" 1 "n8n webhook -> L7 /v1/jobs"
 else
   record "vps-n8n-l7-job" 0 "webhook did not return an L7 job"
+fi
+
+# Optional Tailscale note — does not add a 7th pass/fail (keep 6/6).
+TS_BIN=""
+if command -v tailscale >/dev/null 2>&1; then
+  TS_BIN="$(command -v tailscale)"
+elif [ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]; then
+  TS_BIN=/Applications/Tailscale.app/Contents/MacOS/Tailscale
+fi
+if [ -n "$TS_BIN" ]; then
+  ts_serve="$("$TS_BIN" serve status 2>/dev/null || true)"
+  case "$ts_serve" in
+    *18793*)
+      printf 'note  tailscale-serve  Gateway :18793 is in serve status (OpenClaw :443 left alone)\n'
+      ;;
+    *)
+      printf 'note  tailscale-serve  no :18793 mapping (SSH reverse tunnel is the n8n fallback)\n'
+      ;;
+  esac
 fi
 
 echo

@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0C0A08">
+<meta name="description" content="AVLI Cloud is for campaigns, media, and team workspaces. Studio, API, and private workers — with biometric sign-in.">
+<title>AVLI Cloud — Plans</title>
+<style>
+:root {
+  --void: #0C0A08;
+  --void-raised: #16120E;
+  --parchment: #E4D6B8;
+  --parchment-dim: #B7A88A;
+  --gold: #C4A35A;
+  --gold-bright: #E4C878;
+  --silver: #C8C2B4;
+  --copper: #B5683C;
+  --salt: #6A8464;
+  --line: rgba(196, 163, 90, .22);
+  --ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-width: 320px;
+  color: var(--parchment);
+  background: var(--void);
+  font: 400 17px/1.55 Charter, "Bitstream Charter", "Iowan Old Style", Georgia, serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(196, 163, 90, .09), transparent 55%),
+    radial-gradient(ellipse 40% 30% at 8% 80%, rgba(181, 104, 60, .08), transparent 50%),
+    radial-gradient(ellipse 35% 28% at 92% 70%, rgba(106, 132, 100, .07), transparent 48%);
+}
+
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+::selection { color: var(--void); background: var(--gold-bright); }
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 76px;
+  padding: 0 28px;
+  background: rgba(12, 10, 8, .78);
+  backdrop-filter: blur(18px);
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+.brand-mark {
+  font-family: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+  font-size: 22px;
+  color: var(--gold);
+  letter-spacing: .04em;
+}
+.brand-name {
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--parchment-dim);
+}
+.brand-name b { color: var(--parchment); font-weight: 500; }
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--parchment-dim);
+}
+.nav a:hover { color: var(--gold-bright); }
+.nav-studio {
+  color: var(--void) !important;
+  background: var(--gold);
+  padding: 8px 14px;
+}
+.nav-studio:hover { background: var(--gold-bright); color: var(--void) !important; }
+
+.filament {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold) 18%, var(--gold-bright) 50%, var(--copper) 82%, transparent);
+  box-shadow: 0 0 18px rgba(196, 163, 90, .35);
+  position: relative;
+  overflow: hidden;
+}
+.filament::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(228, 200, 120, .85), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 7.5s var(--ease) infinite;
+}
+
+.hero {
+  padding: 88px 0 72px;
+  text-align: center;
+}
+.eyebrow {
+  margin: 0 0 28px;
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.hero h1 {
+  margin: 0 auto;
+  max-width: 18ch;
+  font-family: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+  font-optical-sizing: auto;
+  font-size: clamp(46px, 8vw, 92px);
+  font-weight: 500;
+  line-height: .92;
+  letter-spacing: -.04em;
+  text-wrap: balance;
+}
+.hero h1 em {
+  display: block;
+  margin-top: .12em;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--gold-bright);
+}
+.lede {
+  max-width: 38em;
+  margin: 32px auto 0;
+  color: var(--parchment-dim);
+  font-size: clamp(17px, 1.6vw, 20px);
+}
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 22px;
+  margin-top: 40px;
+}
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 22px;
+  background: var(--gold);
+  color: var(--void);
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  transition: transform .3s var(--ease), background .3s;
+}
+.btn-gold:hover { transform: translateY(-2px); background: var(--gold-bright); }
+.btn-ghost {
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--silver);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 4px;
+}
+.btn-ghost:hover { color: var(--parchment); }
+
+.laws {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px 36px;
+  padding: 22px 28px;
+  color: var(--parchment-dim);
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.laws b { color: var(--salt); font-weight: 500; }
+
+.offers {
+  padding: 88px 0 40px;
+}
+.offers-head {
+  max-width: 720px;
+  margin-bottom: 56px;
+}
+.offers-head h2 {
+  margin: 12px 0 0;
+  font-family: "Iowan Old Style", Palatino, Georgia, serif;
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 500;
+  line-height: .98;
+  letter-spacing: -.03em;
+}
+.offers-head p {
+  margin: 18px 0 0;
+  color: var(--parchment-dim);
+  max-width: 36em;
+}
+
+.plan-rail {
+  position: relative;
+  margin-top: 8px;
+  padding-top: 0;
+}
+.plan-rail::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--copper), var(--gold) 50%, var(--silver));
+}
+
+.plans {
+  display: grid;
+  grid-template-columns: 1fr 1.12fr 1fr;
+  gap: 0 28px;
+  align-items: start;
+}
+.plan-card {
+  position: relative;
+  padding: 0 8px 28px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+.thread {
+  width: 1px;
+  height: 56px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, var(--gold), transparent);
+}
+.plan-card.team .thread { height: 88px; width: 2px; background: linear-gradient(180deg, var(--gold-bright), var(--gold)); }
+.plan-card.campaign .thread { background: linear-gradient(180deg, var(--copper), transparent); }
+.plan-card.organization .thread { background: linear-gradient(180deg, var(--silver), transparent); }
+
+.plan-mark {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: .16em;
+  border: 1px solid var(--line);
+  background: radial-gradient(circle at 35% 30%, rgba(228, 200, 120, .16), transparent 62%), var(--void-raised);
+}
+.plan-card.campaign .plan-mark { color: var(--copper); box-shadow: 0 0 28px rgba(181, 104, 60, .18); }
+.plan-card.team .plan-mark { color: var(--gold-bright); width: 88px; height: 88px; box-shadow: 0 0 40px rgba(196, 163, 90, .28); }
+.plan-card.organization .plan-mark { color: var(--silver); }
+
+.plan-kicker {
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--parchment-dim);
+  text-align: center;
+}
+.plan-card h3 {
+  margin: 8px 0 0;
+  font-family: "Iowan Old Style", Palatino, Georgia, serif;
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 500;
+  text-align: center;
+  letter-spacing: -.03em;
+}
+.price {
+  margin: 10px 0 0;
+  text-align: center;
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: .08em;
+  color: var(--gold);
+}
+.price small {
+  display: block;
+  margin-top: 4px;
+  color: var(--parchment-dim);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-size: 9px;
+}
+.plan-card p {
+  margin: 18px 0 0;
+  color: var(--parchment-dim);
+  font-size: 15px;
+  text-align: center;
+}
+.receive {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+}
+.receive li {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--parchment);
+}
+.receive li:last-child { border-bottom: 1px solid var(--line); }
+.plan-card .btn-gold,
+.plan-card .btn-ghost {
+  margin-top: auto;
+  align-self: center;
+  padding-top: 28px;
+}
+.plan-card .btn-ghost { padding-top: 32px; }
+
+.share {
+  padding: 72px 0 32px;
+}
+.share-head {
+  max-width: 720px;
+  margin-bottom: 36px;
+}
+.share-head h2 {
+  margin: 12px 0 0;
+  font-family: "Iowan Old Style", Palatino, Georgia, serif;
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 500;
+  line-height: .98;
+  letter-spacing: -.03em;
+}
+.share-head p {
+  margin: 18px 0 0;
+  color: var(--parchment-dim);
+  max-width: 38em;
+}
+.share-board {
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(22, 18, 14, .72), rgba(12, 10, 8, .5)),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 31px,
+      rgba(196, 163, 90, .06) 31px 32px
+    );
+}
+.share-lanes {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.share-lane {
+  padding: 28px 26px 32px;
+  border-right: 1px solid var(--line);
+  min-width: 0;
+}
+.share-lane:last-child { border-right: 0; }
+.share-swatch {
+  display: block;
+  height: 3px;
+  width: 42px;
+  margin-bottom: 22px;
+}
+.share-lane.workspace .share-swatch { background: var(--copper); box-shadow: 0 0 16px rgba(181, 104, 60, .35); }
+.share-lane.identity .share-swatch { background: var(--gold); box-shadow: 0 0 16px rgba(196, 163, 90, .4); }
+.share-lane.resources .share-swatch { background: var(--silver); box-shadow: 0 0 16px rgba(200, 194, 180, .28); }
+.share-kicker {
+  margin: 0;
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--parchment-dim);
+}
+.share-lane h3 {
+  margin: 8px 0 0;
+  font-family: "Iowan Old Style", Palatino, Georgia, serif;
+  font-size: clamp(26px, 2.6vw, 34px);
+  font-weight: 500;
+  letter-spacing: -.03em;
+}
+.share-lane p {
+  margin: 14px 0 0;
+  color: var(--parchment-dim);
+  font-size: 15px;
+}
+.share-note {
+  margin: 0;
+  padding: 16px 26px;
+  border-top: 1px solid var(--line);
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--parchment-dim);
+}
+
+.boundary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  padding: 96px 0;
+}
+.boundary article h2 {
+  margin: 10px 0 0;
+  font-family: "Iowan Old Style", Palatino, Georgia, serif;
+  font-size: clamp(28px, 3.4vw, 44px);
+  font-weight: 500;
+  letter-spacing: -.03em;
+}
+.boundary p { margin: 16px 0 0; color: var(--parchment-dim); }
+.boundary .public { color: var(--gold-bright); }
+.boundary .private { color: var(--copper); }
+
+.close {
+  padding: 72px 0 88px;
+  text-align: center;
+}
+.close p {
+  margin: 0 auto;
+  max-width: 18ch;
+  font-family: "Iowan Old Style", Palatino, Georgia, serif;
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -.03em;
+}
+.close small {
+  display: block;
+  margin-top: 22px;
+  color: var(--parchment-dim);
+  font-size: 15px;
+}
+.close .btn-gold { margin-top: 36px; }
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 28px;
+  color: var(--parchment-dim);
+  font-family: "SF Mono", Menlo, ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+footer a:hover { color: var(--gold); }
+
+@media (max-width: 880px) {
+  .plans { grid-template-columns: 1fr; gap: 36px; }
+  .plan-card.team { order: -1; }
+  .thread { height: 36px; }
+  .plan-card.team .thread { height: 36px; }
+  .share-lanes { grid-template-columns: 1fr; }
+  .share-lane { border-right: 0; border-bottom: 1px solid var(--line); }
+  .share-lane:last-child { border-bottom: 0; }
+  .boundary { grid-template-columns: 1fr; gap: 36px; padding: 64px 0; }
+  .nav a:not(.nav-studio) { display: none; }
+}
+@media (max-width: 560px) {
+  .topbar, .wrap, footer { padding-left: 18px; padding-right: 18px; }
+  .hero { padding-top: 56px; }
+  .hero h1 { font-size: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .filament::after { animation: none; }
+  .btn-gold { transition: none; }
+}
+@keyframes shimmer { to { transform: translateX(100%); } }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="AVLI Cloud home">
+      <span class="brand-mark" aria-hidden="true">A</span>
+      <span class="brand-name"><b>AVLI Cloud</b> · Studio</span>
+    </a>
+    <nav class="nav" aria-label="Product">
+      <a href="#offers">Plans</a>
+      <a href="#share">Workspace</a>
+      <a class="nav-studio" href="/studio">Start in Studio</a>
+    </nav>
+  </header>
+  <div class="filament" aria-hidden="true"></div>
+
+  <main id="top">
+    <section class="hero wrap">
+      <p class="eyebrow">AVLI Cloud · campaigns and media</p>
+      <h1>Make the campaign.<em>Generate the media.</em></h1>
+      <p class="lede">AVLI Cloud is a workspace for operators: campaign briefs, media generation, shared tools, and team resources. Start in Studio. Add automation and API when the team grows.</p>
+      <div class="hero-actions">
+        <a class="btn-gold" href="/studio">Start in Studio <span aria-hidden="true">→</span></a>
+        <a class="btn-ghost" href="#offers">View plans</a>
+      </div>
+    </section>
+
+    <div class="filament" aria-hidden="true"></div>
+    <div class="laws" aria-label="Product principles">
+      <span><b>Studio</b> Campaigns, media, and tools</span>
+      <span><b>Access</b> Biometrics · no passwords</span>
+      <span><b>Privacy</b> Private workers stay private</span>
+    </div>
+    <div class="filament" aria-hidden="true"></div>
+
+    <section class="offers wrap" id="offers" aria-labelledby="offers-title">
+      <div class="offers-head">
+        <p class="eyebrow">Plans</p>
+        <h2 id="offers-title">Three plans. Clear work.</h2>
+        <p>Campaign is Studio for one operator. Team adds a shared workspace, n8n, and API. Organization is private workers and custom media pipelines.</p>
+      </div>
+
+      <div class="plan-rail">
+        <div class="plans">
+          <article class="plan-card campaign">
+            <div class="thread" aria-hidden="true"></div>
+            <div class="plan-mark" aria-hidden="true">01</div>
+            <p class="plan-kicker">One operator</p>
+            <h3>Campaign</h3>
+            <p class="price">$42 <small>per month</small></p>
+            <p>Studio plus campaign and media basics on the machine you already use. One operator, one workspace.</p>
+            <ul class="receive">
+              <li>AVLI Cloud Studio</li>
+              <li>Campaign briefs and media generation</li>
+              <li>Local tools and on-device models</li>
+            </ul>
+            <a class="btn-gold" href="/studio">Start in Studio</a>
+          </article>
+
+          <article class="plan-card team">
+            <div class="thread" aria-hidden="true"></div>
+            <div class="plan-mark" aria-hidden="true">02</div>
+            <p class="plan-kicker">Shared workspace</p>
+            <h3>Team</h3>
+            <p class="price">$420 <small>per month</small></p>
+            <p>A shared workspace: one campaign library, named operator and admin accounts, and tools billed on the plan.</p>
+            <ul class="receive">
+              <li>Shared campaign library and media assets</li>
+              <li>Operator and admin accounts</li>
+              <li>Shared tools, GPU jobs, n8n, and API</li>
+            </ul>
+            <a class="btn-gold" href="mailto:hello@avli.cloud?subject=AVLI%20Cloud%20Team">Talk to us</a>
+          </article>
+
+          <article class="plan-card organization">
+            <div class="thread" aria-hidden="true"></div>
+            <div class="plan-mark" aria-hidden="true">03</div>
+            <p class="plan-kicker">Custom</p>
+            <h3>Organization</h3>
+            <p class="price">Contact us <small>custom pricing</small></p>
+            <p>Private workers, knowledge search, and media pipelines built for your organization.</p>
+            <ul class="receive">
+              <li>Private AVLI workers</li>
+              <li>Knowledge search and RAG</li>
+              <li>Custom media pipelines</li>
+            </ul>
+            <a class="btn-ghost" href="mailto:hello@avli.cloud?subject=AVLI%20Cloud%20Organization">Talk to us</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <div class="filament" aria-hidden="true"></div>
+
+    <section class="share wrap" id="share" aria-labelledby="share-title">
+      <div class="share-head">
+        <p class="eyebrow">Workspace · Identity · Resources</p>
+        <h2 id="share-title">Share the library. Keep the names.</h2>
+        <p>Team is for people who share a campaign, not a login. The library, the accounts, and the tools sit in one workspace — billed on the plan.</p>
+      </div>
+      <div class="share-board">
+        <div class="share-lanes">
+          <article class="share-lane workspace">
+            <span class="share-swatch" aria-hidden="true"></span>
+            <p class="share-kicker">Library</p>
+            <h3>Workspace</h3>
+            <p>People share a campaign library and media assets. Briefs, stills, and motion live in one place — not in ten inboxes.</p>
+          </article>
+          <article class="share-lane identity">
+            <span class="share-swatch" aria-hidden="true"></span>
+            <p class="share-kicker">Accounts</p>
+            <h3>Identity</h3>
+            <p>Each person has an account and a role: operator or admin. Sign-in is biometric. Named people, not a public roster.</p>
+          </article>
+          <article class="share-lane resources">
+            <span class="share-swatch" aria-hidden="true"></span>
+            <p class="share-kicker">Tools</p>
+            <h3>Resources</h3>
+            <p>Tools, GPU and media jobs, and automations run inside the workspace. Usage is billed on Campaign, Team, or Organization.</p>
+          </article>
+        </div>
+        <p class="share-note">Team product model. Live member lists ship with the plan — they are not shown here.</p>
+      </div>
+    </section>
+
+    <div class="filament" aria-hidden="true"></div>
+
+    <section class="boundary wrap" id="boundary">
+      <article>
+        <p class="eyebrow public">Studio · API</p>
+        <h2>Work in Studio. Ship through the API.</h2>
+        <p>Jobs, capabilities, and media planning go through AVLI Cloud Studio and the API. Your team generates, publishes, and shares assets from one workspace.</p>
+      </article>
+      <article>
+        <p class="eyebrow private">Private compute</p>
+        <h2>Generation stays on your side.</h2>
+        <p>Inference, media workers, and private data stay off the public internet. Resources and identities can be shared inside the workspace — not on the open web.</p>
+      </article>
+    </section>
+
+    <div class="filament" aria-hidden="true"></div>
+
+    <section class="close wrap">
+      <p>Open Studio and make the first asset.</p>
+      <small>AVLI Cloud · Alberto Valido Delgado</small>
+      <a class="btn-gold" href="/studio">Start in Studio</a>
+    </section>
+  </main>
+
+  <div class="filament" aria-hidden="true"></div>
+  <footer>
+    <span>© 2026 Alberto Valido Delgado</span>
+    <span>AVLI Cloud</span>
+    <a href="mailto:hello@avli.cloud">hello@avli.cloud</a>
+  </footer>
+</body>
+</html>

@@ -15,6 +15,8 @@ process.env.L7_MODE = 'mock';
 process.env.AVLI_MEDIA_EXECUTION = 'mock';
 process.env.L7_LOCAL_TENANT_ID = 'tenant:test';
 process.env.L7_CALLBACK_HMAC_SECRET = 'test-callback-secret';
+delete process.env.AVLI_MODEL_WORKER_URL;
+delete process.env.AVLI_MODEL_WORKER_SERVICE_TOKEN;
 
 const toolsDir = path.join(FIXTURE_DIR, 'tools');
 const flowsDir = path.join(FIXTURE_DIR, 'flows');
@@ -95,6 +97,35 @@ function requestText(method, pathname, headers = {}) {
   });
 }
 
+function requestBuffer(method, pathname, body, headers = {}) {
+  const payload = body === undefined ? null : JSON.stringify(body);
+  return new Promise((resolve, reject) => {
+    const req = http.request({
+      host: '127.0.0.1',
+      port,
+      method,
+      path: pathname,
+      headers: payload ? {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+        ...headers,
+      } : { ...headers },
+    }, res => {
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
+      res.on('end', () => resolve({
+        status: res.statusCode,
+        type: res.headers['content-type'],
+        headers: res.headers,
+        body: Buffer.concat(chunks),
+      }));
+    });
+    req.on('error', reject);
+    if (payload) req.write(payload);
+    req.end();
+  });
+}
+
 function assertCanonical(body, success = true) {
   assert.equal(body.success, success);
   assert.equal(body.ok, success);
@@ -124,17 +155,46 @@ test('studio route serves the morphic media workspace', async () => {
   assert.match(response.body, /\/api\/media\/readiness\/ssd-1b/);
   assert.match(response.body, /\/v1\/capabilities/);
   assert.match(response.body, /\/v1\/jobs/);
-  assert.match(response.body, /Doctrine \/ Law XV/);
+  assert.match(response.body, /\/v1\/workspace/);
+  assert.match(response.body, /id="roleChip"/);
+  assert.match(response.body, /id="assetLibrary"/);
+  assert.doesNotMatch(response.body, /member-grid|live roster/i);
+  assert.doesNotMatch(response.body, /Doctrine \/ Law XV/);
   assert.match(response.body, /No generation (?:is|was) started/);
   assert.match(response.body, /L7 Prism Design System/);
   assert.match(response.body, /--ds-canvas:/);
   assert.match(response.body, /prefers-reduced-motion/);
-  assert.match(response.body, /Content addressed/);
+  assert.match(response.body, /Shared library/);
   assert.match(response.body, /Generate fast preview/);
   assert.match(response.body, /record\.preview/);
-  assert.match(response.body, /Approve new cycle/);
+  assert.match(response.body, /Start a new run/);
   assert.match(response.body, /\/api\/media\/dream-cycle\/approve/);
   assert.match(response.body, /lowRiskAutoApprovalAvailable/);
+  assert.match(response.body, /data-mode="image"/);
+  assert.match(response.body, /data-mode="video"/);
+  assert.match(response.body, /data-mode="copy"/);
+  assert.match(response.body, /Preview run/);
+  assert.doesNotMatch(response.body, /Preview plan/);
+  assert.match(response.body, /Generate a still, a clip, or a line — it will land here/);
+  assert.match(response.body, /Download pack/);
+  assert.match(response.body, /Send to audience/);
+  assert.match(response.body, /id="advancedDrawer"/);
+  assert.doesNotMatch(response.body, /View API/);
+  assert.doesNotMatch(response.body, /Generate via \/v1\/jobs/);
+  assert.match(response.body, /submitV1Job\('text\.generate'/);
+  assert.match(response.body, /plan === 'team'/);
+});
+
+test('offers Team CTA is Talk to us or Studio, not View API', async () => {
+  const response = await requestText('GET', '/offers');
+  assert.equal(response.status, 200);
+  assert.doesNotMatch(response.body, /View API/);
+  assert.match(response.body, /Start in Studio/);
+  assert.match(response.body, /Talk to us/);
+  assert.match(response.body, /mailto:hello@avli\.cloud/);
+  const teamBlock = response.body.split('<h3>Team</h3>')[1]?.split('<h3>Organization</h3>')[0] || '';
+  assert.match(teamBlock, /Talk to us|Start in Studio/);
+  assert.doesNotMatch(teamBlock, /\/v1\/capabilities/);
 });
 
 test('dream-cycle API requires explicit approval before unlocking generation', async () => {
@@ -258,6 +318,10 @@ test('versioned capability discovery publishes tool and media operations', async
   assert.ok(ids.includes('tool.dcf-valuation'));
   assert.ok(ids.includes('tool.rag-pipeline'));
   assert.ok(ids.includes('text.echo'));
+  assert.ok(ids.includes('text.generate'));
+  const generate = response.body.result.capabilities.find(item => item.id === 'text.generate');
+  assert.equal(generate.available, false);
+  assert.equal(generate.modality, 'text');
   assert.equal(validateCapabilities(response.body.result), true, JSON.stringify(validateCapabilities.errors));
 });
 
@@ -547,6 +611,306 @@ test('versioned execution requires object arguments', async () => {
   assert.equal(response.status, 400);
   assertCanonical(response.body, false);
   assert.equal(response.body.meta.error_code, 'VALIDATION_ERROR');
+});
+
+test('campaign workspace has one operator and no public member list endpoint', async () => {
+  const response = await request('GET', '/v1/workspace');
+  assert.equal(response.status, 200);
+  assertCanonical(response.body);
+  const view = response.body.result;
+  assert.equal(view.plan, 'campaign');
+  assert.equal(view.role, 'admin');
+  assert.equal('members' in view, false);
+});
+
+function echoJobRequest(requestId, tenantId) {
+  return {
+    contract_version: CONTRACT_VERSIONS.workerJobRequest,
+    request_id: requestId,
+    tenant_id: tenantId,
+    capability: 'tool.echo',
+    input: { value: 'workspace' },
+    privacy_class: 'internal',
+    deadline: new Date(Date.now() + 60_000).toISOString(),
+  };
+}
+
+test('team operator cannot read another workspace job', async () => {
+  const previousAccounts = process.env.L7_ACCOUNT_TOKENS;
+  const { createWorkspaceStore } = require('../lib/workspace-store');
+  const store = createWorkspaceStore({ root: path.join(FIXTURE_DIR, 'state', 'workspaces') });
+  store.save({
+    workspace_id: 'workspace:alpha',
+    plan: 'team',
+    tenant_id: 'tenant:alpha-team',
+    members: [
+      { account_id: 'account:admin-a', role: 'admin', token_id: 'admin-a' },
+      { account_id: 'account:op-a', role: 'operator', token_id: 'op-a' },
+    ],
+    artifact_sha256: [],
+  });
+  store.save({
+    workspace_id: 'workspace:beta',
+    plan: 'team',
+    tenant_id: 'tenant:beta-team',
+    members: [
+      { account_id: 'account:admin-b', role: 'admin', token_id: 'admin-b' },
+      { account_id: 'account:op-b', role: 'operator', token_id: 'op-b' },
+    ],
+    artifact_sha256: [],
+  });
+  process.env.L7_ACCOUNT_TOKENS = JSON.stringify({
+    'admin-a': 'token-admin-a',
+    'op-b': 'token-op-b',
+  });
+  try {
+    const submitted = await request(
+      'POST',
+      '/v1/jobs',
+      echoJobRequest('request:workspace-alpha', 'tenant:alpha-team'),
+      { authorization: 'Bearer token-admin-a' },
+    );
+    assert.equal(submitted.status, 202);
+    const jobId = submitted.body.result.job.job_id;
+    const peek = await request(
+      'GET',
+      `/v1/jobs/${encodeURIComponent(jobId)}`,
+      undefined,
+      { authorization: 'Bearer token-op-b' },
+    );
+    assert.equal(peek.status, 404);
+  } finally {
+    restoreEnv('L7_ACCOUNT_TOKENS', previousAccounts);
+  }
+});
+
+test('team admin can attach an artifact hash to the shared library; operator can read it', async () => {
+  const previousAccounts = process.env.L7_ACCOUNT_TOKENS;
+  const { createWorkspaceStore } = require('../lib/workspace-store');
+  const store = createWorkspaceStore({ root: path.join(FIXTURE_DIR, 'state', 'workspaces') });
+  store.save({
+    workspace_id: 'workspace:shared-lib',
+    plan: 'team',
+    tenant_id: 'tenant:shared',
+    members: [
+      { account_id: 'account:lib-admin', role: 'admin', token_id: 'lib-admin' },
+      { account_id: 'account:lib-op', role: 'operator', token_id: 'lib-op' },
+    ],
+    artifact_sha256: [],
+  });
+  process.env.L7_ACCOUNT_TOKENS = JSON.stringify({
+    'lib-admin': 'token-lib-admin',
+    'lib-op': 'token-lib-op',
+  });
+  const sha = 'b'.repeat(64);
+  try {
+    const shared = await request(
+      'POST',
+      '/v1/workspace/artifacts',
+      { sha256: sha },
+      { authorization: 'Bearer token-lib-admin' },
+    );
+    assert.equal(shared.status, 200);
+    const denied = await request(
+      'POST',
+      '/v1/workspace/artifacts',
+      { sha256: 'c'.repeat(64) },
+      { authorization: 'Bearer token-lib-op' },
+    );
+    assert.equal(denied.status, 403);
+    const lib = await request(
+      'GET',
+      '/v1/workspace/artifacts',
+      undefined,
+      { authorization: 'Bearer token-lib-op' },
+    );
+    assert.equal(lib.status, 200);
+    assert.ok(lib.body.result.artifacts.some(item => item.sha256 === sha));
+    assert.equal('members' in lib.body.result, false);
+  } finally {
+    restoreEnv('L7_ACCOUNT_TOKENS', previousAccounts);
+  }
+});
+
+function restoreEnv(name, value) {
+  if (value === undefined) delete process.env[name];
+  else process.env[name] = value;
+}
+
+function startMockModelWorker() {
+  const token = 'model-gateway-token';
+  const jobs = new Map();
+  const server = http.createServer((req, res) => {
+    const send = (status, body) => {
+      const payload = JSON.stringify(body);
+      res.writeHead(status, { 'content-type': 'application/json' });
+      res.end(payload);
+    };
+    if (req.headers.authorization !== `Bearer ${token}`) {
+      send(401, { error: { code: 'AUTHENTICATION_REQUIRED', message: 'authentication required' } });
+      return;
+    }
+    if (req.method === 'GET' && req.url === '/internal/v1/health') {
+      send(200, { status: 'ok', worker_id: 'avli-ollama', worker_version: '0.1.0', active_jobs: 0 });
+      return;
+    }
+    if (req.method === 'GET' && req.url === '/internal/v1/capabilities') {
+      send(200, {
+        contract_version: CONTRACT_VERSIONS.workerCapabilities,
+        capabilities: [{ id: 'text.generate', modality: 'text', models: ['mock:latest'] }],
+      });
+      return;
+    }
+    if (req.method === 'POST' && req.url === '/internal/v1/jobs') {
+      const chunks = [];
+      req.on('data', chunk => chunks.push(chunk));
+      req.on('end', () => {
+        const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        const jobId = `job:${crypto.createHash('sha256').update(`${body.tenant_id}\0${body.request_id}`).digest('hex').slice(0, 24)}`;
+        jobs.set(jobId, {
+          job_id: jobId,
+          state: 'succeeded',
+          progress: 1,
+          result: { text: `pong:${body.input.prompt}`, model: 'mock:latest' },
+          artifacts: [],
+        });
+        send(202, { job_id: jobId, state: 'queued' });
+      });
+      return;
+    }
+    const match = /^\/internal\/v1\/jobs\/(job:[a-f0-9]{24})$/.exec(req.url);
+    if (req.method === 'GET' && match && jobs.has(match[1])) {
+      send(200, jobs.get(match[1]));
+      return;
+    }
+    send(404, { error: { code: 'NOT_FOUND', message: 'route not found' } });
+  });
+  return new Promise(resolve => {
+    server.listen(0, '127.0.0.1', () => {
+      resolve({ server, token, port: server.address().port });
+    });
+  });
+}
+
+test('text.generate is a first-class job like image.generate', async () => {
+  const caps = await request('GET', '/v1/capabilities');
+  assert.equal(caps.status, 200);
+  assert.ok(caps.body.result.capabilities.some(item => item.id === 'text.generate'));
+  assert.ok(caps.body.result.capabilities.some(item => item.id === 'image.generate'));
+});
+
+test('campaign workspace pack is a zip and campaign cannot publish', async () => {
+  const bytes = Buffer.from('campaign-pack-asset');
+  const hash = crypto.createHash('sha256').update(bytes).digest('hex');
+  const directory = path.join(FIXTURE_DIR, 'media', 'objects', hash.slice(0, 2));
+  fs.mkdirSync(directory, { recursive: true });
+  fs.writeFileSync(path.join(directory, `${hash}.txt`), bytes);
+  fs.writeFileSync(path.join(directory, `${hash}.metadata.json`), JSON.stringify({
+    sha256: hash,
+    bytes: bytes.length,
+    media_type: 'text/plain',
+    extension: 'txt',
+    created_at: '2026-08-17T00:00:00.000Z',
+  }));
+
+  const attached = await request('POST', '/v1/workspace/artifacts', { sha256: hash });
+  assert.equal(attached.status, 200);
+  const library = await request('GET', '/v1/workspace/artifacts');
+  assert.equal(library.status, 200);
+  const row = library.body.result.artifacts.find(item => item.sha256 === hash);
+  assert.ok(row);
+  assert.equal(row.media_type, 'text/plain');
+  assert.ok(row.created_at);
+  assert.equal('members' in library.body.result, false);
+
+  const pack = await requestBuffer('GET', '/v1/workspace/pack');
+  assert.equal(pack.status, 200);
+  assert.match(String(pack.type || ''), /zip|octet-stream/);
+  assert.equal(pack.body.subarray(0, 4).toString('hex'), '504b0304');
+  assert.match(pack.body.toString('binary'), /campaign\.txt/);
+  assert.match(pack.body.toString('utf8'), /campaign-pack-asset/);
+
+  const published = await request('POST', '/v1/workspace/publish', { sha256: [hash] });
+  assert.equal(published.status, 403);
+  assertCanonical(published.body, false);
+  assert.equal(published.body.meta.error_code, 'AUTHORIZATION_DENIED');
+});
+
+test('team can publish to audience; operator and campaign cannot', async () => {
+  const previousAccounts = process.env.L7_ACCOUNT_TOKENS;
+  const { createWorkspaceStore } = require('../lib/workspace-store');
+  const store = createWorkspaceStore({ root: path.join(FIXTURE_DIR, 'state', 'workspaces') });
+  store.save({
+    workspace_id: 'workspace:publish-team',
+    plan: 'team',
+    tenant_id: 'tenant:publish',
+    members: [
+      { account_id: 'account:pub-admin', role: 'admin', token_id: 'pub-admin' },
+      { account_id: 'account:pub-op', role: 'operator', token_id: 'pub-op' },
+    ],
+    artifact_sha256: ['d'.repeat(64)],
+  });
+  process.env.L7_ACCOUNT_TOKENS = JSON.stringify({
+    'pub-admin': 'token-pub-admin',
+    'pub-op': 'token-pub-op',
+  });
+  try {
+    const accepted = await request(
+      'POST',
+      '/v1/workspace/publish',
+      { sha256: ['d'.repeat(64)] },
+      { authorization: 'Bearer token-pub-admin' },
+    );
+    assert.equal(accepted.status, 202);
+    assertCanonical(accepted.body);
+    assert.equal(accepted.body.result.accepted, true);
+    assert.match(String(accepted.body.result.request_id || ''), /^request:/);
+    const denied = await request(
+      'POST',
+      '/v1/workspace/publish',
+      { sha256: ['d'.repeat(64)] },
+      { authorization: 'Bearer token-pub-op' },
+    );
+    assert.equal(denied.status, 403);
+  } finally {
+    restoreEnv('L7_ACCOUNT_TOKENS', previousAccounts);
+  }
+});
+
+test('POST /v1/jobs text.generate routes to the private model worker', async () => {
+  const worker = await startMockModelWorker();
+  const previousUrl = process.env.AVLI_MODEL_WORKER_URL;
+  const previousToken = process.env.AVLI_WORKER_SERVICE_TOKEN;
+  process.env.AVLI_MODEL_WORKER_URL = `http://127.0.0.1:${worker.port}`;
+  process.env.AVLI_WORKER_SERVICE_TOKEN = worker.token;
+  try {
+    const submitted = await request('POST', '/v1/jobs', {
+      contract_version: CONTRACT_VERSIONS.workerJobRequest,
+      request_id: 'request:text-generate-gateway',
+      tenant_id: 'tenant:test',
+      capability: 'text.generate',
+      input: { prompt: 'ping' },
+      privacy_class: 'internal',
+      deadline: new Date(Date.now() + 60_000).toISOString(),
+    });
+    assert.equal(submitted.status, 202);
+    const jobId = submitted.body.result.job.job_id;
+    let current;
+    for (let attempt = 0; attempt < 50; attempt += 1) {
+      current = await request('GET', `/v1/jobs/${encodeURIComponent(jobId)}`);
+      if (current.body.result.job.state === 'succeeded') break;
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+    assert.equal(current.body.result.job.state, 'succeeded');
+    assert.equal(current.body.result.job.result.text, 'pong:ping');
+    const capabilities = await request('GET', '/v1/capabilities');
+    const generate = capabilities.body.result.capabilities.find(item => item.id === 'text.generate');
+    assert.equal(generate.available, true);
+  } finally {
+    restoreEnv('AVLI_MODEL_WORKER_URL', previousUrl);
+    restoreEnv('AVLI_WORKER_SERVICE_TOKEN', previousToken);
+    await new Promise(resolve => worker.server.close(resolve));
+  }
 });
 
 test.after(async () => {

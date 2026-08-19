@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://avli.cloud/l7/schema/v1/workspace.schema.json",
+  "title": "L7 Workspace v1",
+  "type": "object",
+  "required": ["workspace_id", "plan", "members", "artifact_sha256"],
+  "properties": {
+    "workspace_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "plan": {
+      "enum": ["campaign", "team", "organization"]
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "members": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["account_id", "role"],
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+          },
+          "role": {
+            "enum": ["operator", "admin", "analyst", "viewer"]
+          },
+          "token_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "artifact_sha256": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false
+}
