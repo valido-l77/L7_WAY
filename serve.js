@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * L7 Gateway Server — The Unified Self, listening.
- * Boots the gateway, then starts the HTTP API on port 18789.
+ * Boots the gateway, then starts the HTTP API on port 18793.
  * Law I — All flows through the Gateway. No exceptions.
  *
  * Created by: Alberto Valido Delgado / Claude (AI-generated)
@@ -49,7 +49,7 @@ function modelWorkerConfigured() {
 }
 const { SIGNATURE_HEADER, verifyCallback } = require('./lib/callback-hmac');
 
-const PORT = parseInt(process.env.L7_PORT || '18789', 10);
+const PORT = parseInt(process.env.L7_PORT || '18793', 10);
 const BIND = process.env.L7_BIND || '127.0.0.1';
 const L7_DIR = process.env.L7_DIR || path.join(process.env.HOME || '', '.l7');
 const TOOLS_DIR = path.join(L7_DIR, 'tools');
@@ -674,6 +674,15 @@ async function requestHandler(req, res) {
       const visible = visibleArtifactHashes(store, record, principal);
       const allowed = new Set(visible.map(item => item.sha256));
       const selected = requestedHashes(parsed.query, [...allowed]).filter(hash => allowed.has(hash));
+      if (selected.length === 0) {
+        throw new HttpRequestError(
+          409,
+          'CONFLICT',
+          visible.length === 0
+            ? 'This workspace has no library assets to download'
+            : 'No selected library assets are available to download',
+        );
+      }
       const files = [];
       const listed = [];
       selected.forEach((sha256, index) => {
@@ -685,6 +694,13 @@ async function requestHandler(req, res) {
         }
         listed.push(`${name}  ${sha256}${loaded?.bytes ? '' : '  (missing)'}`);
       });
+      if (files.length === 0) {
+        throw new HttpRequestError(
+          409,
+          'CONFLICT',
+          'The selected assets are listed in the library, but all artifact bytes are missing',
+        );
+      }
       const brief = typeof parsed.query.brief === 'string' ? parsed.query.brief.trim() : '';
       const campaignTxt = [
         'AVLI Cloud campaign pack',

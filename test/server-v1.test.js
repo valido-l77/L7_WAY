@@ -185,11 +185,57 @@ test('studio route serves the morphic media workspace', async () => {
   assert.match(response.body, /plan === 'team'/);
 });
 
+test('studio clearly labels mock media and guides an empty first run', async () => {
+  const response = await requestText('GET', '/studio');
+  assert.equal(response.status, 200);
+  assert.match(response.body, /id="executionDisclosure"/);
+  assert.match(response.body, /Mock previews are placeholders, not final media/);
+  assert.match(response.body, /1\. Write a clear brief/);
+  assert.match(response.body, /2\. Check readiness/);
+  assert.match(response.body, /3\. Select Generate/);
+  assert.match(response.body, /id="knowledgeBtn"[^>]*disabled/);
+});
+
+test('studio keeps one stable brief control and explains unavailable actions', async () => {
+  const response = await requestText('GET', '/studio');
+  assert.equal(response.status, 200);
+  assert.equal((response.body.match(/id="brief"/g) || []).length, 1);
+  assert.match(response.body, /id="createHint"[^>]*role="status"/);
+  assert.match(response.body, /Add a brief to generate/);
+  assert.match(response.body, /id="runControlHint"[^>]*role="status"/);
+  assert.match(response.body, /Cancel becomes available while a run is active/);
+  assert.match(response.body, /id="packBtn"[^>]*disabled/);
+  assert.match(response.body, /id="libraryFeedback"[^>]*role="status"/);
+  assert.match(response.body, /brief'\)\.addEventListener\('input', syncGenerateAvailability\)/);
+
+  const modeHandler = response.body.split("document.querySelectorAll('[data-mode]')")[1]
+    ?.split("$('candidates').addEventListener")[0] || '';
+  assert.doesNotMatch(modeHandler, /replaceChildren|outerHTML|innerHTML/);
+});
+
+test('studio library cards expose previews, metadata, artifact URLs, and server pack names', async () => {
+  const response = await requestText('GET', '/studio');
+  assert.equal(response.status, 200);
+  assert.match(response.body, /function createLibraryPreview/);
+  assert.match(response.body, /\/v1\/artifacts\/\$\{hash\}/);
+  assert.match(response.body, /Open asset/);
+  assert.match(response.body, /created_at/);
+  assert.match(response.body, /content-disposition/i);
+  assert.doesNotMatch(response.body, /link\.download = 'campaign-pack\.zip'/);
+});
+
+test('studio startup recovery names the command and product URL', async () => {
+  const response = await requestText('GET', '/studio');
+  assert.equal(response.status, 200);
+  assert.match(response.body, /run <code>\.\/start\.sh<\/code>/);
+  assert.match(response.body, /http:\/\/127\.0\.0\.1:18793\/studio/);
+});
+
 test('offers Team CTA is Talk to us or Studio, not View API', async () => {
   const response = await requestText('GET', '/offers');
   assert.equal(response.status, 200);
   assert.doesNotMatch(response.body, /View API/);
-  assert.match(response.body, /Start in Studio/);
+  assert.match(response.body, /Open Studio|Start in Studio/);
   assert.match(response.body, /Talk to us/);
   assert.match(response.body, /mailto:hello@avli\.cloud/);
   const teamBlock = response.body.split('<h3>Team</h3>')[1]?.split('<h3>Organization</h3>')[0] || '';
@@ -323,6 +369,22 @@ test('versioned capability discovery publishes tool and media operations', async
   assert.equal(generate.available, false);
   assert.equal(generate.modality, 'text');
   assert.equal(validateCapabilities(response.body.result), true, JSON.stringify(validateCapabilities.errors));
+});
+
+test('forge-backed capabilities are unavailable when forge health is down', async () => {
+  const previousForgeUrl = process.env.L7_FORGE_URL;
+  process.env.L7_FORGE_URL = 'http://127.0.0.1:1';
+  try {
+    const response = await request('GET', '/v1/capabilities');
+    assert.equal(response.status, 200);
+    for (const id of ['tool.rag-pipeline', 'tool.financial-ratios', 'tool.dcf-valuation']) {
+      const capability = response.body.result.capabilities.find(item => item.id === id);
+      assert.ok(capability, `expected ${id}`);
+      assert.equal(capability.available, false, `${id} must follow forge health`);
+    }
+  } finally {
+    restoreEnv('L7_FORGE_URL', previousForgeUrl);
+  }
 });
 
 test('duplicate X-L7-Request-Id does not double-run ratios', async () => {
@@ -829,11 +891,54 @@ test('campaign workspace pack is a zip and campaign cannot publish', async () =>
   assert.equal(pack.body.subarray(0, 4).toString('hex'), '504b0304');
   assert.match(pack.body.toString('binary'), /campaign\.txt/);
   assert.match(pack.body.toString('utf8'), /campaign-pack-asset/);
+  assert.match(String(pack.headers['content-disposition'] || ''), /^attachment; filename="campaign-[^"]+-pack\.zip"$/);
 
   const published = await request('POST', '/v1/workspace/publish', { sha256: [hash] });
   assert.equal(published.status, 403);
   assertCanonical(published.body, false);
   assert.equal(published.body.meta.error_code, 'AUTHORIZATION_DENIED');
+});
+
+test('workspace pack rejects empty libraries and selections whose bytes are all missing', async () => {
+  const previousAccounts = process.env.L7_ACCOUNT_TOKENS;
+  const { createWorkspaceStore } = require('../lib/workspace-store');
+  const store = createWorkspaceStore({ root: path.join(FIXTURE_DIR, 'state', 'workspaces') });
+  const tokenId = 'pack-edge-admin';
+  const token = 'token-pack-edge-admin';
+  process.env.L7_ACCOUNT_TOKENS = JSON.stringify({ [tokenId]: token });
+  const headers = { authorization: `Bearer ${token}` };
+
+  try {
+    store.save({
+      workspace_id: 'workspace:pack-empty',
+      plan: 'campaign',
+      tenant_id: 'tenant:pack-empty',
+      members: [{ account_id: 'account:pack-empty', role: 'admin', token_id: tokenId }],
+      artifact_sha256: [],
+    });
+    const empty = await requestBuffer('GET', '/v1/workspace/pack', undefined, headers);
+    assert.equal(empty.status, 409);
+    const emptyBody = JSON.parse(empty.body.toString('utf8'));
+    assertCanonical(emptyBody, false);
+    assert.equal(emptyBody.meta.error_code, 'CONFLICT');
+    assert.match(emptyBody.error, /no library assets/i);
+
+    const missingHash = 'e'.repeat(64);
+    store.attachArtifact('workspace:pack-empty', missingHash);
+    const missing = await requestBuffer(
+      'GET',
+      `/v1/workspace/pack?hashes=${missingHash}`,
+      undefined,
+      headers,
+    );
+    assert.equal(missing.status, 409);
+    const missingBody = JSON.parse(missing.body.toString('utf8'));
+    assertCanonical(missingBody, false);
+    assert.equal(missingBody.meta.error_code, 'CONFLICT');
+    assert.match(missingBody.error, /bytes are missing/i);
+  } finally {
+    restoreEnv('L7_ACCOUNT_TOKENS', previousAccounts);
+  }
 });
 
 test('team can publish to audience; operator and campaign cannot', async () => {

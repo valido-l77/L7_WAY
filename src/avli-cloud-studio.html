@@ -280,11 +280,14 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
 .btn.primary:hover:not(:disabled) { background: linear-gradient(110deg, #ffe2a5, #f5ca74 50%, #e4a85b); box-shadow: 0 14px 36px rgba(242, 199, 111, .23); }
 .btn.secondary { color: var(--gold); border-color: rgba(216, 173, 88, .26); }
 .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.action-hint { margin: 8px 0 0; min-height: 16px; color: var(--dim); font-size: 10px; line-height: 1.45; }
+.action-hint.error { color: var(--red); }
+.action-hint.success { color: var(--green); }
 .library-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
 .asset-library { display: grid; gap: 7px; }
 .asset-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto 48px minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   padding: 8px 9px;
@@ -294,6 +297,23 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
   font-size: 10px;
 }
 .asset-row code { overflow-wrap: anywhere; color: var(--muted); }
+.asset-preview {
+  width: 48px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: var(--gold);
+  font: 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-transform: uppercase;
+}
+.asset-preview img { width: 100%; height: 100%; object-fit: cover; }
+.asset-meta { min-width: 0; }
+.asset-meta-line { margin-top: 4px; color: var(--dim); font-size: 9px; overflow-wrap: anywhere; }
+.asset-open { color: var(--gold); font-size: 10px; white-space: nowrap; }
 .asset-library .empty { min-height: 120px; }
 .advanced {
   margin-top: 18px;
@@ -342,6 +362,33 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
 .stage-badges { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px; }
 .stage-badge { padding: 5px 9px; border: 1px solid var(--line); border-radius: var(--ds-radius-pill); color: var(--muted); background: rgba(255, 255, 255, .025); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
 .plan-id { color: var(--dim); font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }
+.trust-banner {
+  display: grid;
+  gap: 3px;
+  margin: -10px 0 22px;
+  padding: 13px 15px;
+  border: 1px solid rgba(196, 163, 90, .42);
+  border-left: 4px solid var(--gold);
+  border-radius: var(--ds-radius-sm);
+  background: rgba(196, 163, 90, .09);
+  color: var(--muted);
+  font-size: 12px;
+}
+.trust-banner strong { color: var(--ink); font-size: 13px; }
+.trust-banner.real { border-color: rgba(106, 132, 100, .42); border-left-color: var(--green); background: rgba(106, 132, 100, .09); }
+.startup-recovery {
+  display: grid;
+  gap: 5px;
+  margin-top: 12px;
+  padding: 11px 12px;
+  border: 1px solid rgba(196, 92, 74, .4);
+  border-radius: var(--ds-radius-sm);
+  background: rgba(196, 92, 74, .08);
+  color: var(--muted);
+  font-size: 11px;
+}
+.startup-recovery strong { color: var(--ink); }
+.startup-recovery code { color: var(--gold); font-family: "SF Mono", Menlo, ui-monospace, monospace; }
 
 .layers { display: grid; grid-template-columns: repeat(3, minmax(190px, 1fr)); gap: 15px; align-items: start; }
 .layer {
@@ -521,14 +568,19 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
   position: fixed;
   inset: 0;
   z-index: 40;
+  display: grid;
+  align-items: start;
   background: rgba(12, 10, 8, .72);
   backdrop-filter: blur(16px);
   overflow: auto;
   padding: 28px 20px 48px;
 }
+.offers-overlay[hidden] { display: none; }
 .offers-panel {
+  width: 100%;
   max-width: 1040px;
   margin: 0 auto;
+  padding-bottom: 24px;
 }
 .offers-panel-head {
   display: flex;
@@ -612,24 +664,8 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
   color: var(--muted);
   font-size: 11px;
 }
-.asset-library {
-  display: grid;
-  gap: 7px;
-  max-height: 168px;
-  overflow: auto;
-}
-.asset-row {
-  display: grid;
-  gap: 2px;
-  padding: 8px 0;
-  border-top: 1px solid var(--line);
-  font-size: 11px;
-}
-.asset-row code {
-  color: var(--ink);
-  font-family: "SF Mono", Menlo, ui-monospace, monospace;
-  font-size: 10px;
-}
+.asset-library { max-height: 280px; overflow: auto; }
+.asset-row code { color: var(--ink); font-family: "SF Mono", Menlo, ui-monospace, monospace; font-size: 10px; }
 .share-honest {
   margin: 12px 0 0;
   color: var(--dim);
@@ -737,7 +773,6 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
       <span class="context-chip" id="roleChip">Admin</span>
     </div>
     <div class="top-status" role="status" aria-live="polite">
-      <a class="offers-link" href="/offers">Plans</a>
       <button class="offers-link" type="button" id="offersBtn" aria-expanded="false" aria-controls="offersOverlay">Plans · $42</button>
       <span class="status-dot" id="gatewayDot"></span>
       <span id="gatewayStatus">Connecting</span>
@@ -827,16 +862,18 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
             <span class="readiness-title">New run needs approval</span>
             <span class="state-pill">approval</span>
           </div>
-          <div class="readiness-detail">Your last generation is saved. Approve before starting another run.</div>
-          <button class="btn secondary" id="approveCycleBtn" type="button">Start a new run</button>
+          <div class="readiness-detail">Your finished run and brief stay saved. Start a new run only after approving this separate run; approval does not replace work already in your library.</div>
+          <button class="btn secondary" id="approveCycleBtn" type="button">Approve separate run</button>
         </section>
 
         <div class="actions">
-          <button class="btn primary" id="runBtn" type="button" disabled>Generate fast preview</button>
+          <button class="btn primary" id="runBtn" type="button" aria-describedby="createHint" disabled>Generate fast preview</button>
+          <p class="action-hint" id="createHint" role="status" aria-live="polite">Checking generator availability.</p>
           <div class="btn-row">
             <button class="btn secondary" id="planBtn" type="button">Preview run</button>
-            <button class="btn" id="exportBtn" type="button" disabled>Export plan</button>
+            <button class="btn" id="exportBtn" type="button" aria-describedby="planActionHint" disabled>Export plan</button>
           </div>
+          <p class="action-hint" id="planActionHint">Export becomes available after Preview run creates a plan.</p>
         </div>
       </section>
     </aside>
@@ -854,6 +891,11 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
           </div>
         </div>
         <div class="plan-id" id="planId">No plan yet</div>
+      </div>
+
+      <div class="trust-banner" id="executionDisclosure" role="status" aria-live="polite">
+        <strong id="executionDisclosureTitle">Mock media mode</strong>
+        <span id="executionDisclosureCopy">Mock previews are placeholders, not final media. Check readiness before switching to a configured real media engine.</span>
       </div>
 
       <div class="layers" id="layers" aria-live="polite"></div>
@@ -902,12 +944,13 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
         <h2 class="section-title" id="assetsTitle">Shared library</h2>
         <p class="section-copy">Campaign and media files in this workspace. Team shares this library.</p>
         <div class="asset-library" id="assetLibrary">
-          <div class="empty">Generate a still, a clip, or a line — it will land here.</div>
+          <div class="empty">1. Write a clear brief. 2. Check readiness. 3. Select Generate. Generate a still, a clip, or a line — it will land here.</div>
         </div>
         <div class="library-actions">
-          <button class="btn secondary" id="packBtn" type="button">Download pack</button>
+          <button class="btn secondary" id="packBtn" type="button" aria-describedby="libraryFeedback" disabled>Download pack</button>
           <button class="btn" id="publishBtn" type="button" hidden>Send to audience</button>
         </div>
+        <p class="action-hint" id="libraryFeedback" role="status" aria-live="polite">Generate an asset to enable Download pack.</p>
       </section>
 
       <section class="section">
@@ -920,10 +963,15 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
         </div>
         <div class="progress" aria-hidden="true"><span id="progressFill"></span></div>
         <div class="run-message" id="runMessage">Write a brief, then generate.</div>
-        <div class="btn-row">
-          <button class="btn" id="cancelBtn" type="button" disabled>Cancel</button>
-          <button class="btn" id="resumeBtn" type="button" disabled>Resume</button>
+        <div class="startup-recovery" id="startupRecovery" hidden>
+          <strong>Studio could not finish startup.</strong>
+          <span>From L7_WAY, run <code>./start.sh</code>, then open <code>http://127.0.0.1:18793/studio</code>.</span>
         </div>
+        <div class="btn-row">
+          <button class="btn" id="cancelBtn" type="button" aria-describedby="runControlHint" disabled>Cancel</button>
+          <button class="btn" id="resumeBtn" type="button" aria-describedby="runControlHint" disabled>Resume</button>
+        </div>
+        <p class="action-hint" id="runControlHint" role="status" aria-live="polite">Cancel becomes available while a run is active. Resume appears after a failed or cancelled run.</p>
       </section>
 
       <details class="advanced" id="advancedDrawer">
@@ -943,7 +991,7 @@ input[type="range"] { padding: 0; accent-color: var(--gold); }
             <label for="knowledgeQuery">Ask the knowledge base</label>
             <textarea id="knowledgeQuery">How do we keep a campaign brief consistent across a team?</textarea>
           </div>
-          <button class="btn secondary" id="knowledgeBtn" type="button">Query via /v1/jobs</button>
+          <button class="btn secondary" id="knowledgeBtn" type="button" disabled>Search knowledge</button>
           <div class="run-message" id="knowledgeResult">Citations appear here after a knowledge-search job.</div>
         </section>
         <section class="section">
@@ -1079,7 +1127,9 @@ let renderedPreviewRevision = -1;
 let dreamCycleLocked = true;
 let executionMode = null;
 let workspacePlan = 'campaign';
+let libraryArtifactCount = 0;
 const attachedHashes = new Set();
+const capabilityAvailability = new Map();
 
 function lowRiskAutoApprovalAvailable() {
   return mode === 'image'
@@ -1089,7 +1139,34 @@ function lowRiskAutoApprovalAvailable() {
 
 function syncGenerateAvailability() {
   const mediaBlocked = !readinessReady || (dreamCycleLocked && !lowRiskAutoApprovalAvailable());
-  $('runBtn').disabled = studioBusy || (mode !== 'copy' && mediaBlocked);
+  const capability = mode === 'copy' ? 'text.generate' : `${mode}.generate`;
+  const capabilityState = capabilityAvailability.get(capability);
+  const briefMissing = !$('brief').value.trim();
+  const identityMissing = mode !== 'copy' && !$('identity').value.trim();
+  const approvalMissing = mode !== 'copy' && dreamCycleLocked && !lowRiskAutoApprovalAvailable();
+  const blocked = studioBusy
+    || briefMissing
+    || identityMissing
+    || capabilityState !== true
+    || (mode !== 'copy' && (!readinessReady || approvalMissing));
+  $('runBtn').disabled = blocked;
+  const reason = studioBusy
+    ? 'Generation is already in progress.'
+    : briefMissing
+      ? 'Add a brief to generate.'
+      : identityMissing
+        ? 'Add what should stay consistent.'
+        : capabilityState === undefined
+          ? `Checking whether ${capabilityLabel(capability).toLowerCase()} is available.`
+          : capabilityState !== true
+            ? `${capabilityLabel(capability)} is offline. Check capability health in Advanced.`
+            : mode !== 'copy' && !readinessReady
+              ? 'Media readiness is blocked. Check SSD-1B readiness in Advanced.'
+              : approvalMissing
+                ? 'Approve a separate run before generating.'
+                : `Ready to ${mode === 'copy' ? 'generate copy' : mode === 'video' ? 'generate motion' : 'generate a still'}.`;
+  $('createHint').textContent = reason;
+  $('runBtn').title = blocked ? reason : '';
 }
 
 function node(tag, className, text) {
@@ -1162,6 +1239,7 @@ function setBusy(busy) {
   studioBusy = busy;
   syncGenerateAvailability();
   $('planBtn').disabled = busy;
+  $('planBtn').title = busy ? 'Wait for the active generation to finish.' : '';
   if (busy) setGateway('busy', 'Generating');
 }
 
@@ -1198,7 +1276,7 @@ function renderDreamCycle(payload) {
   dreamCycleLocked = Boolean(payload.approval_required ?? payload.morphLocked);
   $('cycleGate').hidden = !dreamCycleLocked || lowRiskAutoApprovalAvailable();
   const recoverable = activeRun?.state === 'failed' && /MORPH LOCKED/.test(activeRun.error?.message || '');
-  $('approveCycleBtn').textContent = recoverable ? 'Approve and resume' : 'Start a new run';
+  $('approveCycleBtn').textContent = recoverable ? 'Approve and resume failed run' : 'Approve separate run';
   syncGenerateAvailability();
 }
 
@@ -1352,7 +1430,9 @@ function renderCapabilities(payload) {
   const capabilities = payload.result?.capabilities || payload.capabilities || [];
   const adapters = payload.adapters || [];
   const rows = [];
+  capabilityAvailability.clear();
   for (const capability of capabilities) {
+    capabilityAvailability.set(capability.id, Boolean(capability.available));
     const row = node('div', 'capability');
     const state = capability.available ? 'online' : 'error';
     row.append(
@@ -1375,12 +1455,23 @@ function renderCapabilities(payload) {
     rows.push(row);
   }
   $('capList').replaceChildren(...(rows.length ? rows : [node('div', 'capability', 'No capabilities discovered')]));
+  const knowledgeAvailable = capabilityAvailability.get('tool.rag-pipeline') === true;
+  $('knowledgeBtn').disabled = !knowledgeAvailable;
+  $('knowledgeResult').textContent = knowledgeAvailable
+    ? 'Citations appear here after a knowledge search.'
+    : 'Knowledge search is unavailable. Start the local services and try again.';
   executionMode = payload.execution_mode || payload.result?.execution_mode || executionMode || 'unknown';
   $('runMode').textContent = executionMode;
+  renderExecutionDisclosure(executionMode);
   renderDreamCycle({ approval_required: dreamCycleLocked });
+  syncGenerateAvailability();
 }
 
 async function queryKnowledge() {
+  if (capabilityAvailability.get('tool.rag-pipeline') !== true) {
+    $('knowledgeResult').textContent = 'Knowledge search is unavailable. Start the local services and try again.';
+    return;
+  }
   const query = $('knowledgeQuery').value.trim() || 'How do we keep a campaign brief consistent across a team?';
   $('knowledgeBtn').disabled = true;
   $('knowledgeResult').textContent = 'Submitting knowledge-search job…';
@@ -1399,6 +1490,20 @@ async function queryKnowledge() {
   } finally {
     $('knowledgeBtn').disabled = false;
   }
+}
+
+function renderExecutionDisclosure(currentMode) {
+  const disclosure = $('executionDisclosure');
+  const isMock = currentMode === 'mock';
+  disclosure.classList.toggle('real', !isMock && currentMode !== 'unknown');
+  $('executionDisclosureTitle').textContent = isMock
+    ? 'Mock media mode'
+    : currentMode === 'unknown' ? 'Media mode unavailable' : 'Real media mode';
+  $('executionDisclosureCopy').textContent = isMock
+    ? 'Mock previews are placeholders, not final media. Check readiness before switching to a configured real media engine.'
+    : currentMode === 'unknown'
+      ? 'Studio could not confirm the media engine. Do not treat previews as final media.'
+      : `Generated media uses the configured ${currentMode} engine. Review every asset before publishing.`;
 }
 
 async function generateCopy() {
@@ -1475,6 +1580,11 @@ function updateRun(record) {
   $('runMessage').textContent = record.error?.message || progressMessage(progress);
   $('cancelBtn').disabled = terminalStates.has(record.state);
   $('resumeBtn').disabled = !['failed', 'cancelled'].includes(record.state);
+  $('runControlHint').textContent = ['queued', 'running'].includes(record.state)
+    ? 'Cancel stops this active run. Resume is only available after failure or cancellation.'
+    : ['failed', 'cancelled'].includes(record.state)
+      ? 'Resume continues this saved run. Cancel is unavailable because it is not active.'
+      : 'Cancel becomes available while a run is active. Resume appears after a failed or cancelled run.';
 
   if (record.preview && record.preview.revision !== renderedPreviewRevision) {
     renderedPreviewRevision = record.preview.revision;
@@ -1509,6 +1619,7 @@ async function composePlan() {
   activePlan = await api('/api/media/plan', { method: 'POST', body: JSON.stringify(request) });
   $('planId').textContent = `${activePlan.id}\n${activePlan.provenance.plan_hash.slice(0, 16)}…`;
   $('exportBtn').disabled = false;
+  $('planActionHint').textContent = 'Plan ready. Export downloads its JSON receipt; it does not generate media.';
   renderLayers(activePlan);
   logEvent(`Plan ${activePlan.id} composed`);
   return activePlan;
@@ -1632,6 +1743,8 @@ document.querySelectorAll('[data-mode]').forEach(button => {
     syncGenerateAvailability();
   });
 });
+$('brief').addEventListener('input', syncGenerateAvailability);
+$('identity').addEventListener('input', syncGenerateAvailability);
 $('candidates').addEventListener('change', event => {
   $('runBtn').textContent = mode !== 'copy' && Number(event.target.value) === 1
     ? 'Generate fast preview'
@@ -1647,6 +1760,9 @@ $('resumeBtn').addEventListener('click', () => runAction('resume'));
 $('approveCycleBtn').addEventListener('click', approveDreamCycle);
 $('knowledgeBtn').addEventListener('click', queryKnowledge);
 $('packBtn').addEventListener('click', () => downloadPack().catch(error => {
+  syncLibraryActions();
+  $('libraryFeedback').className = 'action-hint error';
+  $('libraryFeedback').textContent = error.message;
   $('runMessage').textContent = error.message;
   logEvent(error.message);
 }));
@@ -1660,6 +1776,9 @@ $('publishBtn').addEventListener('click', () => sendToAudience().catch(error => 
 function setOffersOpen(open) {
   $('offersOverlay').hidden = !open;
   $('offersBtn').setAttribute('aria-expanded', String(open));
+  document.body.style.overflow = open ? 'hidden' : '';
+  if (open) $('offersClose').focus();
+  else $('offersBtn').focus();
 }
 $('offersBtn').addEventListener('click', () => setOffersOpen($('offersOverlay').hidden));
 $('offersClose').addEventListener('click', () => setOffersOpen(false));
@@ -1685,10 +1804,55 @@ function selectedHashes() {
     .filter(hash => /^[a-f0-9]{64}$/.test(hash || ''));
 }
 
+function syncLibraryActions() {
+  const selected = selectedHashes().length;
+  $('packBtn').disabled = libraryArtifactCount === 0 || selected === 0;
+  $('publishBtn').disabled = selected === 0;
+  if (libraryArtifactCount === 0) {
+    $('libraryFeedback').textContent = 'Generate an asset to enable Download pack.';
+  } else if (selected === 0) {
+    $('libraryFeedback').textContent = 'Select at least one library asset to download or send.';
+  } else {
+    $('libraryFeedback').textContent = `${selected} asset${selected === 1 ? '' : 's'} selected.`;
+  }
+}
+
+function fileTypeLabel(mediaType) {
+  const type = String(mediaType || 'application/octet-stream');
+  return type.split('/')[1]?.replace(/^x-/, '').slice(0, 8) || 'file';
+}
+
+function createLibraryPreview(item, hash) {
+  const preview = node('div', 'asset-preview', fileTypeLabel(item.media_type));
+  if (String(item.media_type || '').startsWith('image/') && hash) {
+    const image = node('img');
+    image.src = `/v1/artifacts/${hash}`;
+    image.alt = '';
+    image.loading = 'lazy';
+    image.addEventListener('error', () => preview.replaceChildren(document.createTextNode(fileTypeLabel(item.media_type))), { once: true });
+    preview.replaceChildren(image);
+  }
+  return preview;
+}
+
+function formatCreatedAt(value) {
+  if (!value) return 'Created time unavailable';
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf())
+    ? 'Created time unavailable'
+    : `Created ${date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`;
+}
+
 function renderAssets(artifacts) {
   const items = Array.isArray(artifacts) ? artifacts : [];
+  libraryArtifactCount = items.length;
   if (items.length === 0) {
-    $('assetLibrary').replaceChildren(node('div', 'empty', 'Generate a still, a clip, or a line — it will land here.'));
+    $('assetLibrary').replaceChildren(node(
+      'div',
+      'empty',
+      '1. Write a clear brief. 2. Check readiness. 3. Select Generate. Generate a still, a clip, or a line — it will land here.',
+    ));
+    syncLibraryActions();
     return;
   }
   $('assetLibrary').replaceChildren(...items.map(item => {
@@ -1699,12 +1863,21 @@ function renderAssets(artifacts) {
     check.dataset.sha = hash;
     check.checked = true;
     check.setAttribute('aria-label', `Select ${hash.slice(0, 12)}`);
-    const meta = node('div');
+    check.addEventListener('change', syncLibraryActions);
+    const meta = node('div', 'asset-meta');
     meta.append(node('code', '', hash ? `${hash.slice(0, 12)}…${hash.slice(-8)}` : 'unknown'));
-    if (item.media_type) meta.append(node('div', 'candidate-meta', item.media_type));
-    row.append(check, meta);
+    meta.append(
+      node('div', 'asset-meta-line', item.media_type || 'application/octet-stream'),
+      node('div', 'asset-meta-line', formatCreatedAt(item.created_at)),
+    );
+    const open = node('a', 'asset-open', 'Open asset');
+    open.href = `/v1/artifacts/${hash}`;
+    open.target = '_blank';
+    open.rel = 'noopener';
+    row.append(check, createLibraryPreview(item, hash), meta, open);
     return row;
   }));
+  syncLibraryActions();
 }
 
 async function attachLibraryHashes(hashes) {
@@ -1727,15 +1900,30 @@ async function downloadPack() {
   const brief = $('brief').value.trim();
   if (brief) params.set('brief', brief);
   const query = params.toString();
+  $('packBtn').disabled = true;
+  $('libraryFeedback').className = 'action-hint';
+  $('libraryFeedback').textContent = 'Building download pack…';
   const response = await fetch(`/v1/workspace/pack${query ? `?${query}` : ''}`);
-  if (!response.ok) throw new Error('Could not build the download pack.');
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error || body.message || `Could not build the download pack (${response.status}).`);
+  }
   const blob = await response.blob();
+  if (!blob.size) throw new Error('The server returned an empty download pack.');
+  const disposition = response.headers.get('content-disposition') || '';
+  const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  const quotedName = disposition.match(/filename="([^"]+)"/i)?.[1];
+  const filename = encodedName ? decodeURIComponent(encodedName) : quotedName || 'campaign-pack.zip';
   const link = node('a');
   link.href = URL.createObjectURL(blob);
-  link.download = 'campaign-pack.zip';
+  link.download = filename;
   link.click();
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-  logEvent('Download pack started');
+  syncLibraryActions();
+  $('libraryFeedback').className = 'action-hint success';
+  $('libraryFeedback').textContent = `Downloaded ${filename}.`;
+  $('runMessage').textContent = `Download ready: ${filename}`;
+  logEvent(`Downloaded ${filename}`);
 }
 
 async function sendToAudience() {
@@ -1798,7 +1986,11 @@ async function boot() {
     }
   } catch (error) {
     setGateway('error', 'Studio unavailable');
-    $('runMessage').textContent = 'Open Studio through AVLI Cloud to plan and run media.';
+    $('runMessage').textContent = 'Studio could not reach the local services.';
+    $('startupRecovery').hidden = false;
+    renderExecutionDisclosure('unknown');
+    $('runBtn').disabled = true;
+    $('knowledgeBtn').disabled = true;
     logEvent(error.message);
   }
 }

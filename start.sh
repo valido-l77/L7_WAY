@@ -872,6 +872,16 @@ ${GREEN}Founder Loop ready${NC}
   Media mode: ${AVLI_MEDIA_EXECUTION}
   VPS stack:  ~/avli_cloud/start.sh (Hostinger docker; not started here)
 EOF
+  if [ "$AVLI_MEDIA_EXECUTION" = "mock" ]; then
+    cat <<EOF
+
+${YELLOW}Mock media mode${NC}
+  Studio previews are placeholders, not final media.
+  For real local images, first confirm Studio → Advanced → SSD-1B readiness,
+  then restart with: AVLI_MEDIA_EXECUTION=ssd1b ./start.sh --restart
+  Reopen: http://${GATEWAY_BIND}:${GATEWAY_PORT}/studio
+EOF
+  fi
 }
 
 # --- args ---
